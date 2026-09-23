@@ -1,0 +1,8 @@
+node_modules/
+data/
+coverage/
+.vite/
+.env
+*.db
+*.db-shm
+*.db-wal

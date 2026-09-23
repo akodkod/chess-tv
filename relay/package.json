@@ -1,0 +1,10 @@
+{
+  "name": "@chess-tv/relay",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@chess-tv/protocol": "workspace:*",
+    "hono": "4.13.8",
+    "zod": "4.6.5"
+  }
+}

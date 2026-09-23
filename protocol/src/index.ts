@@ -1,21 +1,21 @@
-import { z } from "zod";
-export const VERSION = 1;
-export const MAX_BYTES = 64 * 1024;
-export const id = z.string().min(1).max(128);
-export const credential = z.string().regex(/^[a-f0-9]{64}$/);
-export const role = z.enum(["tv", "extension"]);
-export type Role = z.infer<typeof role>;
-const square = z.string().regex(/^[a-h][1-8]$/);
-const color = z.enum(["white", "black"]);
-const revision = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
-const context = { gameId: id, generation: id };
-const base = { v: z.literal(VERSION) };
+import { z } from "zod"
+export const VERSION = 1
+export const MAX_BYTES = 64 * 1024
+export const id = z.string().min(1).max(128)
+export const credential = z.string().regex(/^[a-f0-9]{64}$/)
+export const role = z.enum(["tv", "extension"])
+export type Role = z.infer<typeof role>
+const square = z.string().regex(/^[a-h][1-8]$/)
+const color = z.enum(["white", "black"])
+const revision = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
+const context = { gameId: id, generation: id }
+const base = { v: z.literal(VERSION) }
 const message = <T extends string, S extends z.ZodRawShape>(type: T, shape: S) =>
-  z.strictObject({ ...base, type: z.literal(type), ...shape });
+  z.strictObject({ ...base, type: z.literal(type), ...shape })
 const clock = z.strictObject({
   remainingMs: z.number().nonnegative().nullable(),
   running: z.boolean().nullable(),
-});
+})
 export const messageSchema = z.discriminatedUnion("type", [
   message("authenticate", { credential }),
   message("authenticated", { role, pairingId: id }),
@@ -59,8 +59,8 @@ export const messageSchema = z.discriminatedUnion("type", [
   }),
   message("snapshot-request", context),
   message("error", { code: id, message: z.string().max(256) }),
-]);
-export type Message = z.infer<typeof messageSchema>;
+])
+export type Message = z.infer<typeof messageSchema>
 export function parseMessage(value: unknown): Message {
-  return messageSchema.parse(value);
+  return messageSchema.parse(value)
 }

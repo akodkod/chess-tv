@@ -1,0 +1,4 @@
+// Set an HTTPS origin in Local.xcconfig before building for a device.
+RELAY_ORIGIN =
+INFOPLIST_FILE = Config/Release-Info.plist
+#include? "Local.xcconfig"

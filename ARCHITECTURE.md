@@ -1,6 +1,6 @@
 # Chess TV MVP architecture
 
-Status: implementation guide for a personal prototype. Application implementation and deployment are separate work; Chess.com integration approval is not assumed.
+Status: implementation guide for a personal prototype. The implemented simulator extension now automatically attaches the foreground game after pairing; Disconnect pauses this behavior, and ambiguous move recovery still requires explicit reconnection. Real-site attachment described below remains deferred. Application implementation and deployment are separate work; Chess.com integration approval is not assumed.
 
 ## 1. Goal and scope
 

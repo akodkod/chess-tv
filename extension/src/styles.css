@@ -1,0 +1,17 @@
+@import "tailwindcss";
+@source "./popup.tsx";
+@source "./ui";
+:root {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  color-scheme: light;
+}
+body {
+  margin: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+  }
+}

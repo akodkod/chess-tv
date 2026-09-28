@@ -1,0 +1,6 @@
+// A slash variable avoids xcconfig's // comment syntax in URLs.
+SLASH = /
+RELAY_ORIGIN = http:$(SLASH)$(SLASH)127.0.0.1:3000
+INFOPLIST_FILE = Config/Debug-Info.plist
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG
+#include? "Local.xcconfig"

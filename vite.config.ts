@@ -14,7 +14,7 @@ export default defineConfig({
     sortTailwindcss: true,
   },
   test: {
-    include: ["protocol/**/*.test.ts", "relay/**/*.test.ts"],
+    include: ["protocol/**/*.test.ts", "relay/**/*.test.ts", "extension/**/*.test.ts"],
     testTimeout: 15000,
     hookTimeout: 15000,
   },

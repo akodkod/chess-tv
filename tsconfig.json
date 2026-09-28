@@ -7,8 +7,9 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
-    "types": ["bun", "node"],
-    "skipLibCheck": true
+    "types": ["bun", "node", "chrome"],
+    "skipLibCheck": true,
+    "jsx": "react-jsx"
   },
-  "include": ["relay", "protocol", "vite.config.ts"]
+  "include": ["relay", "protocol", "vite.config.ts", "extension"]
 }

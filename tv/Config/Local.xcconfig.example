@@ -1,0 +1,3 @@
+SLASH = /
+RELAY_ORIGIN = https:$(SLASH)$(SLASH)relay.example.com
+// DEVELOPMENT_TEAM = YOUR_TEAM_ID

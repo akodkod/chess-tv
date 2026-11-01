@@ -62,7 +62,7 @@ export class Pairing {
       throw new Error("Pairing is no longer available. Request a new TV code.")
     }
     if (!response.ok)
-      throw new Error("Cannot check TV confirmation. Retrying until the code expires.")
+      throw new Error("Cannot check pairing status. Retrying until the code expires.")
     const result = pollSchema.parse(await response.json())
     if (result.state === "rejected") {
       await this.expire()

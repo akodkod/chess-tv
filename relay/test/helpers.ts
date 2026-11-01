@@ -65,7 +65,7 @@ export async function harness(env: Record<string, string> = {}) {
       env: {
         ...globalThis.process.env,
         NODE_ENV: "test",
-        PORT: "0",
+        PORT: url ? new URL(url).port : "0",
         DATABASE_PATH: join(dir, "relay.db"),
         ...env,
       },

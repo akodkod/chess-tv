@@ -79,6 +79,64 @@ final class MemoryCredentials: CredentialStoring {
     message.outcome = result
     session.receive(message)
   }
+  func testWhiteBoardFocusAndSnapshotStability() async throws {
+    try await checkBoardFocus(color: .white)
+  }
+  func testBlackBoardFocusAndSnapshotStability() async throws {
+    try await checkBoardFocus(color: .black)
+  }
+  private func checkBoardFocus(color: PieceColor) async throws {
+    let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.first as? UIWindowScene)
+    let previousWindow = scene.keyWindow
+    let window = UIWindow(windowScene: scene)
+    window.rootViewController = UIHostingController(rootView: ContentView(session: session))
+    window.makeKeyAndVisible()
+    defer {
+      window.isHidden = true
+      previousWindow?.makeKeyAndVisible()
+    }
+    try await Task.sleep(for: .milliseconds(300))
+    let system = try XCTUnwrap(UIFocusSystem.focusSystem(for: window))
+    let connection = try XCTUnwrap(system.focusedItem)
+    state()
+    var snapshot = try ProtocolTests.fixture()
+    snapshot.playerColor = color
+    snapshot.turn = color
+    session.receive(snapshot)
+    available()
+    try await Task.sleep(for: .milliseconds(500))
+    let square = try XCTUnwrap(system.focusedItem)
+    XCTAssertFalse(square === connection, "The arriving board must take focus from Connection")
+    var candidates: [ObjectIdentifier: any UIFocusItem] = [:]
+    var visited: Set<ObjectIdentifier> = []
+    func collectFocusItems(_ environment: any UIFocusEnvironment) {
+      guard visited.insert(ObjectIdentifier(environment)).inserted else { return }
+      if let item = environment as? any UIFocusItem, item.canBecomeFocused {
+        candidates[ObjectIdentifier(item)] = item
+      }
+      environment.preferredFocusEnvironments.forEach(collectFocusItems)
+      if let container = environment.focusItemContainer {
+        for item in container.focusItems(in: CGRect(x: -10000, y: -10000, width: 20000, height: 20000)) {
+          collectFocusItems(item)
+        }
+      }
+      if let view = environment as? UIView { view.subviews.forEach(collectFocusItems) }
+    }
+    collectFocusItems(window)
+    XCTAssertEqual(candidates.count, 66, "Connection, Settings and all 64 squares must be focusable")
+    XCTAssertNotNil(candidates[ObjectIdentifier(square)])
+    snapshot.revision! += 1
+    session.receive(snapshot)
+    try await Task.sleep(for: .milliseconds(100))
+    XCTAssertTrue(system.focusedItem === square, "Snapshots must preserve the focused square")
+    let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+      window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+    }
+    let attachment = XCTAttachment(image: image)
+    attachment.name = "Board focus - \(color.rawValue)"
+    attachment.lifetime = .keepAlways
+    add(attachment)
+  }
   func testBoardRenderingForVisualInspection() throws {
     guard ProcessInfo.processInfo.environment["CHESS_TV_RENDER"] == "1" else {
       throw XCTSkip(
@@ -265,5 +323,97 @@ final class MemoryCredentials: CredentialStoring {
     auth.pairingId = "pair"
     oldCallback?(auth)
     XCTAssertFalse(session.authenticated)
+  }
+  func testTransientDisconnectsAutomaticallyReconnectWithFreshState() throws {
+    for (code, reason) in [(1006, "Offline"), (1001, "Server shutdown"),
+      (1008, "Heartbeat timeout"), (1008, "Authentication timeout")]
+    {
+      try ready()
+      let before = socket.connects
+      session.closed(code: code, reason: reason)
+      XCTAssertFalse(session.needsReconnect)
+      XCTAssertFalse(session.canMove)
+      XCTAssertTrue(session.statusText.contains("Reconnecting"))
+      time += 2
+      session.tick()
+      XCTAssertEqual(socket.connects, before + 1)
+      var auth = Message(type: "authenticated")
+      auth.role = "tv"
+      auth.pairingId = "pair"
+      socket.onMessage?(auth)
+      XCTAssertFalse(session.canMove)
+      try ready()
+      XCTAssertTrue(session.canMove)
+    }
+  }
+  func testAuthenticationTimeoutAndRepeatedFailuresKeepRetrying() {
+    session.reconnect()
+    for _ in 0..<8 {
+      let before = socket.connects
+      time += 8
+      session.tick()
+      XCTAssertFalse(session.needsReconnect)
+      XCTAssertEqual(socket.connects, before)
+      time += 30
+      session.tick()
+      XCTAssertEqual(socket.connects, before + 1)
+    }
+  }
+  func testPauseCancelsRetryAndResumeConnectsImmediately() {
+    session.closed(code: 1006, reason: "Offline")
+    let before = socket.connects
+    session.setActive(false)
+    time += 60
+    session.tick()
+    XCTAssertEqual(socket.connects, before)
+    session.setActive(true)
+    XCTAssertEqual(socket.connects, before + 1)
+  }
+  func testTerminalDisconnectsDoNotAutomaticallyTakeOverOrRePair() {
+    for code in [4001, 4003, 1002, 1007, 1009, 1008] {
+      session.reconnect()
+      session.closed(code: code, reason: "Invalid credential")
+      let before = socket.connects
+      time += 60
+      session.tick()
+      XCTAssertTrue(session.needsReconnect)
+      XCTAssertEqual(socket.connects, before)
+    }
+  }
+  func testExtensionReconnectResynchronizesWithoutReconnectingTV() throws {
+    try ready()
+    let before = socket.connects
+    var offline = Message(type: "session")
+    offline.generation = "offline"
+    offline.peerConnected = false
+    session.receive(offline)
+    XCTAssertFalse(session.canMove)
+    XCTAssertTrue(session.statusText.contains("extension to reconnect"))
+    state(generation: "recovered")
+    var snapshot = try ProtocolTests.fixture()
+    snapshot.generation = "recovered"
+    session.receive(snapshot)
+    available(generation: "recovered")
+    XCTAssertTrue(session.canMove)
+    XCTAssertEqual(socket.connects, before)
+  }
+  func testAutomaticReconnectNeverReplaysAnInterruptedMove() async throws {
+    try ready()
+    session.submit(from: 60, to: 52)
+    await Task.yield()
+    let moves = socket.sent.filter { $0.type == "move" }.count
+    let command = session.pending?.commandId
+    session.closed(code: 1006, reason: "Offline")
+    time += 2
+    session.tick()
+    var auth = Message(type: "authenticated")
+    auth.role = "tv"
+    auth.pairingId = "pair"
+    socket.onMessage?(auth)
+    try ready()
+    await Task.yield()
+    XCTAssertEqual(session.pending?.commandId, command)
+    XCTAssertFalse(session.canMove)
+    XCTAssertEqual(socket.sent.filter { $0.type == "move" }.count, moves)
   }
 }

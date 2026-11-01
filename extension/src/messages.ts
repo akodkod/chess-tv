@@ -1,12 +1,6 @@
 import { messageSchema, type Message } from "@chess-tv/protocol"
 import { z } from "zod"
-export type Snapshot = Extract<Message, { type: "snapshot" }>
 export type Move = Extract<Message, { type: "move" }>
-export type Outcome = Extract<Message, { type: "outcome" }>
-export const snapshotSchema = z.custom<Snapshot>((v) => {
-  const p = messageSchema.safeParse(v)
-  return p.success && p.data.type === "snapshot"
-})
 export const moveSchema = z.custom<Move>((v) => {
   const p = messageSchema.safeParse(v)
   return p.success && p.data.type === "move"
@@ -42,22 +36,5 @@ export type PopupState = {
   available: boolean
   status: string
   error: string | null
-  simulator: boolean
   relay: string
 }
-// Simulator-only observation contract. The page publishes evidence, not commands from the extension.
-export const observationSchema = z.strictObject({
-  snapshot: snapshotSchema,
-  updatedAt: z.number(),
-  sequence: z.number().int().nonnegative(),
-  acceptance: z
-    .strictObject({
-      sequence: z.number().int().nonnegative(),
-      from: z.string().regex(/^[a-h][1-8]$/),
-      to: z.string().regex(/^[a-h][1-8]$/),
-      promotion: z.enum(["q", "r", "b", "n"]).nullable(),
-      accepted: z.boolean(),
-    })
-    .nullable(),
-})
-export type Observation = z.infer<typeof observationSchema>

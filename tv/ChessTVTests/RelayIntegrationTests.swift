@@ -26,7 +26,7 @@ import XCTest
     let ext = try await api.status(
       .init(
         challengeId: claim.challengeId, code: "", token: claim.token, expiresAt: claim.expiresAt))
-    let extensionSocket = URLSession.shared.webSocketTask(with: config.socketURL)
+    var extensionSocket = URLSession.shared.webSocketTask(with: config.socketURL)
     extensionSocket.resume()
     defer { extensionSocket.cancel(with: .goingAway, reason: nil) }
     func send(_ message: Message) async throws {
@@ -96,6 +96,42 @@ import XCTest
     }
     XCTAssertNil(session.pending)
     XCTAssertEqual(session.snapshot?.board?[52], "K")
+    for interruption in ["tv", "extension", "both"] {
+      let previous = session.generation
+      if interruption != "extension" {
+        // Model a transport failure reported by RelaySocket; the session must retry itself.
+        session.closed(code: 1006, reason: "Test connection interruption")
+      }
+      if interruption != "tv" {
+        extensionSocket.cancel(with: .goingAway, reason: nil)
+        for _ in 0..<100 {
+          if !session.peerConnected { break }
+          try await Task.sleep(for: .milliseconds(20))
+        }
+        extensionSocket = URLSession.shared.webSocketTask(with: config.socketURL)
+        extensionSocket.resume()
+        try await send(auth)
+        _ = try await next("authenticated")
+      }
+      var recovered = try await next("session")
+      while recovered.peerConnected != true { recovered = try await next("session") }
+      if recovered.gameId == nil {
+        attachment.generation = recovered.generation
+        try await send(attachment)
+        recovered = try await next("session")
+      }
+      snapshot.generation = recovered.generation
+      status.generation = recovered.generation
+      try await send(snapshot)
+      try await send(status)
+      for _ in 0..<100 {
+        if session.canMove && session.generation != previous { break }
+        try await Task.sleep(for: .milliseconds(50))
+      }
+      XCTAssertTrue(session.canMove, "Failed to recover after \(interruption) disconnected")
+      XCTAssertNotEqual(session.generation, previous)
+      XCTAssertEqual(session.snapshot?.board?[52], "K")
+    }
     session.unpair()
     for _ in 0..<100 {
       if !session.busy { break }

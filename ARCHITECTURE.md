@@ -1,6 +1,6 @@
 # Chess TV MVP architecture
 
-Status: implementation guide for a personal prototype. The implemented simulator extension now automatically attaches the foreground game after pairing; Disconnect pauses this behavior, and ambiguous move recovery still requires explicit reconnection. Real-site attachment described below remains deferred. Application implementation and deployment are separate work; Chess.com integration approval is not assumed.
+Status: Chess.com bot games are the only extension target. Real board/turn observation and a manual move handler exist; live move verification and the bridge to the native Apple TV app remain unfinished. The relay, protocol, and native app are retained. See extension/README.md for the current integration milestones.
 
 ## 1. Goal and scope
 
@@ -144,15 +144,15 @@ Sources: [Designing for tvOS](https://developer.apple.com/design/human-interface
 
 Observation and page interaction remain unverified assumptions. Chrome's [content-script model](https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts) permits DOM access, but does not establish that Chess.com exposes stable game identity, board, turn, clocks, result, or reliable move acceptance. Verify rapid and bot pages, including all promotion choices.
 
-Start with local fixtures and a simulated page. Preserve the requirement to obtain appropriate authorization before real Chess.com integration testing under its [User Agreement](https://www.chess.com/legal/user-agreement); none is assumed granted. Its [public API guidance](https://support.chess.com/en/articles/9650547-what-is-the-pubapi-and-how-do-i-use-it) describes a read-only API and developer application route. Confirm that the proposed interaction can be supported through that route.
+Use captured Chess.com DOM fixtures and user-selected moves in real bot games. Preserve the requirement to obtain appropriate authorization before real Chess.com integration testing under its [User Agreement](https://www.chess.com/legal/user-agreement); none is assumed granted. Its [public API guidance](https://support.chess.com/en/articles/9650547-what-is-the-pubapi-and-how-do-i-use-it) describes a read-only API and developer application route. Confirm that the proposed interaction can be supported through that route.
 
 Do not use private endpoints, export login data, bypass safeguards, or silently expand permissions. If reliable observation and human-selected move execution cannot be demonstrated, stop the integration and document the failed assumption.
 
 ## 7. Validation and delivery
 
-Implement in this order: adapter feasibility using fixtures/simulator, one complete vertical slice from pairing to a confirmed move, recovery, then visual polish. Authorized real-site checks follow the feasibility and authorization requirements above.
+Implement in this order: real Chess.com move verification, one complete vertical slice from pairing to a confirmed move, recovery, then visual polish. Authorized real-site checks follow the feasibility and authorization requirements above.
 
-Run TypeScript suites with `vp test`. Relay integration tests launch the actual Bun process with a temporary SQLite database and simulated WebSocket clients; do not mock Bun SQL or import Bun-only modules into Node-based Vitest. Clean up processes and databases after each run. Share protocol fixtures with Swift tests and use a simulated page for end-to-end coverage.
+Run TypeScript suites with `vp test`. Relay integration tests launch the actual Bun process with a temporary SQLite database and simulated WebSocket clients; do not mock Bun SQL or import Bun-only modules into Node-based Vitest. Clean up processes and databases after each run. Share protocol fixtures with Swift tests and verify the complete extension-to-TV flow against a real Chess.com bot game.
 
 | Area                  | Acceptance scenarios                                                                                                                                                                                                 |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

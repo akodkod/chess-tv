@@ -11,6 +11,7 @@ export class RelayLink {
   private retry?: ReturnType<typeof setTimeout>
   private heartbeat?: ReturnType<typeof setInterval>
   private deadline?: ReturnType<typeof setTimeout>
+  private authenticateBy = 0
   constructor(
     private url: string,
     private credential: string,
@@ -22,22 +23,46 @@ export class RelayLink {
     this.connect()
   }
   wake() {
-    if (!this.stopped && !this.socket && Date.now() >= this.nextAttempt) this.connect()
+    if (this.stopped) return
+    if (this.socket) {
+      if (
+        this.authenticated ? Date.now() - this.lastPong >= 60000 : Date.now() >= this.authenticateBy
+      )
+        this.closed(this.socket, 0, "Connection timed out")
+    } else if (Date.now() >= this.nextAttempt) this.connect()
   }
   send(message: Message) {
     if (!this.authenticated || this.socket?.readyState !== WebSocket.OPEN) return false
-    this.socket.send(JSON.stringify(message))
-    return true
+    try {
+      this.socket.send(JSON.stringify(message))
+      return true
+    } catch {
+      this.closed(this.socket, 0, "Send failed")
+      return false
+    }
   }
   private connect() {
     if (this.stopped || this.socket) return
     clearTimeout(this.retry)
     this.status("Connecting to relay…", false)
-    const ws = new WebSocket(this.url)
+    let ws: WebSocket
+    try {
+      ws = new WebSocket(this.url)
+    } catch {
+      this.scheduleRetry()
+      return
+    }
     this.socket = ws
-    this.deadline = setTimeout(() => ws.close(), 5000)
-    ws.onopen = () =>
-      ws.send(JSON.stringify({ v: 1, type: "authenticate", credential: this.credential }))
+    this.authenticateBy = Date.now() + 5000
+    this.deadline = setTimeout(() => this.closed(ws, 0, "Authentication timeout"), 5000)
+    ws.onopen = () => {
+      if (ws !== this.socket) return
+      try {
+        ws.send(JSON.stringify({ v: 1, type: "authenticate", credential: this.credential }))
+      } catch {
+        this.closed(ws, 0, "Authentication failed")
+      }
+    }
     ws.onmessage = (e) => {
       if (ws !== this.socket) return
       let value: unknown
@@ -67,7 +92,7 @@ export class RelayLink {
         this.status("Connected to relay", false)
         this.heartbeat = setInterval(() => {
           if (Date.now() - this.lastPong >= 60000) {
-            ws.close()
+            this.closed(ws, 0, "Heartbeat timeout")
             return
           }
           this.nonce ??= crypto.randomUUID()
@@ -85,29 +110,39 @@ export class RelayLink {
       }
       this.receive(m)
     }
-    ws.onerror = () => ws.close()
-    ws.onclose = (e) => {
-      if (ws !== this.socket) return
-      this.clear()
-      if (this.stopped) return
-      if ([4001, 4003, 1008].includes(e.code)) {
-        this.stopped = true
-        this.status(
-          e.code === 4003
-            ? "Pairing revoked. Unpair locally, then pair again."
-            : e.code === 4001
-              ? "Connection replaced. Choose Reconnect relay to take over."
-              : "Relay rejected the connection. Pair again.",
-          true,
-        )
-        return
-      }
-      this.status("Relay disconnected. Reconnecting…", false)
-      const delay =
-        Math.min(30000, 1000 * 2 ** Math.min(this.attempt++, 5)) * (0.75 + Math.random() * 0.5)
-      this.nextAttempt = Date.now() + delay
-      this.retry = setTimeout(() => this.connect(), delay)
+    ws.onerror = () => this.closed(ws, 0, "Transport error")
+    ws.onclose = (e) => this.closed(ws, e.code, e.reason)
+  }
+  private closed(ws: WebSocket, code: number, reason: string) {
+    if (ws !== this.socket) return
+    this.clear()
+    // Do not wait for the closing handshake on a dead transport before retrying.
+    ws.close()
+    if (this.stopped) return
+    if (
+      [4001, 4003, 1002, 1007, 1009].includes(code) ||
+      (code === 1008 && !["Heartbeat timeout", "Authentication timeout"].includes(reason))
+    ) {
+      this.stopped = true
+      this.status(
+        code === 4003
+          ? "Pairing revoked. Unpair locally, then pair again."
+          : code === 4001
+            ? "Connection replaced. Choose Reconnect relay to take over."
+            : "Relay rejected the connection. Pair again.",
+        true,
+      )
+      return
     }
+    this.scheduleRetry()
+  }
+  private scheduleRetry() {
+    this.status("Relay disconnected. Reconnecting…", false)
+    const delay = Math.min(30000, 1000 * 2 ** this.attempt * (0.75 + Math.random() * 0.5))
+    this.attempt = Math.min(this.attempt + 1, 5)
+    this.nextAttempt = Date.now() + delay
+    clearTimeout(this.retry)
+    this.retry = setTimeout(() => this.connect(), delay)
   }
   private clear() {
     clearTimeout(this.deadline)

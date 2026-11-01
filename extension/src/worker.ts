@@ -56,9 +56,9 @@ async function saveBinding() {
   else await chrome.storage.session.remove("binding")
 }
 function supported(url?: string) {
-  if (!url || !__SETTINGS__.simulator) return false
+  if (!url) return false
   const parsed = new URL(url)
-  return parsed.origin === __SETTINGS__.simulatorOrigin && parsed.pathname === "/"
+  return parsed.origin === "https://www.chess.com" && parsed.pathname.startsWith("/play/computer/")
 }
 function state(): PopupState {
   return {
@@ -71,7 +71,6 @@ function state(): PopupState {
     available,
     status,
     error,
-    simulator: __SETTINGS__.simulator,
     relay: __SETTINGS__.relay,
   }
 }
@@ -82,15 +81,20 @@ async function content(action: unknown): Promise<ContentReply> {
 async function active() {
   if (!binding) return false
   const tab = await chrome.tabs.get(binding.tabId)
-  return supported(tab.url) && tab.active && (await chrome.windows.get(tab.windowId)).focused
+  if (!supported(tab.url) || !tab.active) return false
+  const window = await chrome.windows.get(tab.windowId)
+  return window.state !== "minimized" && window.focused
 }
 function connect() {
   if (!pairing.saved.device || pairing.saved.revocationPending || link) return
-  link = new RelayLink(
+  const current = new RelayLink(
     __SETTINGS__.socket,
     pairing.saved.device.credential,
     (m) => {
-      void enqueue(() => receive(m))
+      const socket = current.socket
+      void enqueue(async () => {
+        if (link === current && current.socket === socket && current.authenticated) await receive(m)
+      })
     },
     (text, fatal) => {
       status = text
@@ -104,6 +108,7 @@ function connect() {
       if (fatal) error = text
     },
   )
+  link = current
   link.start()
 }
 function sendAttachment(gameId: string | null) {
@@ -158,14 +163,16 @@ async function processReply(reply: ContentReply) {
       available = message.available && peerConnected && !binding.locked
       status = binding.locked
         ? "An interrupted move needs inspection. Reconnect the game."
-        : (message.reason ?? "Ready for your move.")
-      link?.send({ ...message, available, reason: available ? null : status })
-    } else link?.send(message)
+        : !peerConnected
+          ? "Waiting for the TV to reconnect…"
+          : (message.reason ?? "Ready for your move.")
+      if (peerConnected) link?.send({ ...message, available, reason: available ? null : status })
+    } else if (peerConnected) link?.send(message)
   }
 }
 function reportUnavailable(reason: string) {
   available = false
-  if (generation && attached)
+  if (generation && attached && peerConnected)
     link?.send({ v: 1, type: "status", gameId: attached, generation, available: false, reason })
 }
 async function synchronize() {
@@ -194,7 +201,7 @@ async function synchronize() {
       }),
     )
   } catch {
-    reportUnavailable("Game unavailable. Keep the attached simulator open and visible.")
+    reportUnavailable("Game unavailable. Keep the attached Chess.com game open and visible.")
   }
 }
 async function receive(message: Message) {
@@ -204,6 +211,8 @@ async function receive(message: Message) {
     attached = message.gameId
     peerConnected = message.peerConnected
     phase = "idle"
+    error = null
+    if (!peerConnected) status = "Waiting for the TV to reconnect…"
     await synchronize()
   } else if (message.type === "snapshot-request") {
     if (message.generation === generation && message.gameId === attached) await synchronize()
@@ -230,9 +239,9 @@ async function receive(message: Message) {
     }
     await saveBinding()
     try {
-      const foreground = await active()
+      const pageUsable = await active()
       if (
-        !foreground ||
+        !pageUsable ||
         !link?.authenticated ||
         generation !== message.generation ||
         !peerConnected ||
@@ -292,7 +301,7 @@ async function attach(automatic = false) {
   if (phase !== "idle") throw new Error("Wait for the connection to synchronize.")
   const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
   if (!tab?.id || !supported(tab.url))
-    throw new Error("Simulator only. Open http://127.0.0.1:4173/ in the active tab.")
+    throw new Error("Open a Chess.com bot game in the active tab.")
   if (automatic && !(await chrome.windows.get(tab.windowId)).focused) return
   await detach()
   await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content.js"] })
@@ -327,7 +336,8 @@ async function autoAttach() {
   try {
     await attach(true)
   } catch {
-    status = "Waiting for a readable simulator game in the active Chrome tab."
+    status =
+      "Chess.com TV connection is not implemented yet. Use the popup to inspect the bot game."
   }
 }
 async function tick() {
@@ -335,7 +345,7 @@ async function tick() {
     try {
       await pairing.poll()
       error = null
-      status = pairing.saved.claim ? "Confirm this pairing on your TV." : "Pairing complete."
+      status = pairing.saved.claim ? "Completing pairing with your TV…" : "Pairing complete."
     } catch (e) {
       error = e instanceof Error ? e.message : "Cannot check pairing."
     }
@@ -360,7 +370,7 @@ chrome.runtime.onMessage.addListener((raw: unknown, sender, reply) => {
         error = null
         await pairing.claim(action.code)
         await setAutoConnect(true)
-        status = "Confirm this pairing on your TV."
+        status = "Completing pairing with your TV…"
       }
       if (action.kind === "attach") {
         error = null

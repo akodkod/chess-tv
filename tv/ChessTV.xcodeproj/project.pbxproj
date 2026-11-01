@@ -1,63 +1,392 @@
 // !$*UTF8*$!
-{ archiveVersion = 1; classes = {}; objectVersion = 77; objects = {
-A1A134DABD6C019CB67DB79E = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTV/App/ChessTVApp.swift"; sourceTree = SOURCE_ROOT; };
-88F759D1EFA2262AFC13BDA9 = { isa = PBXBuildFile; fileRef = A1A134DABD6C019CB67DB79E; };
-5A0195AA0022FE3D58E30BFB = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTV/Models/Board.swift"; sourceTree = SOURCE_ROOT; };
-FA4E10C2D736FB8351DB86A9 = { isa = PBXBuildFile; fileRef = 5A0195AA0022FE3D58E30BFB; };
-A5CE8953C1481E6DF51BC1D7 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTV/Models/Protocol.swift"; sourceTree = SOURCE_ROOT; };
-4A0492C74022811657552920 = { isa = PBXBuildFile; fileRef = A5CE8953C1481E6DF51BC1D7; };
-6BDB71167672AE053F9C2666 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTV/Models/TVSession.swift"; sourceTree = SOURCE_ROOT; };
-0D48C1DA31A26E1DFA6AFF41 = { isa = PBXBuildFile; fileRef = 6BDB71167672AE053F9C2666; };
-583FF0087FD7BC26A2A6DC87 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTV/Services/CredentialStore.swift"; sourceTree = SOURCE_ROOT; };
-F05377166A12C08533D1DDE3 = { isa = PBXBuildFile; fileRef = 583FF0087FD7BC26A2A6DC87; };
-02B09F2E76947AD72987E4E5 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTV/Services/PairingAPI.swift"; sourceTree = SOURCE_ROOT; };
-25D0384CD27C1748D52362F5 = { isa = PBXBuildFile; fileRef = 02B09F2E76947AD72987E4E5; };
-21161828EF33C43137EAFB30 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTV/Services/RelayConfiguration.swift"; sourceTree = SOURCE_ROOT; };
-07696118828E74B216426CEA = { isa = PBXBuildFile; fileRef = 21161828EF33C43137EAFB30; };
-1DC0697B72D9E9D755A2E97B = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTV/Services/RelaySocket.swift"; sourceTree = SOURCE_ROOT; };
-C254DF2101669DC8BEB22502 = { isa = PBXBuildFile; fileRef = 1DC0697B72D9E9D755A2E97B; };
-47389ACDBD422A77754562AD = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTV/Views/BoardView.swift"; sourceTree = SOURCE_ROOT; };
-7A75312DC45913DFB3A68AB3 = { isa = PBXBuildFile; fileRef = 47389ACDBD422A77754562AD; };
-7866FD52E305BBA98091AA97 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTV/Views/ContentView.swift"; sourceTree = SOURCE_ROOT; };
-80A34EA12AC9686070ABA1F4 = { isa = PBXBuildFile; fileRef = 7866FD52E305BBA98091AA97; };
-85CF0835D55933607339EADA = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTV/Views/PairingView.swift"; sourceTree = SOURCE_ROOT; };
-6F9ABBC1C31604479CE000DA = { isa = PBXBuildFile; fileRef = 85CF0835D55933607339EADA; };
-ABCB5409AB6718B9971B6C9D = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTVTests/ProtocolTests.swift"; sourceTree = SOURCE_ROOT; };
-B918FD91742A3464903548DF = { isa = PBXBuildFile; fileRef = ABCB5409AB6718B9971B6C9D; };
-3ABBB97C22B30BED26CB56F3 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTVTests/SessionTests.swift"; sourceTree = SOURCE_ROOT; };
-4495F16DDE9DB1232358C2FC = { isa = PBXBuildFile; fileRef = 3ABBB97C22B30BED26CB56F3; };
-346613A405792573AEC521C3 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTVTests/PairingTests.swift"; sourceTree = SOURCE_ROOT; };
-715076C07F5A8167019EA100 = { isa = PBXBuildFile; fileRef = 346613A405792573AEC521C3; };
-196533E4ABD586D5AAA52556 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTVTests/RelayIntegrationTests.swift"; sourceTree = SOURCE_ROOT; };
-4518B87A6FD9703511844049 = { isa = PBXBuildFile; fileRef = 196533E4ABD586D5AAA52556; };
-3685E330EC5277A9DD5661C6 = { isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = ChessTV/Assets.xcassets; sourceTree = SOURCE_ROOT; };
-2E03FC9C8D896B37E45626A1 = { isa = PBXBuildFile; fileRef = 3685E330EC5277A9DD5661C6; };
-51CFF3C1F0BC59F6187E7040 = { isa = PBXFileReference; lastKnownFileType = text.json; path = ../protocol/fixtures/snapshot.json; sourceTree = SOURCE_ROOT; };
-37D1F4CEE011BE1825F69FC6 = { isa = PBXBuildFile; fileRef = 51CFF3C1F0BC59F6187E7040; };
-E24A67ECC63770D2C537D6FB = { isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Debug.xcconfig; sourceTree = SOURCE_ROOT; };
-6BE5C18470DBF25D01F73B86 = { isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Release.xcconfig; sourceTree = SOURCE_ROOT; };
-8BCD5BC4CDFDF0918087C782 = { isa = PBXFileReference; explicitFileType = wrapper.application; path = ChessTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
-F219C0274590DA45E4BEF1EA = { isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = ChessTVTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-FBDC4F23F93125BBEEAE800C = { isa = PBXGroup; name = Products; children = (8BCD5BC4CDFDF0918087C782,F219C0274590DA45E4BEF1EA,); sourceTree = "<group>"; };
-B28B7AF69320201D1CF206EB = { isa = PBXGroup; children = (A1A134DABD6C019CB67DB79E,5A0195AA0022FE3D58E30BFB,A5CE8953C1481E6DF51BC1D7,6BDB71167672AE053F9C2666,583FF0087FD7BC26A2A6DC87,02B09F2E76947AD72987E4E5,21161828EF33C43137EAFB30,1DC0697B72D9E9D755A2E97B,47389ACDBD422A77754562AD,7866FD52E305BBA98091AA97,85CF0835D55933607339EADA,ABCB5409AB6718B9971B6C9D,3ABBB97C22B30BED26CB56F3,346613A405792573AEC521C3,196533E4ABD586D5AAA52556,3685E330EC5277A9DD5661C6,51CFF3C1F0BC59F6187E7040,E24A67ECC63770D2C537D6FB,6BE5C18470DBF25D01F73B86,FBDC4F23F93125BBEEAE800C,); sourceTree = "<group>"; };
-971ED9D05B25DB6C4D7680D4 = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (88F759D1EFA2262AFC13BDA9,FA4E10C2D736FB8351DB86A9,4A0492C74022811657552920,0D48C1DA31A26E1DFA6AFF41,F05377166A12C08533D1DDE3,25D0384CD27C1748D52362F5,07696118828E74B216426CEA,C254DF2101669DC8BEB22502,7A75312DC45913DFB3A68AB3,80A34EA12AC9686070ABA1F4,6F9ABBC1C31604479CE000DA,); runOnlyForDeploymentPostprocessing = 0; };
-364863F9F2E558B0F50473FC = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (2E03FC9C8D896B37E45626A1,); runOnlyForDeploymentPostprocessing = 0; };
-78AE8C6BEB2A40A6D824CCEE = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
-6E431EB0650617AA1756B320 = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B918FD91742A3464903548DF,4495F16DDE9DB1232358C2FC,715076C07F5A8167019EA100,4518B87A6FD9703511844049,); runOnlyForDeploymentPostprocessing = 0; };
-7DED7670B79BEA8B7480B1FC = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (37D1F4CEE011BE1825F69FC6,); runOnlyForDeploymentPostprocessing = 0; };
-1ABF84E55BD30AC2CEF8FC42 = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
-E9B2E96ABC5F6856F2BE79CF = { isa = XCBuildConfiguration; baseConfigurationReference = E24A67ECC63770D2C537D6FB; buildSettings = {SDKROOT = appletvos;TVOS_DEPLOYMENT_TARGET = 27.0;SWIFT_VERSION = 6.0;TARGETED_DEVICE_FAMILY = 3;SUPPORTED_PLATFORMS = "appletvos appletvsimulator";CLANG_ENABLE_MODULES = YES;SWIFT_STRICT_CONCURRENCY = complete;SWIFT_OPTIMIZATION_LEVEL = "-Onone";DEBUG_INFORMATION_FORMAT = dwarf;ENABLE_TESTABILITY = YES;PRODUCT_NAME = ChessTV;PRODUCT_BUNDLE_IDENTIFIER = com.chesstv.app;CODE_SIGN_STYLE = Automatic;GENERATE_INFOPLIST_FILE = NO;}; name = Debug; };
-5A8C91857F674E16E2724F47 = { isa = XCBuildConfiguration; baseConfigurationReference = 6BE5C18470DBF25D01F73B86; buildSettings = {SDKROOT = appletvos;TVOS_DEPLOYMENT_TARGET = 27.0;SWIFT_VERSION = 6.0;TARGETED_DEVICE_FAMILY = 3;SUPPORTED_PLATFORMS = "appletvos appletvsimulator";CLANG_ENABLE_MODULES = YES;SWIFT_STRICT_CONCURRENCY = complete;SWIFT_OPTIMIZATION_LEVEL = "-O";DEBUG_INFORMATION_FORMAT = dwarf;ENABLE_TESTABILITY = NO;PRODUCT_NAME = ChessTV;PRODUCT_BUNDLE_IDENTIFIER = com.chesstv.app;CODE_SIGN_STYLE = Automatic;GENERATE_INFOPLIST_FILE = NO;}; name = Release; };
-F37922C48DA5978D02C9E50E = { isa = XCConfigurationList; buildConfigurations = (E9B2E96ABC5F6856F2BE79CF,5A8C91857F674E16E2724F47,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-FCB48D8F88BCDB0ED9FADFD7 = { isa = XCBuildConfiguration;  buildSettings = {SDKROOT = appletvos;TVOS_DEPLOYMENT_TARGET = 27.0;SWIFT_VERSION = 6.0;TARGETED_DEVICE_FAMILY = 3;SUPPORTED_PLATFORMS = "appletvos appletvsimulator";CLANG_ENABLE_MODULES = YES;SWIFT_STRICT_CONCURRENCY = complete;SWIFT_OPTIMIZATION_LEVEL = "-Onone";DEBUG_INFORMATION_FORMAT = dwarf;ENABLE_TESTABILITY = YES;PRODUCT_NAME = ChessTVTests;PRODUCT_BUNDLE_IDENTIFIER = com.chesstv.tests;GENERATE_INFOPLIST_FILE = YES;TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ChessTV.app/ChessTV";BUNDLE_LOADER = "$(TEST_HOST)";CODE_SIGN_STYLE = Automatic;}; name = Debug; };
-942EEBBACD6C88CAE7F29B29 = { isa = XCBuildConfiguration;  buildSettings = {SDKROOT = appletvos;TVOS_DEPLOYMENT_TARGET = 27.0;SWIFT_VERSION = 6.0;TARGETED_DEVICE_FAMILY = 3;SUPPORTED_PLATFORMS = "appletvos appletvsimulator";CLANG_ENABLE_MODULES = YES;SWIFT_STRICT_CONCURRENCY = complete;SWIFT_OPTIMIZATION_LEVEL = "-O";DEBUG_INFORMATION_FORMAT = dwarf;ENABLE_TESTABILITY = NO;PRODUCT_NAME = ChessTVTests;PRODUCT_BUNDLE_IDENTIFIER = com.chesstv.tests;GENERATE_INFOPLIST_FILE = YES;TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ChessTV.app/ChessTV";BUNDLE_LOADER = "$(TEST_HOST)";CODE_SIGN_STYLE = Automatic;}; name = Release; };
-BECB265224D91761C05FDA33 = { isa = XCConfigurationList; buildConfigurations = (FCB48D8F88BCDB0ED9FADFD7,942EEBBACD6C88CAE7F29B29,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-89E1FD6268CC0F221A2BE178 = { isa = XCBuildConfiguration;  buildSettings = {SDKROOT = appletvos;TVOS_DEPLOYMENT_TARGET = 27.0;SWIFT_VERSION = 6.0;TARGETED_DEVICE_FAMILY = 3;SUPPORTED_PLATFORMS = "appletvos appletvsimulator";CLANG_ENABLE_MODULES = YES;SWIFT_STRICT_CONCURRENCY = complete;SWIFT_OPTIMIZATION_LEVEL = "-Onone";DEBUG_INFORMATION_FORMAT = dwarf;ENABLE_TESTABILITY = YES;}; name = Debug; };
-E6DE6C99132752C914FEF632 = { isa = XCBuildConfiguration;  buildSettings = {SDKROOT = appletvos;TVOS_DEPLOYMENT_TARGET = 27.0;SWIFT_VERSION = 6.0;TARGETED_DEVICE_FAMILY = 3;SUPPORTED_PLATFORMS = "appletvos appletvsimulator";CLANG_ENABLE_MODULES = YES;SWIFT_STRICT_CONCURRENCY = complete;SWIFT_OPTIMIZATION_LEVEL = "-O";DEBUG_INFORMATION_FORMAT = dwarf;ENABLE_TESTABILITY = NO;}; name = Release; };
-862894B703A6DEDF96A9DD6C = { isa = XCConfigurationList; buildConfigurations = (89E1FD6268CC0F221A2BE178,E6DE6C99132752C914FEF632,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-7D1043473D55BFA90E8530D3 = { isa = PBXNativeTarget; buildConfigurationList = F37922C48DA5978D02C9E50E; buildPhases = (971ED9D05B25DB6C4D7680D4,364863F9F2E558B0F50473FC,78AE8C6BEB2A40A6D824CCEE,); buildRules = (); dependencies = (); name = ChessTV; productName = ChessTV; productReference = 8BCD5BC4CDFDF0918087C782; productType = "com.apple.product-type.application"; };
-D799BAE6088A90139B415FCC = { isa = PBXContainerItemProxy; containerPortal = 98F54143AB4E86B28C3AFEE0; proxyType = 1; remoteGlobalIDString = 7D1043473D55BFA90E8530D3; remoteInfo = ChessTV; };
-E9FAD0C6CD43534327C0AF90 = { isa = PBXTargetDependency; target = 7D1043473D55BFA90E8530D3; targetProxy = D799BAE6088A90139B415FCC; };
-A94A8FE5CCB19BA61C4C0873 = { isa = PBXNativeTarget; buildConfigurationList = BECB265224D91761C05FDA33; buildPhases = (6E431EB0650617AA1756B320,7DED7670B79BEA8B7480B1FC,1ABF84E55BD30AC2CEF8FC42,); buildRules = (); dependencies = (E9FAD0C6CD43534327C0AF90,); name = ChessTVTests; productName = ChessTVTests; productReference = F219C0274590DA45E4BEF1EA; productType = "com.apple.product-type.bundle.unit-test"; };
-98F54143AB4E86B28C3AFEE0 = { isa = PBXProject; attributes = { LastUpgradeCheck = 2700; }; buildConfigurationList = 862894B703A6DEDF96A9DD6C; compatibilityVersion = "Xcode 16.0"; developmentRegion = en; knownRegions = (en,Base); mainGroup = B28B7AF69320201D1CF206EB; productRefGroup = FBDC4F23F93125BBEEAE800C; projectDirPath = ""; projectRoot = ""; targets = (7D1043473D55BFA90E8530D3,A94A8FE5CCB19BA61C4C0873,); };
-}; rootObject = 98F54143AB4E86B28C3AFEE0; }
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 71;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		07696118828E74B216426CEA /* ChessTV/Services/RelayConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21161828EF33C43137EAFB30 /* ChessTV/Services/RelayConfiguration.swift */; };
+		0D48C1DA31A26E1DFA6AFF41 /* ChessTV/Models/TVSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BDB71167672AE053F9C2666 /* ChessTV/Models/TVSession.swift */; };
+		25D0384CD27C1748D52362F5 /* ChessTV/Services/PairingAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B09F2E76947AD72987E4E5 /* ChessTV/Services/PairingAPI.swift */; };
+		2E03FC9C8D896B37E45626A1 /* ChessTV/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3685E330EC5277A9DD5661C6 /* ChessTV/Assets.xcassets */; };
+		37D1F4CEE011BE1825F69FC6 /* ../protocol/fixtures/snapshot.json in Resources */ = {isa = PBXBuildFile; fileRef = 51CFF3C1F0BC59F6187E7040 /* ../protocol/fixtures/snapshot.json */; };
+		4495F16DDE9DB1232358C2FC /* ChessTVTests/SessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ABBB97C22B30BED26CB56F3 /* ChessTVTests/SessionTests.swift */; };
+		4518B87A6FD9703511844049 /* ChessTVTests/RelayIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196533E4ABD586D5AAA52556 /* ChessTVTests/RelayIntegrationTests.swift */; };
+		4A0492C74022811657552920 /* ChessTV/Models/Protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5CE8953C1481E6DF51BC1D7 /* ChessTV/Models/Protocol.swift */; };
+		6F9ABBC1C31604479CE000DA /* ChessTV/Views/PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85CF0835D55933607339EADA /* ChessTV/Views/PairingView.swift */; };
+		715076C07F5A8167019EA100 /* ChessTVTests/PairingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 346613A405792573AEC521C3 /* ChessTVTests/PairingTests.swift */; };
+		7A75312DC45913DFB3A68AB3 /* ChessTV/Views/BoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47389ACDBD422A77754562AD /* ChessTV/Views/BoardView.swift */; };
+		80A34EA12AC9686070ABA1F4 /* ChessTV/Views/ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7866FD52E305BBA98091AA97 /* ChessTV/Views/ContentView.swift */; };
+		88F759D1EFA2262AFC13BDA9 /* ChessTV/App/ChessTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A134DABD6C019CB67DB79E /* ChessTV/App/ChessTVApp.swift */; };
+		B918FD91742A3464903548DF /* ChessTVTests/ProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABCB5409AB6718B9971B6C9D /* ChessTVTests/ProtocolTests.swift */; };
+		C254DF2101669DC8BEB22502 /* ChessTV/Services/RelaySocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DC0697B72D9E9D755A2E97B /* ChessTV/Services/RelaySocket.swift */; };
+		F05377166A12C08533D1DDE3 /* ChessTV/Services/CredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583FF0087FD7BC26A2A6DC87 /* ChessTV/Services/CredentialStore.swift */; };
+		FA4E10C2D736FB8351DB86A9 /* ChessTV/Models/Board.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0195AA0022FE3D58E30BFB /* ChessTV/Models/Board.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D799BAE6088A90139B415FCC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7D1043473D55BFA90E8530D3;
+			remoteInfo = ChessTV;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		02B09F2E76947AD72987E4E5 /* ChessTV/Services/PairingAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Services/PairingAPI.swift; sourceTree = SOURCE_ROOT; };
+		196533E4ABD586D5AAA52556 /* ChessTVTests/RelayIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTVTests/RelayIntegrationTests.swift; sourceTree = SOURCE_ROOT; };
+		1DC0697B72D9E9D755A2E97B /* ChessTV/Services/RelaySocket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Services/RelaySocket.swift; sourceTree = SOURCE_ROOT; };
+		21161828EF33C43137EAFB30 /* ChessTV/Services/RelayConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Services/RelayConfiguration.swift; sourceTree = SOURCE_ROOT; };
+		346613A405792573AEC521C3 /* ChessTVTests/PairingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTVTests/PairingTests.swift; sourceTree = SOURCE_ROOT; };
+		3685E330EC5277A9DD5661C6 /* ChessTV/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = ChessTV/Assets.xcassets; sourceTree = SOURCE_ROOT; };
+		3ABBB97C22B30BED26CB56F3 /* ChessTVTests/SessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTVTests/SessionTests.swift; sourceTree = SOURCE_ROOT; };
+		47389ACDBD422A77754562AD /* ChessTV/Views/BoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Views/BoardView.swift; sourceTree = SOURCE_ROOT; };
+		51CFF3C1F0BC59F6187E7040 /* ../protocol/fixtures/snapshot.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ../protocol/fixtures/snapshot.json; sourceTree = SOURCE_ROOT; };
+		583FF0087FD7BC26A2A6DC87 /* ChessTV/Services/CredentialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Services/CredentialStore.swift; sourceTree = SOURCE_ROOT; };
+		5A0195AA0022FE3D58E30BFB /* ChessTV/Models/Board.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Models/Board.swift; sourceTree = SOURCE_ROOT; };
+		6BDB71167672AE053F9C2666 /* ChessTV/Models/TVSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Models/TVSession.swift; sourceTree = SOURCE_ROOT; };
+		6BE5C18470DBF25D01F73B86 /* Config/Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Release.xcconfig; sourceTree = SOURCE_ROOT; };
+		7866FD52E305BBA98091AA97 /* ChessTV/Views/ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Views/ContentView.swift; sourceTree = SOURCE_ROOT; };
+		85CF0835D55933607339EADA /* ChessTV/Views/PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Views/PairingView.swift; sourceTree = SOURCE_ROOT; };
+		8BCD5BC4CDFDF0918087C782 /* ChessTV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = ChessTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1A134DABD6C019CB67DB79E /* ChessTV/App/ChessTVApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/App/ChessTVApp.swift; sourceTree = SOURCE_ROOT; };
+		A5CE8953C1481E6DF51BC1D7 /* ChessTV/Models/Protocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Models/Protocol.swift; sourceTree = SOURCE_ROOT; };
+		ABCB5409AB6718B9971B6C9D /* ChessTVTests/ProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTVTests/ProtocolTests.swift; sourceTree = SOURCE_ROOT; };
+		E24A67ECC63770D2C537D6FB /* Config/Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		F219C0274590DA45E4BEF1EA /* ChessTVTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = ChessTVTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1ABF84E55BD30AC2CEF8FC42 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		78AE8C6BEB2A40A6D824CCEE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		B28B7AF69320201D1CF206EB = {
+			isa = PBXGroup;
+			children = (
+				A1A134DABD6C019CB67DB79E /* ChessTV/App/ChessTVApp.swift */,
+				5A0195AA0022FE3D58E30BFB /* ChessTV/Models/Board.swift */,
+				A5CE8953C1481E6DF51BC1D7 /* ChessTV/Models/Protocol.swift */,
+				6BDB71167672AE053F9C2666 /* ChessTV/Models/TVSession.swift */,
+				583FF0087FD7BC26A2A6DC87 /* ChessTV/Services/CredentialStore.swift */,
+				02B09F2E76947AD72987E4E5 /* ChessTV/Services/PairingAPI.swift */,
+				21161828EF33C43137EAFB30 /* ChessTV/Services/RelayConfiguration.swift */,
+				1DC0697B72D9E9D755A2E97B /* ChessTV/Services/RelaySocket.swift */,
+				47389ACDBD422A77754562AD /* ChessTV/Views/BoardView.swift */,
+				7866FD52E305BBA98091AA97 /* ChessTV/Views/ContentView.swift */,
+				85CF0835D55933607339EADA /* ChessTV/Views/PairingView.swift */,
+				ABCB5409AB6718B9971B6C9D /* ChessTVTests/ProtocolTests.swift */,
+				3ABBB97C22B30BED26CB56F3 /* ChessTVTests/SessionTests.swift */,
+				346613A405792573AEC521C3 /* ChessTVTests/PairingTests.swift */,
+				196533E4ABD586D5AAA52556 /* ChessTVTests/RelayIntegrationTests.swift */,
+				3685E330EC5277A9DD5661C6 /* ChessTV/Assets.xcassets */,
+				51CFF3C1F0BC59F6187E7040 /* ../protocol/fixtures/snapshot.json */,
+				E24A67ECC63770D2C537D6FB /* Config/Debug.xcconfig */,
+				6BE5C18470DBF25D01F73B86 /* Config/Release.xcconfig */,
+				FBDC4F23F93125BBEEAE800C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		FBDC4F23F93125BBEEAE800C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8BCD5BC4CDFDF0918087C782 /* ChessTV.app */,
+				F219C0274590DA45E4BEF1EA /* ChessTVTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		7D1043473D55BFA90E8530D3 /* ChessTV */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F37922C48DA5978D02C9E50E /* Build configuration list for PBXNativeTarget "ChessTV" */;
+			buildPhases = (
+				971ED9D05B25DB6C4D7680D4 /* Sources */,
+				364863F9F2E558B0F50473FC /* Resources */,
+				78AE8C6BEB2A40A6D824CCEE /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ChessTV;
+			productName = ChessTV;
+			productReference = 8BCD5BC4CDFDF0918087C782 /* ChessTV.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A94A8FE5CCB19BA61C4C0873 /* ChessTVTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BECB265224D91761C05FDA33 /* Build configuration list for PBXNativeTarget "ChessTVTests" */;
+			buildPhases = (
+				6E431EB0650617AA1756B320 /* Sources */,
+				7DED7670B79BEA8B7480B1FC /* Resources */,
+				1ABF84E55BD30AC2CEF8FC42 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E9FAD0C6CD43534327C0AF90 /* PBXTargetDependency */,
+			);
+			name = ChessTVTests;
+			productName = ChessTVTests;
+			productReference = F219C0274590DA45E4BEF1EA /* ChessTVTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		98F54143AB4E86B28C3AFEE0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 2700;
+			};
+			buildConfigurationList = 862894B703A6DEDF96A9DD6C /* Build configuration list for PBXProject "ChessTV" */;
+			compatibilityVersion = "Xcode 16.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B28B7AF69320201D1CF206EB;
+			productRefGroup = FBDC4F23F93125BBEEAE800C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				7D1043473D55BFA90E8530D3 /* ChessTV */,
+				A94A8FE5CCB19BA61C4C0873 /* ChessTVTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		364863F9F2E558B0F50473FC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2E03FC9C8D896B37E45626A1 /* ChessTV/Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7DED7670B79BEA8B7480B1FC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				37D1F4CEE011BE1825F69FC6 /* ../protocol/fixtures/snapshot.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6E431EB0650617AA1756B320 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B918FD91742A3464903548DF /* ChessTVTests/ProtocolTests.swift in Sources */,
+				4495F16DDE9DB1232358C2FC /* ChessTVTests/SessionTests.swift in Sources */,
+				715076C07F5A8167019EA100 /* ChessTVTests/PairingTests.swift in Sources */,
+				4518B87A6FD9703511844049 /* ChessTVTests/RelayIntegrationTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		971ED9D05B25DB6C4D7680D4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				88F759D1EFA2262AFC13BDA9 /* ChessTV/App/ChessTVApp.swift in Sources */,
+				FA4E10C2D736FB8351DB86A9 /* ChessTV/Models/Board.swift in Sources */,
+				4A0492C74022811657552920 /* ChessTV/Models/Protocol.swift in Sources */,
+				0D48C1DA31A26E1DFA6AFF41 /* ChessTV/Models/TVSession.swift in Sources */,
+				F05377166A12C08533D1DDE3 /* ChessTV/Services/CredentialStore.swift in Sources */,
+				25D0384CD27C1748D52362F5 /* ChessTV/Services/PairingAPI.swift in Sources */,
+				07696118828E74B216426CEA /* ChessTV/Services/RelayConfiguration.swift in Sources */,
+				C254DF2101669DC8BEB22502 /* ChessTV/Services/RelaySocket.swift in Sources */,
+				7A75312DC45913DFB3A68AB3 /* ChessTV/Views/BoardView.swift in Sources */,
+				80A34EA12AC9686070ABA1F4 /* ChessTV/Views/ContentView.swift in Sources */,
+				6F9ABBC1C31604479CE000DA /* ChessTV/Views/PairingView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E9FAD0C6CD43534327C0AF90 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7D1043473D55BFA90E8530D3 /* ChessTV */;
+			targetProxy = D799BAE6088A90139B415FCC /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		5A8C91857F674E16E2724F47 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 6BE5C18470DBF25D01F73B86 /* Config/Release.xcconfig */;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				PRODUCT_BUNDLE_IDENTIFIER = com.chesstv.app;
+				PRODUCT_NAME = ChessTV;
+				SDKROOT = appletvos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		89E1FD6268CC0F221A2BE178 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				SDKROOT = appletvos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		942EEBBACD6C88CAE7F29B29 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.chesstv.tests;
+				PRODUCT_NAME = ChessTVTests;
+				SDKROOT = appletvos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ChessTV.app/ChessTV";
+				TVOS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		E6DE6C99132752C914FEF632 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = NO;
+				SDKROOT = appletvos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		E9B2E96ABC5F6856F2BE79CF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = E24A67ECC63770D2C537D6FB /* Config/Debug.xcconfig */;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				PRODUCT_BUNDLE_IDENTIFIER = com.chesstv.app;
+				PRODUCT_NAME = ChessTV;
+				SDKROOT = appletvos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		FCB48D8F88BCDB0ED9FADFD7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.chesstv.tests;
+				PRODUCT_NAME = ChessTVTests;
+				SDKROOT = appletvos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ChessTV.app/ChessTV";
+				TVOS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		862894B703A6DEDF96A9DD6C /* Build configuration list for PBXProject "ChessTV" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				89E1FD6268CC0F221A2BE178 /* Debug */,
+				E6DE6C99132752C914FEF632 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BECB265224D91761C05FDA33 /* Build configuration list for PBXNativeTarget "ChessTVTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FCB48D8F88BCDB0ED9FADFD7 /* Debug */,
+				942EEBBACD6C88CAE7F29B29 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F37922C48DA5978D02C9E50E /* Build configuration list for PBXNativeTarget "ChessTV" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E9B2E96ABC5F6856F2BE79CF /* Debug */,
+				5A8C91857F674E16E2724F47 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+}

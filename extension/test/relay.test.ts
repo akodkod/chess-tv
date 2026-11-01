@@ -94,3 +94,62 @@ it("adopts new sessions after TV replacement and stops after extension replaceme
   await expect.poll(() => fatal).toBe(true)
   expect(link.stopped).toBe(true)
 })
+
+it.each(["extension", "tv", "both", "relay"])(
+  "restores pairing and game synchronization after %s disconnects",
+  async (interruption) => {
+    const url = await endpoint()
+    const paired = await pair(h!)
+    let session: Extract<Message, { type: "session" }> | undefined
+    let authentications = 0
+    link = new RelayLink(
+      url.replace("http", "ws") + "/v1/ws",
+      paired.extension,
+      (message) => {
+        if (message.type === "authenticated") authentications++
+        if (message.type === "session") {
+          session = message
+          if (!message.gameId)
+            link!.send({ v: 1, type: "attachment", generation: message.generation, gameId: "game" })
+        }
+      },
+      () => {},
+    )
+    link.start()
+    let tv = await h!.client(paired.tv)
+    await tv.take("authenticated")
+    await expect.poll(() => session?.gameId === "game" && session.peerConnected).toBe(true)
+    const previous = session!.generation
+    if (["tv", "both"].includes(interruption)) {
+      tv.ws.close()
+      await tv.closed
+    }
+    if (["extension", "both"].includes(interruption)) {
+      link.socket!.close()
+      await expect.poll(() => link!.authenticated).toBe(false)
+    }
+    if (interruption === "relay") await h!.restart()
+    if (interruption !== "extension") {
+      tv = await h!.client(paired.tv)
+      await tv.take("authenticated")
+    }
+    await expect
+      .poll(
+        () =>
+          session?.generation !== previous && session?.gameId === "game" && session.peerConnected,
+        { timeout: 10000 },
+      )
+      .toBe(true)
+    expect(link.authenticated).toBe(true)
+    expect(authentications).toBe(interruption === "tv" ? 1 : 2)
+    link.send({
+      v: 1,
+      type: "status",
+      generation: session!.generation,
+      gameId: "game",
+      available: true,
+      reason: null,
+    })
+    expect((await tv.take("status")).available).toBe(true)
+  },
+)

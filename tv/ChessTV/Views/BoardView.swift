@@ -3,6 +3,7 @@ import SwiftUI
 struct BoardView: View {
   let session: TVSession
   let snapshot: Message
+  var showSquareLabels = true
   @State private var source: Int?
   @State private var promotionTarget: Int?
   @State private var promotionSource: Int?
@@ -33,12 +34,20 @@ struct BoardView: View {
           }
           if source != nil {
             Text("Select a destination. Back cancels.").font(.caption).foregroundStyle(.secondary)
-          } else {
+          } else if session.canMove {
             Text("Select a piece, then its destination.").font(.caption).foregroundStyle(.secondary)
           }
           if session.needsReconnect { Button("Reconnect relay") { session.reconnect() } }
         }.frame(width: 340, alignment: .leading)
       }.frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    // Include the side panel so Down from Connection can reach the board,
+    // even though the button isn't horizontally aligned with a square.
+    .focusSection()
+    .task {
+      // A game can arrive while Connection already owns focus. Hand focus to
+      // the board once on appearance, without resetting it on snapshot updates.
+      focused = Square.index(snapshot.playerColor == .black ? "e7" : "e2")
     }
     .sheet(
       isPresented: Binding(
@@ -77,7 +86,6 @@ struct BoardView: View {
           ?? "\(color.rawValue.capitalized) player"
       )
       .lineLimit(1).minimumScaleFactor(0.8)
-      if snapshot.playerColor == color { Text("You").font(.caption).foregroundStyle(.secondary) }
       Spacer()
       Text(ClockReading.format(session.clockReading?.remaining(color, now: session.now)))
         .monospacedDigit().font(.title3).frame(minWidth: 100, alignment: .trailing)
@@ -96,7 +104,7 @@ struct BoardView: View {
           }
         }
       }
-    }.frame(width: side, height: side).focusSection()
+    }.frame(width: side, height: side)
   }
   private func square(_ index: Int, size: CGFloat) -> some View {
     let piece = snapshot.board?[index]
@@ -117,8 +125,11 @@ struct BoardView: View {
             color: Square.color(of: piece) == .white ? .black : .white.opacity(0.75), radius: 1
           )
           .frame(width: size, height: size)
-        Text(Square.name(index)).font(.system(size: max(12, size * 0.17), weight: .semibold))
-          .foregroundStyle(light ? Color.black : Color.white).padding(4)
+        if showSquareLabels {
+          Text(Square.name(index)).font(.system(size: max(12, size * 0.17) - 1, weight: .regular))
+            .foregroundStyle(light ? Color.black : Color.white)
+            .opacity(0.3).padding(4).offset(x: 4)
+        }
         if selected || pending {
           Image(systemName: pending ? "hourglass" : "checkmark.circle.fill")
             .font(.system(size: size * 0.22)).foregroundStyle(.black, .yellow)
@@ -127,10 +138,9 @@ struct BoardView: View {
         Rectangle().strokeBorder(
           isFocused ? Color.white : selected || pending ? Color.yellow : Color.clear,
           lineWidth: isFocused ? (contrast == .increased ? 7 : 5) : 4)
-        if isFocused { Rectangle().strokeBorder(Color.black, lineWidth: 1).padding(6) }
       }.frame(width: size, height: size)
     }
-    .buttonStyle(.plain).focused($focused, equals: index)
+    .buttonStyle(BoardSquareButtonStyle()).focused($focused, equals: index)
     .accessibilityLabel("\(Square.name(index)), \(Square.pieceName(piece))")
     .accessibilityValue(selected ? "Selected" : pending ? "Move pending" : "")
     .accessibilityHint(session.canMove ? "Select piece or destination" : "Move input unavailable")
@@ -155,5 +165,16 @@ struct BoardView: View {
       session.submit(from: from, to: index)
       source = nil
     }
+  }
+}
+
+// Even the plain tvOS button style adds system focus chrome around its label.
+// Squares draw their own inset focus and selection borders, so keep the label's
+// exact bounds and provide press feedback without lifting it above its neighbors.
+private struct BoardSquareButtonStyle: ButtonStyle {
+  func makeBody(configuration: Configuration) -> some View {
+    configuration.label
+      .contentShape(Rectangle())
+      .opacity(configuration.isPressed ? 0.8 : 1)
   }
 }

@@ -25,6 +25,8 @@ let listener: (raw: unknown, sender: unknown, reply: (value: any) => void) => vo
 let local: Record<string, unknown>
 let session: Record<string, unknown>
 let focused: boolean
+let tabActive: boolean
+let windowState: "normal" | "minimized"
 let gameId: string
 let url: string
 const event = () => ({ addListener: vi.fn() })
@@ -63,14 +65,14 @@ beforeEach(() => {
   vi.useFakeTimers()
   relay.send.mockClear()
   focused = true
+  tabActive = true
+  windowState = "normal"
   gameId = "game-one"
-  url = "http://127.0.0.1:4173/"
+  url = "https://www.chess.com/play/computer/Zach-BOT"
   local = {}
   session = {}
   vi.stubGlobal("__SETTINGS__", {
     relay: "http://127.0.0.1:3000",
-    simulator: true,
-    simulatorOrigin: "http://127.0.0.1:4173",
   })
   vi.stubGlobal("chrome", {
     storage: { local: storage(local), session: storage(session) },
@@ -88,13 +90,13 @@ beforeEach(() => {
     },
     tabs: {
       query: async () => [{ id: 1, windowId: 1, url, active: true }],
-      get: async () => ({ id: 1, windowId: 1, url, active: true }),
-      sendMessage: async () => ({ instance: "instance", gameId, messages: [], error: null }),
+      get: async () => ({ id: 1, windowId: 1, url, active: tabActive }),
+      sendMessage: vi.fn(async () => ({ instance: "instance", gameId, messages: [], error: null })),
       onRemoved: event(),
       onUpdated: event(),
       onActivated: event(),
     },
-    windows: { get: async () => ({ focused }), onFocusChanged: event() },
+    windows: { get: async () => ({ focused, state: windowState }), onFocusChanged: event() },
     scripting: { executeScript: vi.fn() },
   })
 })
@@ -104,7 +106,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-it("attaches the foreground simulator without a popup action", async () => {
+it("attaches the foreground supported game without a popup action", async () => {
   await start()
   expect((await action()).gameId).toBe("game-one")
   expect(relay.send).toHaveBeenCalledWith(
@@ -119,10 +121,76 @@ it("waits for Chrome focus and ignores unsupported pages", async () => {
   url = "https://www.chess.com/"
   await vi.advanceTimersByTimeAsync(1000)
   expect((await action()).gameId).toBeNull()
-  url = "http://127.0.0.1:4173/"
+  url = "https://www.chess.com/play/computer/Zach-BOT"
   await vi.advanceTimersByTimeAsync(1000)
   expect((await action()).gameId).toBe("game-one")
 })
+it("dispatches moves while the attached game is focused", async () => {
+  await start()
+  relay.receive({ type: "session", generation: "attached-generation", gameId, peerConnected: true })
+  await action()
+  await vi.advanceTimersByTimeAsync(1000)
+  expect(chrome.tabs.sendMessage).toHaveBeenLastCalledWith(
+    1,
+    { kind: "sync", generation: "attached-generation", enabled: true },
+    { frameId: 0 },
+  )
+  const move = {
+    v: 1,
+    type: "move",
+    gameId,
+    generation: "attached-generation",
+    revision: 1,
+    commandId: "test-move",
+    from: "e2",
+    to: "e4",
+  }
+  relay.receive(move)
+  await action()
+  expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(1, { kind: "move", move }, { frameId: 0 })
+})
+it.each(["inactive tab", "minimized window", "unfocused window"])(
+  "blocks game moves for an %s",
+  async (condition) => {
+    await start()
+    relay.receive({
+      type: "session",
+      generation: "attached-generation",
+      gameId,
+      peerConnected: true,
+    })
+    await action()
+    focused = false
+    if (condition === "inactive tab") tabActive = false
+    else if (condition === "minimized window") windowState = "minimized"
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(chrome.tabs.sendMessage).toHaveBeenLastCalledWith(
+      1,
+      { kind: "sync", generation: "attached-generation", enabled: false },
+      { frameId: 0 },
+    )
+    const move = {
+      v: 1,
+      type: "move",
+      gameId,
+      generation: "attached-generation",
+      revision: 1,
+      commandId: "blocked-move",
+      from: "e2",
+      to: "e4",
+    }
+    relay.receive(move)
+    await action()
+    expect(chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+      1,
+      { kind: "move", move },
+      { frameId: 0 },
+    )
+    expect(relay.send).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "outcome", commandId: "blocked-move", outcome: "rejected" }),
+    )
+  },
+)
 it("Disconnect persists a pause across worker restarts", async () => {
   await start()
   await action("disconnect")
@@ -169,5 +237,39 @@ it("never clears interrupted move risk by automatically attaching a different ga
   expect(local.autoConnect).toBe(false)
   expect(relay.send).not.toHaveBeenCalledWith(
     expect.objectContaining({ type: "attachment", gameId: "game-one" }),
+  )
+})
+
+it("reattaches the saved game after a worker restart without requiring Chrome focus", async () => {
+  await start()
+  vi.clearAllTimers()
+  vi.resetModules()
+  focused = false
+  relay.send.mockClear()
+  await start()
+  expect((await action()).gameId).toBe("game-one")
+  expect(relay.send).toHaveBeenCalledWith(
+    expect.objectContaining({ type: "attachment", gameId: "game-one" }),
+  )
+})
+it("resumes observation automatically when the TV returns with a new generation", async () => {
+  await start()
+  relay.receive({ type: "session", generation: "offline", gameId, peerConnected: false })
+  await action()
+  expect(chrome.tabs.sendMessage).toHaveBeenLastCalledWith(
+    1,
+    { kind: "sync", generation: "offline", enabled: false },
+    { frameId: 0 },
+  )
+  relay.receive({ type: "error", message: "The other device is disconnected." })
+  await action()
+  relay.receive({ type: "session", generation: "reconnected", gameId, peerConnected: true })
+  const current = await action()
+  expect(current.error).toBeNull()
+  expect(current.peerConnected).toBe(true)
+  expect(chrome.tabs.sendMessage).toHaveBeenLastCalledWith(
+    1,
+    { kind: "sync", generation: "reconnected", enabled: true },
+    { frameId: 0 },
   )
 })

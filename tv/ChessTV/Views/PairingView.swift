@@ -17,18 +17,12 @@ struct PairingView: View {
             .font(.caption).foregroundStyle(.secondary).monospacedDigit()
         }.accessibilityHidden(true)
         Text(session.notice).multilineTextAlignment(.center)
-        if session.pairingState == "claimed" {
-          HStack(spacing: 32) {
-            Button("Confirm pairing") { session.decidePairing(true) }
-            Button("Decline", role: .cancel) { session.decidePairing(false) }
-          }.disabled(session.busy)
-        }
       } else {
         Text(session.notice).multilineTextAlignment(.center)
         Button(session.busy ? "Requesting code…" : "Get pairing code") { session.createCode() }
           .disabled(session.busy)
       }
-      Text("Keep Chrome awake, in the foreground, with the connected game visible.")
+      Text("Keep Chrome awake, with the connected game tab selected and visible.")
         .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
     }.frame(maxWidth: 1100).padding(60)
   }

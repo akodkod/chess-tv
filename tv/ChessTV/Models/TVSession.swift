@@ -4,7 +4,6 @@ import Observation
 @MainActor @Observable final class TVSession {
   private(set) var credential: DeviceCredential?
   private(set) var challenge: Challenge?
-  private(set) var pairingState = "waiting"
   private(set) var busy = false
   private(set) var authenticated = false
   private(set) var active = false
@@ -28,6 +27,8 @@ import Observation
   private var fresh = false
   private var started = false
   private var attempt = 0
+  private var reconnectAt: TimeInterval?
+  private var authenticateBy: TimeInterval?
   private var operation = UUID()
   private var connection = UUID()
   @ObservationIgnored private let api: PairingAPI
@@ -35,7 +36,6 @@ import Observation
   @ObservationIgnored private let socket: any RelayConnecting
   @ObservationIgnored private let uptime: () -> TimeInterval
   @ObservationIgnored private var pairingTask: Task<Void, Never>?
-  @ObservationIgnored private var reconnectTask: Task<Void, Never>?
   @ObservationIgnored private var ticker: Task<Void, Never>?
 
   init(
@@ -101,7 +101,6 @@ import Observation
     guard active, credential == nil, !busy else { return }
     invalidatePairingWork()
     challenge = nil
-    pairingState = "waiting"
     busy = true
     let op = operation
     pairingTask = Task { [weak self] in
@@ -120,32 +119,6 @@ import Observation
       }
     }
   }
-  func decidePairing(_ confirm: Bool) {
-    guard let challenge, pairingState == "claimed", !busy else { return }
-    invalidatePairingWork()
-    busy = true
-    let op = operation
-    pairingTask = Task { [weak self] in
-      guard let self else { return }
-      do {
-        try await api.decide(challenge, confirm: confirm)
-        guard op == operation, active else { return }
-        busy = false
-        if !confirm {
-          self.challenge = nil
-          notice = "Pairing declined. Request a new code."
-        } else {
-          pollChallenge()
-        }
-      } catch {
-        guard op == operation else { return }
-        busy = false
-        notice = error.localizedDescription
-        // A lost decision response may have committed. Poll; never create a replacement blindly.
-        pollChallenge()
-      }
-    }
-  }
   private func pollChallenge() {
     guard let challenge, active else { return }
     pairingTask?.cancel()
@@ -161,7 +134,15 @@ import Observation
         do {
           let status = try await api.status(challenge)
           guard op == operation, active else { return }
-          try acceptPairing(status)
+          if status.state == "claimed" {
+            notice = "Connecting to the extension…"
+            // Entering this TV's code completes pairing; no second remote action is needed.
+            // If the response is lost, poll again before deciding whether to retry.
+            try await api.decide(challenge, confirm: true)
+            guard op == operation, active else { return }
+          } else {
+            try acceptPairing(status)
+          }
           if self.challenge == nil { return }
         } catch let error as HTTPFailure where [401, 404].contains(error.status) {
           guard op == operation else { return }
@@ -178,7 +159,6 @@ import Observation
     }
   }
   func acceptPairing(_ status: PairingStatus) throws {
-    pairingState = status.state
     switch status.state {
     case "confirmed":
       guard let id = status.pairingId, !id.isEmpty, id.utf16.count <= 128,
@@ -197,7 +177,7 @@ import Observation
       challenge = nil
       notice = "Pairing declined. Request a new code."
     case "claimed":
-      notice = "An extension wants to pair. Confirm only if you just entered this code."
+      notice = "Connecting to the extension…"
     default: break
     }
   }
@@ -245,8 +225,8 @@ import Observation
   private func stopConnection() {
     connection = UUID()
     socket.disconnect()
-    reconnectTask?.cancel()
-    reconnectTask = nil
+    reconnectAt = nil
+    authenticateBy = nil
     authenticated = false
     available = false
     fresh = false
@@ -268,18 +248,14 @@ import Observation
       self.closed(code: code, reason: reason)
     }
     socket.connect(url: api.configuration.socketURL, credential: credential.credential)
-    reconnectTask = Task { [weak self] in
-      do { try await Task.sleep(for: .seconds(8)) } catch { return }
-      guard let self, connection == epoch, !authenticated else { return }
-      closed(code: 0, reason: "Relay authentication timed out.")
-    }
+    authenticateBy = uptime() + 8
   }
   func closed(code: Int, reason: String) {
     stopConnection()
     notice = reason
-    guard active else { return }
+    guard active, credential != nil else { return }
     if [4001, 4003, 1002, 1007, 1009].contains(code)
-      || (code == 1008 && reason != "Heartbeat timeout")
+      || (code == 1008 && !["Heartbeat timeout", "Authentication timeout"].contains(reason))
     {
       needsReconnect = true
       if code == 4001 { notice = "Another TV replaced this connection. Reconnect to take over." }
@@ -287,11 +263,9 @@ import Observation
       return
     }
     let delay = min(30, pow(2, Double(min(attempt, 5))) * Double.random(in: 0.75...1.25))
-    attempt += 1
-    reconnectTask = Task { [weak self] in
-      do { try await Task.sleep(for: .seconds(delay)) } catch { return }
-      self?.connect()
-    }
+    attempt = min(attempt + 1, 5)
+    notice = "Relay disconnected. Reconnecting…"
+    reconnectAt = uptime() + delay
   }
   func receive(_ message: Message) {
     guard active else { return }
@@ -303,7 +277,8 @@ import Observation
       }
       authenticated = true
       attempt = 0
-      reconnectTask?.cancel()
+      authenticateBy = nil
+      reconnectAt = nil
       notice = "Waiting for the extension…"
       return
     }
@@ -336,9 +311,11 @@ import Observation
       statusAt = nil
       freezeClocks()
       notice =
-        gameId == nil
-        ? "Open the simulator in Chrome and connect the game in the extension."
-        : "Synchronizing game…"
+        !peerConnected
+        ? "Waiting for the Chrome extension to reconnect…"
+        : gameId == nil
+          ? "Chess.com TV connection is in development. Use the Chrome extension to inspect your bot game."
+          : "Synchronizing game…"
       requestSnapshot()
       return
     }
@@ -440,6 +417,13 @@ import Observation
   }
   func tick() {
     now = uptime()
+    guard active else { return }
+    // Monotonic deadlines also recover after delayed ticks or device sleep.
+    if let authenticateBy, !authenticated, now >= authenticateBy {
+      closed(code: 0, reason: "Relay authentication timed out.")
+    } else if let reconnectAt, now >= reconnectAt, !needsReconnect, !busy {
+      connect()
+    }
     if let pendingAt, pending != nil, !checkingMove, now - pendingAt >= 5 {
       checkingMove = true
       requestSnapshot()

@@ -16,19 +16,17 @@ For an Apple TV device or Release build, copy `Config/Local.xcconfig.example` to
 
 Use the same relay origin in the extension build. A device cannot reach the Mac through `127.0.0.1`; configure a reachable HTTPS relay for both clients. Select the connected Apple TV as the Xcode destination and use your personal signing team for manual installation. Public distribution is outside this prototype.
 
-## Pair and play
+## Chess.com integration status
 
-1. Choose **Get pairing code** on the TV. Enter its six-digit code in the extension popup.
-2. Confirm the request on the TV. The TV saves its credential in Keychain before connecting. Pairing is remembered per relay origin.
-3. Keep the connected simulator tab visible in foreground Chrome. The existing extension automatically attaches the foreground simulated game after pairing.
-4. Use directional focus to select your source piece and then its destination. Select another owned piece to change source; select the same square or press Back to cancel. Promotion offers queen, rook, bishop, and knight.
-5. Pieces update only from extension snapshots. A pending destination has an hourglass; completion requires an observed outcome. After five seconds, the TV requests fresh state and displays **Checking move**. It never resends a move.
+The native app retains pairing, board rendering, remote selection, move submission, and recovery over the shared relay protocol. The Chrome extension now targets Chess.com bot games exclusively. Its real-page handler is not yet wired to TV snapshots and commands; end-to-end TV play is not available yet.
+
+The next milestone is a user-selected move from Apple TV, through the relay and Chrome extension, confirmed by Chess.com's board and move history. The extension currently exposes direct bot-game inspection and manual move testing. See `../extension/README.md` for the remaining integration work.
+
+Open **Settings** in the top bar to turn **Show square labels** on or off. Labels are on by default, and the app remembers your choice between launches.
+
+The TV and extension automatically reconnect after temporary network loss, relay restarts, and heartbeat or authentication timeouts, including when both disconnect. Pairing is retained, and the game resynchronizes before moves are enabled. Retries back off to at most 30 seconds; returning to the TV app reconnects immediately. While only the extension is offline, the TV waits for it to return. Revoked credentials, protocol rejection, and replacement by another client require explicit recovery through **Connection**.
 
 For an interrupted move, inspect Chrome, then explicitly reconnect the game through the extension. Reconnecting only the TV's relay connection does not clear uncertainty. **Connection** provides relay reconnection and Unpair. An offline unpair retains the credential and reports incomplete revocation; retry when the relay returns.
-
-When using a simulator on the same Mac, clicking the Simulator window takes foreground focus away from Chrome and the extension correctly blocks moves. For full manual gameplay, use Apple TV hardware with the Siri Remote while Chrome remains foreground. Do not disable the extension's foreground checks to make simulator input work.
-
-Real Chess.com observation and interaction are still deferred. This app uses the existing simulator protocol and introduces no Chess.com permissions, private endpoints, or rules engine.
 
 ## Verification
 
@@ -57,7 +55,7 @@ It creates and confirms a pairing, authenticates both roles, attaches a game, pu
 
 Static board renders can be produced by setting `CHESS_TV_RENDER=1` in the scheme test environment and running `testBoardRenderingForVisualInspection`. The test prints paths to PNGs in the simulator cache. These offscreen renders check layout, not focus behavior. Rendering is opt-in because Xcode can stall while finalizing an offscreen SwiftUI rendering test.
 
-The workspace's existing checks remain `vp check`, `vp test`, and `vp build` in `extension`.
+The workspace's existing checks remain `vp check`, `vp test`, and `vp build` in `extension` (output: `dist-chesscom`).
 
 Before relying on device play, check directional focus across all 64 squares, focus stability during snapshots, Back behavior, promotion focus restoration, both orientations, viewing-distance readability, large text, VoiceOver, increased contrast, reduced motion/transparency, and TV suspension. Hardware and assistive-technology checks require an Apple TV; simulator builds alone do not establish them.
 

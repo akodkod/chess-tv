@@ -22,6 +22,12 @@ export class ChessComAdapter {
 
   private read() {
     const p = readGame(this.doc)
+    const color = p.playerColor
+    if (!color)
+      throw new Error(
+        "Cannot detect your playing color. Sign in to Chess.com, open your current bot game, and reconnect.",
+      )
+    this.color = color
     const path = this.doc.location?.pathname ?? ""
     if (
       this.boardElement &&
@@ -151,7 +157,6 @@ export class ChessComAdapter {
     try {
       const action = contentAction.parse(raw)
       if (action.kind === "inspect") {
-        if (action.color) this.color = action.color
         this.read()
         return this.reply()
       }

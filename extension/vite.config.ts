@@ -8,7 +8,7 @@ import { buildSettings } from "./config"
 export default defineConfig(({ mode }) => {
   const settings = buildSettings(mode, process.env.RELAY_URL)
   const root = import.meta.dirname
-  const outDir = resolve(root, "dist-chesscom")
+  const outDir = resolve(root, "dist")
   return {
     root,
     base: "./",

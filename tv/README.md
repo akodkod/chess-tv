@@ -61,7 +61,7 @@ It creates and confirms a pairing, authenticates both roles, attaches a game, pu
 
 Static board renders can be produced by setting `CHESS_TV_RENDER=1` in the scheme test environment and running `testBoardRenderingForVisualInspection`. The test prints paths to PNGs in the simulator cache. These offscreen renders check layout, not focus behavior. Rendering is opt-in because Xcode can stall while finalizing an offscreen SwiftUI rendering test.
 
-The workspace's existing checks remain `vp check`, `vp test`, and `vp build` in `extension` (output: `dist-chesscom`).
+The workspace's existing checks remain `vp check`, `vp test`, and `vp build` in `extension` (output: `dist`).
 
 Before relying on device play, check directional focus across all 64 squares, focus stability during snapshots, Back behavior, promotion focus restoration, both orientations, viewing-distance readability, large text, VoiceOver, increased contrast, reduced motion/transparency, and TV suspension. Hardware and assistive-technology checks require an Apple TV; simulator builds alone do not establish them.
 

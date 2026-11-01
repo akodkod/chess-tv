@@ -6,4 +6,4 @@ coverage/
 *.db
 *.db-shm
 *.db-wal
-extension/dist-chesscom/
+extension/dist/

@@ -271,3 +271,40 @@ it("resumes observation automatically when the TV returns with a new generation"
     { frameId: 0 },
   )
 })
+
+it("defaults automatic attachment to detection instead of a stale saved color", async () => {
+  local.playerColor = "white"
+  await start()
+  expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(1, { kind: "inspect" }, { frameId: 0 })
+})
+
+it("ignores obsolete manual color preferences", async () => {
+  local.playerColorMode = "black"
+  await start()
+  expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(1, { kind: "inspect" }, { frameId: 0 })
+})
+
+it("attaches as soon as the relay session arrives, without waiting for a timer", async () => {
+  await import("../src/worker")
+  await action()
+  relay.receive({ type: "session", generation: "generation", gameId: null, peerConnected: true })
+  expect((await action()).gameId).toBe("game-one")
+})
+
+it.each(["tab", "focus", "load"])("attaches immediately on %s activity", async (trigger) => {
+  url = "https://www.chess.com/"
+  await start()
+  expect((await action()).gameId).toBeNull()
+  url = "https://www.chess.com/play/computer/Zach-BOT"
+  const source =
+    trigger === "tab"
+      ? chrome.tabs.onActivated
+      : trigger === "focus"
+        ? chrome.windows.onFocusChanged
+        : chrome.tabs.onUpdated
+  const callback = vi.mocked(source.addListener).mock.calls[0]![0]
+  if (trigger === "load")
+    (callback as (id: number, change: unknown) => void)(1, { status: "complete" })
+  else (callback as () => void)()
+  expect((await action()).gameId).toBe("game-one")
+})

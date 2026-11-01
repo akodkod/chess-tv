@@ -73,7 +73,19 @@ export function readGame(doc: Document) {
       }
     }
   }
-  return { ...observed, chess, boardCells: board, result, players, clocks }
+  const profiles = doc.querySelectorAll<HTMLAnchorElement>('a[data-user-activity-key="profile"]')
+  let playerColor: Snapshot["playerColor"] = null
+  if (profiles.length === 1 && rows.length === 2) {
+    const profile = new URL(profiles[0]!.href, doc.baseURI)
+    const username = /^\/member\/([^/]+)\/?$/.exec(profile.pathname)?.[1]?.toLowerCase()
+    if (profile.origin === "https://www.chess.com" && username) {
+      const matches = (["white", "black"] as const).filter(
+        (color) => players[color]?.toLowerCase() === username,
+      )
+      if (matches.length === 1) playerColor = matches[0]!
+    }
+  }
+  return { ...observed, chess, boardCells: board, result, players, clocks, playerColor }
 }
 
 // Chess.com uses m:ss, h:mm:ss, and fractional seconds near time control.

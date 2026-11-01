@@ -14,29 +14,30 @@ struct BoardView: View {
 
   var body: some View {
     GeometryReader { geometry in
-      let side = min(geometry.size.height - 116, geometry.size.width - 380)
-      HStack(alignment: .center, spacing: 36) {
+      let side = min(geometry.size.height - 116, geometry.size.width - 404)
+      HStack(alignment: .center, spacing: 64) {
         VStack(spacing: 10) {
           playerLine(snapshot.playerColor == .black ? .white : .black)
           grid(side: max(240, side))
           playerLine(snapshot.playerColor == .black ? .black : .white)
         }.frame(width: max(240, side))
-        VStack(alignment: .leading, spacing: 24) {
+        // Keep the primary status centered independently of transient messages.
+        Group {
           if let result = snapshot.result {
-            Text(result.label).font(.title.bold())
-          } else if let checked = snapshot.checkSquare.flatMap(Square.index),
-            let color = Square.color(of: snapshot.board?[checked])
-          {
-            Text("\(color.rawValue.capitalized) in check").font(.title2.bold())
-              .fixedSize(horizontal: false, vertical: true)
+            Text(result.label).font(.title.weight(.semibold))
+          } else {
+            Text(snapshot.turn.map { "\($0.rawValue.capitalized)\nto move" } ?? "Turn\nunknown")
+              .font(.title2.weight(.semibold))
+              .lineSpacing(4)
           }
-          if let warning = session.gameplayWarning { Text(warning).font(.body) }
-          if let notice = session.moveNotice { Text(notice).font(.callout) }
-          if session.clocksStale && snapshot.result == nil {
-            Label("Clocks paused", systemImage: "pause.circle").font(.caption)
-          }
-          if session.needsReconnect { Button("Reconnect relay") { session.reconnect() } }
-        }.frame(width: 340, alignment: .leading)
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(width: 340, alignment: .leading)
+        .frame(maxHeight: .infinity)
+        .overlay(alignment: .bottomLeading) {
+          statusMessages
+            .padding(.bottom, 12)
+        }
       }.frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     // Include the side panel so Down from Connection can reach the board,
@@ -76,6 +77,24 @@ struct BoardView: View {
       promotionTarget = nil
     }
     .onExitCommand(perform: source != nil && promotionTarget == nil ? { source = nil } : nil)
+  }
+  private var statusMessages: some View {
+    VStack(alignment: .leading, spacing: 16) {
+      if snapshot.result == nil,
+        let checked = snapshot.checkSquare.flatMap(Square.index),
+        let color = Square.color(of: snapshot.board?[checked])
+      {
+        Text("\(color.rawValue.capitalized) in check").font(.headline)
+      }
+      if let warning = session.gameplayWarning { Text(warning).font(.callout) }
+      if let notice = session.moveNotice { Text(notice).font(.callout) }
+      if session.clocksStale && snapshot.result == nil {
+        Label("Clocks paused", systemImage: "pause.circle").font(.caption)
+      }
+      if session.needsReconnect { Button("Reconnect relay") { session.reconnect() } }
+    }
+    .fixedSize(horizontal: false, vertical: true)
+    .frame(width: 340, alignment: .leading)
   }
   private func playerLine(_ color: PieceColor) -> some View {
     let avatar = color == .white ? snapshot.players?.whiteAvatar : snapshot.players?.blackAvatar
@@ -232,10 +251,10 @@ struct LegalMoveMarker: View {
   let capture: Bool
   var body: some View {
     if capture {
-      Circle().strokeBorder(Color.black.opacity(0.6), lineWidth: size * 0.065)
+      Circle().strokeBorder(Color.black.opacity(0.5), lineWidth: size * 0.065)
         .padding(size * 0.04)
     } else {
-      Circle().fill(Color.black.opacity(0.45))
+      Circle().fill(Color.black.opacity(0.35))
         .frame(width: size * 0.24, height: size * 0.24)
         .frame(width: size, height: size)
     }

@@ -6,13 +6,21 @@ import { afterEach, expect, it, vi } from "vite-plus/test"
 import { ChessComAdapter } from "../src/chesscom-adapter"
 import { readGame } from "../src/chesscom-game"
 
-function fixture(moves: string[] = []) {
+function fixture(moves: string[] = [], color = "white") {
   const dom = new JSDOM(
     '<wc-chess-board id="board-play-computer"></wc-chess-board><wc-simple-move-list board-id="board-play-computer"></wc-simple-move-list>',
     { pretendToBeVisual: true, url: "https://www.chess.com/play/computer/Zach-BOT" },
   )
   const doc = dom.window.document
   const board = doc.querySelector<HTMLElement>("wc-chess-board")!
+  doc.body.insertAdjacentHTML(
+    "beforeend",
+    `
+    <a data-user-activity-key="profile" href="https://www.chess.com/member/human">Human</a>
+    <div class="player-row-component player-row-top"><div data-test-element="user-tagline-username">${color === "black" ? "Human" : "Zach"}</div></div>
+    <div class="player-row-component"><div data-test-element="user-tagline-username">${color === "white" ? "Human" : "Zach"}</div></div>
+  `,
+  )
   const chess = new Chess()
   for (const san of moves) chess.move(san)
   const render = () => {
@@ -57,8 +65,8 @@ function fixture(moves: string[] = []) {
   return { doc, board, chess, render, adapter: new ChessComAdapter(doc) }
 }
 afterEach(() => vi.unstubAllGlobals())
-async function sync(adapter: ChessComAdapter, color = "white") {
-  await adapter.handle({ kind: "inspect", color })
+async function sync(adapter: ChessComAdapter) {
+  await adapter.handle({ kind: "inspect" })
   const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
   expect(reply.error).toBeNull()
   reply.messages.forEach((m) => expect(messageSchema.safeParse(m).success).toBe(true))
@@ -79,9 +87,9 @@ function command(snapshot: Extract<Message, { type: "snapshot" }>, from = "e2", 
     },
   }
 }
-it("publishes a complete initial position with selected player color", async () => {
-  const { adapter } = fixture()
-  const s = await sync(adapter, "black")
+it("publishes a complete initial position with detected player color", async () => {
+  const { adapter } = fixture([], "black")
+  const s = await sync(adapter)
   expect(s.playerColor).toBe("black")
   expect(s.turn).toBe("white")
   expect(s.board.filter(Boolean)).toHaveLength(32)
@@ -306,6 +314,7 @@ it.each([false, true])(
   async (flipped) => {
     const { doc, board, adapter } = fixture(["e4", "e5"])
     board.classList.toggle("flipped", flipped)
+    doc.querySelectorAll(".player-row-component").forEach((row) => row.remove())
     const row = (top: boolean, name: string, clock: string) =>
       `<div class="player-row-component ${top ? "player-row-top" : ""}"><img class="cc-avatar-img" src="https://images.chesscomfiles.com/${name}.png"><div data-test-element="user-tagline-username">${name}</div><div class="move-time-content">${clock}</div></div>`
     doc.body.insertAdjacentHTML(
@@ -361,4 +370,79 @@ it("excludes pinned moves and identifies checks and checkmate for either king", 
   expect(mate.checkSquare).toBe("e1")
   expect(mate.legalMoves).toEqual([])
   expect(mate.result).toBe("black-won")
+})
+
+it.each([
+  ["white", false],
+  ["white", true],
+  ["black", false],
+  ["black", true],
+] as const)(
+  "detects %s with flipped=%s from the signed-in player's row",
+  async (color, flipped) => {
+    const { doc, board, adapter } = fixture()
+    board.classList.toggle("flipped", flipped)
+    doc
+      .querySelectorAll('.player-row-component, a[data-user-activity-key="profile"]')
+      .forEach((node) => node.remove())
+    const humanTop = (color === "white") === flipped
+    doc.body.insertAdjacentHTML(
+      "beforeend",
+      `
+    <a data-user-activity-key="profile" href="https://www.chess.com/member/human">Human</a>
+    <div class="player-row-component player-row-top"><div data-test-element="user-tagline-username">${humanTop ? "Human" : "Zach"}</div></div>
+    <div class="player-row-component"><div data-test-element="user-tagline-username">${humanTop ? "Zach" : "Human"}</div></div>
+  `,
+    )
+    expect((await adapter.handle({ kind: "inspect" })).error).toBeNull()
+    const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
+    expect(reply.error).toBeNull()
+    expect(reply.messages).toContainEqual(
+      expect.objectContaining({ type: "snapshot", playerColor: color }),
+    )
+    // Flipping the view moves the player rows too; it must not change our playing color.
+    board.classList.toggle("flipped")
+    for (const row of doc.querySelectorAll(".player-row-component"))
+      row.classList.toggle("player-row-top")
+    const next = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
+    expect(next.messages).toContainEqual(
+      expect.objectContaining({ type: "snapshot", playerColor: color }),
+    )
+  },
+)
+
+it("blocks snapshots and moves when player identity disappears", async () => {
+  const { adapter, doc, board } = fixture()
+  const snapshot = await sync(adapter)
+  doc.querySelector('a[data-user-activity-key="profile"]')!.remove()
+  const click = vi.fn()
+  board.addEventListener("click", click)
+  const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
+  expect(reply.error).toContain("Cannot detect")
+  expect(reply.messages).toEqual([])
+  const moved = await adapter.handle(command(snapshot))
+  expect(moved.messages).toContainEqual(
+    expect.objectContaining({
+      type: "outcome",
+      outcome: "rejected",
+      reason: expect.stringContaining("Cannot detect"),
+    }),
+  )
+  expect(click).not.toHaveBeenCalled()
+})
+
+it.each(["Other", "Human"])("rejects unmatched or ambiguous player identity (%s)", (name) => {
+  const { doc } = fixture()
+  doc
+    .querySelectorAll('.player-row-component, a[data-user-activity-key="profile"]')
+    .forEach((node) => node.remove())
+  doc.body.insertAdjacentHTML(
+    "beforeend",
+    `
+    <a data-user-activity-key="profile" href="https://www.chess.com/member/human">Human</a>
+    <div class="player-row-component player-row-top"><div data-test-element="user-tagline-username">${name}</div></div>
+    <div class="player-row-component"><div data-test-element="user-tagline-username">${name}</div></div>
+  `,
+  )
+  expect(readGame(doc).playerColor).toBeNull()
 })

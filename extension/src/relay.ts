@@ -58,7 +58,7 @@ export class RelayLink {
     ws.onopen = () => {
       if (ws !== this.socket) return
       try {
-        ws.send(JSON.stringify({ v: 1, type: "authenticate", credential: this.credential }))
+        ws.send(JSON.stringify({ v: 2, type: "authenticate", credential: this.credential }))
       } catch {
         this.closed(ws, 0, "Authentication failed")
       }
@@ -96,9 +96,9 @@ export class RelayLink {
             return
           }
           this.nonce ??= crypto.randomUUID()
-          this.send({ v: 1, type: "ping", nonce: this.nonce })
+          this.send({ v: 2, type: "ping", nonce: this.nonce })
         }, 20000)
-      } else if (m.type === "ping") this.send({ v: 1, type: "pong", nonce: m.nonce })
+      } else if (m.type === "ping") this.send({ v: 2, type: "pong", nonce: m.nonce })
       else if (m.type === "pong") {
         if (m.nonce === this.nonce) {
           this.lastPong = Date.now()

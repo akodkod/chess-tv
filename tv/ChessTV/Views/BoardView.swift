@@ -24,19 +24,16 @@ struct BoardView: View {
         VStack(alignment: .leading, spacing: 24) {
           if let result = snapshot.result {
             Text(result.label).font(.title.bold())
-          } else {
-            Text(snapshot.turn.map { "\($0.rawValue.capitalized) to move" } ?? "Turn unknown").font(
-              .title2.bold())
+          } else if let checked = snapshot.checkSquare.flatMap(Square.index),
+            let color = Square.color(of: snapshot.board?[checked])
+          {
+            Text("\(color.rawValue.capitalized) in check").font(.title2.bold())
+              .fixedSize(horizontal: false, vertical: true)
           }
-          Text(session.statusText).font(.body)
+          if let warning = session.gameplayWarning { Text(warning).font(.body) }
           if let notice = session.moveNotice { Text(notice).font(.callout) }
-          if session.clocksStale {
+          if session.clocksStale && snapshot.result == nil {
             Label("Clocks paused", systemImage: "pause.circle").font(.caption)
-          }
-          if source != nil {
-            Text("Select a destination. Back cancels.").font(.caption).foregroundStyle(.secondary)
-          } else if session.canMove {
-            Text("Select a piece, then its destination.").font(.caption).foregroundStyle(.secondary)
           }
           if session.needsReconnect { Button("Reconnect relay") { session.reconnect() } }
         }.frame(width: 340, alignment: .leading)
@@ -131,36 +128,50 @@ struct BoardView: View {
   private func square(_ index: Int, size: CGFloat) -> some View {
     let piece = snapshot.board?[index]
     let selected = source == index
-    let pending = session.pending?.to == Square.name(index)
+    let checked = snapshot.checkSquare == Square.name(index)
+    let destination =
+      session.canMove
+      && source.map { from in
+        snapshot.legalMoves?.contains {
+          $0.from == Square.name(from) && $0.to == Square.name(index)
+        } == true
+      } == true
     let isFocused = focused == index
     let light = (index / 8 + index % 8).isMultiple(of: 2)
     return Button {
       select(index)
     } label: {
       ZStack(alignment: .topLeading) {
+        if checked {
+          Rectangle().fill(Color.red.opacity(contrast == .increased ? 0.85 : 0.65))
+        }
         Rectangle().fill(
           selected ? Color.yellow.opacity(contrast == .increased ? 0.38 : 0.22) : Color.clear)
         if showSquareLabels {
           squareLabels(index, size: size, light: light)
         }
-        if pending {
-          Image(systemName: "hourglass")
-            .font(.system(size: size * 0.22)).foregroundStyle(.black, .yellow)
-            .frame(width: size - 8, height: size - 8, alignment: .bottomTrailing)
+        if destination {
+          LegalMoveMarker(size: size, capture: piece != nil)
         }
         Rectangle().strokeBorder(
-          isFocused ? Color.white : selected || pending ? Color.yellow : Color.clear,
+          isFocused ? Color.white : selected ? Color.yellow : Color.clear,
           lineWidth: isFocused ? (contrast == .increased ? 7 : 5) : 4)
       }.frame(width: size, height: size)
     }
     .buttonStyle(BoardSquareButtonStyle()).focused($focused, equals: index)
     .accessibilityLabel("\(Square.name(index)), \(Square.pieceName(piece))")
-    .accessibilityValue(selected ? "Selected" : pending ? "Move pending" : "")
+    .accessibilityValue(
+      [
+        selected ? "Selected" : nil, destination ? "Legal destination" : nil,
+        checked ? "In check" : nil,
+      ]
+      .compactMap { $0 }.joined(separator: ", ")
+    )
     .accessibilityHint(session.canMove ? "Select piece or destination" : "Move input unavailable")
     .accessibilityAddTraits(selected ? [.isSelected] : [])
   }
   @ViewBuilder private func squareLabels(_ index: Int, size: CGFloat, light: Bool) -> some View {
-    let displayIndex = snapshot.playerColor == .black ? 63 - index : index
+    let displayIndex = Square.displayIndex(index, for: snapshot.playerColor)
     let name = Square.name(index)
     ZStack(alignment: .topLeading) {
       if edgeSquareLabelsOnly {
@@ -212,5 +223,21 @@ private struct BoardSquareButtonStyle: ButtonStyle {
     configuration.label
       .contentShape(Rectangle())
       .opacity(configuration.isPressed ? 0.8 : 1)
+  }
+}
+
+/// Insets keep capture rings visible around the piece artwork.
+struct LegalMoveMarker: View {
+  let size: CGFloat
+  let capture: Bool
+  var body: some View {
+    if capture {
+      Circle().strokeBorder(Color.black.opacity(0.6), lineWidth: size * 0.065)
+        .padding(size * 0.04)
+    } else {
+      Circle().fill(Color.black.opacity(0.45))
+        .frame(width: size * 0.24, height: size * 0.24)
+        .frame(width: size, height: size)
+    }
   }
 }

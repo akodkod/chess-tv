@@ -14,7 +14,6 @@ struct ContentView: View {
       } else {
         VStack(spacing: 20) {
           HStack {
-            Text("Chess TV").font(.headline)
             Spacer()
             Button("Settings", systemImage: "gearshape") {
               showSettings = true

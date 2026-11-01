@@ -1,5 +1,5 @@
 import { z } from "zod"
-export const VERSION = 1
+export const VERSION = 2
 export const MAX_BYTES = 64 * 1024
 export const id = z.string().min(1).max(128)
 export const credential = z.string().regex(/^[a-f0-9]{64}$/)
@@ -53,6 +53,8 @@ export const messageSchema = z.discriminatedUnion("type", [
       black: clock,
       observedAt: z.number().nonnegative().nullable(),
     }),
+    legalMoves: z.array(z.strictObject({ from: square, to: square })).max(256),
+    checkSquare: square.nullable(),
     result: z.enum(["white-won", "black-won", "draw"]).nullable(),
   }),
   message("move", {

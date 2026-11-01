@@ -4,7 +4,7 @@ Native SwiftUI app for **tvOS 27+ / Xcode 27+**. Open `ChessTV.xcodeproj` and ch
 
 ## Configure and run
 
-Debug simulator builds default to `http://127.0.0.1:3000`. Start the relay from the repository root with `bun run dev`, then run the app on an Apple TV simulator in Xcode, or:
+Debug and Release builds default to `https://chess-tv-relay.kodkod.me`. Run the app on an Apple TV simulator in Xcode, or:
 
 ```sh
 ./tv/script/build_and_run.sh
@@ -12,9 +12,9 @@ Debug simulator builds default to `http://127.0.0.1:3000`. Start the relay from 
 
 The script selects an installed tvOS 27 simulator and opens Simulator or Xcode 27 Device Hub; set `TV_SIMULATOR_ID` to override it. It supports `--logs`, `--debug`, and `--verify`. Keep simulator signing enabled: disabling code signing can prevent Keychain access even when the app launches.
 
-For an Apple TV device or Release build, copy `Config/Local.xcconfig.example` to the ignored `Config/Local.xcconfig`, set `RELAY_ORIGIN` to your relay's HTTPS origin, and set your signing team. Use `https:$(SLASH)$(SLASH)host` in xcconfig files because literal `//` starts a comment. No paths, credentials, query strings, or fragments are allowed in the origin. Release has no default relay. Plain HTTP is accepted only for loopback in Debug simulator builds; device builds always require HTTPS. Trust a real TLS certificate rather than bypassing transport security.
+Set your signing team in Xcode for an Apple TV device build. To override the relay or signing team locally, copy `Config/Local.xcconfig.example` to the ignored `Config/Local.xcconfig` and edit it. Use `https:$(SLASH)$(SLASH)host` in xcconfig files because literal `//` starts a comment. No paths, credentials, query strings, or fragments are allowed in the origin. Plain HTTP is accepted only for loopback in Debug simulator builds; device builds always require HTTPS. Trust a real TLS certificate rather than bypassing transport security.
 
-Use the same relay origin in the extension build. A device cannot reach the Mac through `127.0.0.1`; configure a reachable HTTPS relay for both clients. Select the connected Apple TV as the Xcode destination and use your personal signing team for manual installation. Public distribution is outside this prototype.
+For local simulator development, start `bun run dev` from the repository root and set `RELAY_ORIGIN = http:$(SLASH)$(SLASH)127.0.0.1:3000` in `Config/Local.xcconfig`. Use the same relay origin in the extension build. A device cannot reach the Mac through `127.0.0.1`; configure a reachable HTTPS relay for both clients. Select the connected Apple TV as the Xcode destination and use your personal signing team for manual installation. Public distribution is outside this prototype.
 
 ## Play with Chess.com
 
@@ -22,9 +22,13 @@ Pair the app with the Chrome extension using the TV's six-digit code, then confi
 
 The extension synchronizes the actual board, turn, and result. It validates chosen moves and supports castling, en passant, and promotion. Keep the bot tab selected and visible. Start new games and choose bots in Chrome. Player names and timed-game clocks synchronize from Chrome; untimed clocks are hidden. See `../extension/README.md` for setup, recovery, and verification details.
 
+The playing side always appears at the bottom, including Black. Selecting a piece shows legal destinations: dots for empty squares and rings for captures. A king in check has a red square and a check warning. During play, only warnings/errors and game results appear beside the board; routine instructions and pending-move indicators are hidden.
+
+Snapshots use protocol v2 with required legal-move and checked-king metadata from the extension’s chess engine. Update the TV, extension, and relay together; v1 is unsupported.
+
 The board uses bundled Chess.com Neo-Wood pieces and the Walnut texture. Confirmed single moves animate for 180 ms, including castling, en passant, and promotions; Reduce Motion disables animation. Initial loads, reconnects, and ambiguous position jumps update immediately.
 
-Open **Settings** in the top bar to control **Show square labels**, **Labels on board edges only**, and **Game sounds**. All three default to on and persist between launches. Edge labels follow the visible left and bottom edges for either playing color; disable edge-only mode to label every square. Sounds use the bundled Chess.com Default move/capture clips and play only for confirmed single moves. Theme source URLs are recorded in `ChessTV/theme-sources.json`; later Chess.com theme changes do not change this bundled theme.
+Open **Settings** in the top bar to control **Show square labels**, **Labels on board edges only**, and **Game sounds**. All three default to on and persist between launches. Edge labels follow the visible left and bottom edges for either playing color; disable edge-only mode to label every square. Sounds use bundled Chess.com Default move, capture, and check clips and play only for confirmed single moves. A check cue replaces the move/capture cue. Theme source URLs are recorded in `ChessTV/theme-sources.json`; later Chess.com theme changes do not change this bundled theme.
 
 The TV and extension automatically reconnect after temporary network loss, relay restarts, and heartbeat or authentication timeouts, including when both disconnect. Pairing is retained, and the game resynchronizes before moves are enabled. Retries back off to at most 30 seconds; returning to the TV app reconnects immediately. While only the extension is offline, the TV waits for it to return. Revoked credentials, protocol rejection, and replacement by another client require explicit recovery through **Connection**.
 

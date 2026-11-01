@@ -18,7 +18,7 @@ export class Client {
     )
     this.ws.addEventListener("message", (e) => {
       const msg = JSON.parse(String(e.data)) as Message
-      if (heartbeat && msg.type === "ping") this.send({ v: 1, type: "pong", nonce: msg.nonce })
+      if (heartbeat && msg.type === "ping") this.send({ v: 2, type: "pong", nonce: msg.nonce })
       else {
         this.messages.push(msg)
         for (const waiter of this.waiters) waiter()
@@ -136,7 +136,7 @@ export async function harness(env: Record<string, string> = {}) {
       const client = new Client(url.replace("http:", "ws:") + "/v1/ws", heartbeat)
       clients.push(client)
       await client.open()
-      if (token) client.send({ v: 1, type: "authenticate", credential: token })
+      if (token) client.send({ v: 2, type: "authenticate", credential: token })
       return client
     },
     async dispose() {

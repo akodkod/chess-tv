@@ -34,7 +34,7 @@ export function connections(sql: SQL, heartbeatMs = 20_000, timeoutMs = 60_000, 
     session.generation = randomUUID()
     for (const role of ["tv", "extension"] as const)
       send(session[role], {
-        v: 1,
+        v: 2,
         type: "session",
         generation: session.generation,
         gameId: session.gameId,
@@ -42,7 +42,7 @@ export function connections(sql: SQL, heartbeatMs = 20_000, timeoutMs = 60_000, 
       })
     if (session.tv && session.extension && session.gameId)
       send(session.extension, {
-        v: 1,
+        v: 2,
         type: "snapshot-request",
         generation: session.generation,
         gameId: session.gameId,
@@ -66,7 +66,7 @@ export function connections(sql: SQL, heartbeatMs = 20_000, timeoutMs = 60_000, 
     client.ws.close(code, reason)
   }
   const error = (client: Client, code: string, message: string) =>
-    send(client, { v: 1, type: "error", code, message })
+    send(client, { v: 2, type: "error", code, message })
   const timer = setInterval(
     () => {
       const now = Date.now()
@@ -83,7 +83,7 @@ export function connections(sql: SQL, heartbeatMs = 20_000, timeoutMs = 60_000, 
         if (now - client.lastPing < heartbeatMs) continue
         client.lastPing = now
         client.nonce ??= randomUUID()
-        send(client, { v: 1, type: "ping", nonce: client.nonce })
+        send(client, { v: 2, type: "ping", nonce: client.nonce })
       }
     },
     Math.min(heartbeatMs, authMs),
@@ -113,11 +113,11 @@ export function connections(sql: SQL, heartbeatMs = 20_000, timeoutMs = 60_000, 
     }
     const parsed = messageSchema.safeParse(json)
     if (!parsed.success) {
-      const incompatible = typeof json === "object" && json !== null && "v" in json && json.v !== 1
+      const incompatible = typeof json === "object" && json !== null && "v" in json && json.v !== 2
       error(
         client,
         incompatible ? "incompatible_version" : "invalid_message",
-        incompatible ? "Use protocol version 1." : "Invalid message shape.",
+        incompatible ? "Use protocol version 2." : "Invalid message shape.",
       )
       close(client, 1008, "Invalid protocol")
       return
@@ -150,12 +150,12 @@ export function connections(sql: SQL, heartbeatMs = 20_000, timeoutMs = 60_000, 
       session[device.role] = client
       if (device.role === "extension") session.gameId = null
       if (previous) close(previous, 4001, "Connection replaced")
-      send(client, { v: 1, type: "authenticated", ...device })
+      send(client, { v: 2, type: "authenticated", ...device })
       refresh(session)
       return
     }
     if (msg.type === "ping") {
-      send(client, { v: 1, type: "pong", nonce: msg.nonce })
+      send(client, { v: 2, type: "pong", nonce: msg.nonce })
       return
     }
     if (msg.type === "pong") {

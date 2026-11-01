@@ -73,7 +73,7 @@ struct PieceBoardOverlay: View {
       .resizable().scaledToFit().frame(width: side / 8, height: side / 8)
   }
   private func center(_ index: Int) -> CGPoint {
-    let displayed = snapshot.playerColor == .black ? 63 - index : index
+    let displayed = Square.displayIndex(index, for: snapshot.playerColor)
     return CGPoint(
       x: (CGFloat(displayed % 8) + 0.5) * side / 8,
       y: (CGFloat(displayed / 8) + 0.5) * side / 8)

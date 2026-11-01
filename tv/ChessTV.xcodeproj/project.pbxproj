@@ -18,18 +18,19 @@
 		6F9ABBC1C31604479CE000DA /* ChessTV/Views/PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85CF0835D55933607339EADA /* ChessTV/Views/PairingView.swift */; };
 		715076C07F5A8167019EA100 /* ChessTVTests/PairingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 346613A405792573AEC521C3 /* ChessTVTests/PairingTests.swift */; };
 		7A75312DC45913DFB3A68AB3 /* ChessTV/Views/BoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47389ACDBD422A77754562AD /* ChessTV/Views/BoardView.swift */; };
+		7B5C99EC873833544BC16B52 /* ChessTVTests/BoardTransitionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E76C4D45F52B102B73B854FC /* ChessTVTests/BoardTransitionTests.swift */; };
 		80A34EA12AC9686070ABA1F4 /* ChessTV/Views/ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7866FD52E305BBA98091AA97 /* ChessTV/Views/ContentView.swift */; };
+		81C8D57ABCAB08AF05B37812 /* ChessTV/Sounds/move-self.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = BCAB68134A164EA983F823D1 /* ChessTV/Sounds/move-self.mp3 */; };
 		88F759D1EFA2262AFC13BDA9 /* ChessTV/App/ChessTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A134DABD6C019CB67DB79E /* ChessTV/App/ChessTVApp.swift */; };
+		8E7DA00E28D6EC70D27A3DC9 /* ChessTV/Sounds/capture.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7E88A65EA62B3E09276A41F2 /* ChessTV/Sounds/capture.mp3 */; };
+		FEECC0011223344556677889 /* ChessTV/Sounds/move-check.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = FEECC001122334455667788A /* ChessTV/Sounds/move-check.mp3 */; };
+		8EC9A52F2DF0B31098069948 /* ChessTV/Services/BoardSounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B0BE6B4DF96240D99FABCF7 /* ChessTV/Services/BoardSounds.swift */; };
+		B51583C72CE46186E9F991A9 /* ChessTV/Models/BoardTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17734A35E297696671BF3DB8 /* ChessTV/Models/BoardTransition.swift */; };
 		B918FD91742A3464903548DF /* ChessTVTests/ProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABCB5409AB6718B9971B6C9D /* ChessTVTests/ProtocolTests.swift */; };
 		C254DF2101669DC8BEB22502 /* ChessTV/Services/RelaySocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DC0697B72D9E9D755A2E97B /* ChessTV/Services/RelaySocket.swift */; };
+		C440817894CE08A4F6C515B9 /* ChessTV/Views/PieceBoardOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA91495BEBB0F98CA6ADA28C /* ChessTV/Views/PieceBoardOverlay.swift */; };
 		F05377166A12C08533D1DDE3 /* ChessTV/Services/CredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583FF0087FD7BC26A2A6DC87 /* ChessTV/Services/CredentialStore.swift */; };
 		FA4E10C2D736FB8351DB86A9 /* ChessTV/Models/Board.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0195AA0022FE3D58E30BFB /* ChessTV/Models/Board.swift */; };
-		B51583C72CE46186E9F991A9 /* ChessTV/Models/BoardTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17734A35E297696671BF3DB8; };
-		C440817894CE08A4F6C515B9 /* ChessTV/Views/PieceBoardOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA91495BEBB0F98CA6ADA28C; };
-		8EC9A52F2DF0B31098069948 /* ChessTV/Services/BoardSounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B0BE6B4DF96240D99FABCF7; };
-		7B5C99EC873833544BC16B52 /* ChessTVTests/BoardTransitionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E76C4D45F52B102B73B854FC; };
-		81C8D57ABCAB08AF05B37812 /* ChessTV/Sounds/move-self.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = BCAB68134A164EA983F823D1; };
-		8E7DA00E28D6EC70D27A3DC9 /* ChessTV/Sounds/capture.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7E88A65EA62B3E09276A41F2; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,6 +45,8 @@
 
 /* Begin PBXFileReference section */
 		02B09F2E76947AD72987E4E5 /* ChessTV/Services/PairingAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Services/PairingAPI.swift; sourceTree = SOURCE_ROOT; };
+		0B0BE6B4DF96240D99FABCF7 /* ChessTV/Services/BoardSounds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Services/BoardSounds.swift; sourceTree = SOURCE_ROOT; };
+		17734A35E297696671BF3DB8 /* ChessTV/Models/BoardTransition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Models/BoardTransition.swift; sourceTree = SOURCE_ROOT; };
 		196533E4ABD586D5AAA52556 /* ChessTVTests/RelayIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTVTests/RelayIntegrationTests.swift; sourceTree = SOURCE_ROOT; };
 		1DC0697B72D9E9D755A2E97B /* ChessTV/Services/RelaySocket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Services/RelaySocket.swift; sourceTree = SOURCE_ROOT; };
 		21161828EF33C43137EAFB30 /* ChessTV/Services/RelayConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Services/RelayConfiguration.swift; sourceTree = SOURCE_ROOT; };
@@ -57,19 +60,18 @@
 		6BDB71167672AE053F9C2666 /* ChessTV/Models/TVSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Models/TVSession.swift; sourceTree = SOURCE_ROOT; };
 		6BE5C18470DBF25D01F73B86 /* Config/Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Release.xcconfig; sourceTree = SOURCE_ROOT; };
 		7866FD52E305BBA98091AA97 /* ChessTV/Views/ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Views/ContentView.swift; sourceTree = SOURCE_ROOT; };
+		7E88A65EA62B3E09276A41F2 /* ChessTV/Sounds/capture.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ChessTV/Sounds/capture.mp3; sourceTree = SOURCE_ROOT; };
+		FEECC001122334455667788A /* ChessTV/Sounds/move-check.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ChessTV/Sounds/move-check.mp3; sourceTree = SOURCE_ROOT; };
 		85CF0835D55933607339EADA /* ChessTV/Views/PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Views/PairingView.swift; sourceTree = SOURCE_ROOT; };
 		8BCD5BC4CDFDF0918087C782 /* ChessTV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = ChessTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1A134DABD6C019CB67DB79E /* ChessTV/App/ChessTVApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/App/ChessTVApp.swift; sourceTree = SOURCE_ROOT; };
 		A5CE8953C1481E6DF51BC1D7 /* ChessTV/Models/Protocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Models/Protocol.swift; sourceTree = SOURCE_ROOT; };
 		ABCB5409AB6718B9971B6C9D /* ChessTVTests/ProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTVTests/ProtocolTests.swift; sourceTree = SOURCE_ROOT; };
-		E24A67ECC63770D2C537D6FB /* Config/Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Debug.xcconfig; sourceTree = SOURCE_ROOT; };
-		F219C0274590DA45E4BEF1EA /* ChessTVTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = ChessTVTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		17734A35E297696671BF3DB8 /* ChessTV/Models/BoardTransition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTV/Models/BoardTransition.swift"; sourceTree = SOURCE_ROOT; };
-		FA91495BEBB0F98CA6ADA28C /* ChessTV/Views/PieceBoardOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTV/Views/PieceBoardOverlay.swift"; sourceTree = SOURCE_ROOT; };
-		0B0BE6B4DF96240D99FABCF7 /* ChessTV/Services/BoardSounds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTV/Services/BoardSounds.swift"; sourceTree = SOURCE_ROOT; };
-		E76C4D45F52B102B73B854FC /* ChessTVTests/BoardTransitionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChessTVTests/BoardTransitionTests.swift"; sourceTree = SOURCE_ROOT; };
 		BCAB68134A164EA983F823D1 /* ChessTV/Sounds/move-self.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "ChessTV/Sounds/move-self.mp3"; sourceTree = SOURCE_ROOT; };
-		7E88A65EA62B3E09276A41F2 /* ChessTV/Sounds/capture.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "ChessTV/Sounds/capture.mp3"; sourceTree = SOURCE_ROOT; };
+		E24A67ECC63770D2C537D6FB /* Config/Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		E76C4D45F52B102B73B854FC /* ChessTVTests/BoardTransitionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTVTests/BoardTransitionTests.swift; sourceTree = SOURCE_ROOT; };
+		F219C0274590DA45E4BEF1EA /* ChessTVTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = ChessTVTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA91495BEBB0F98CA6ADA28C /* ChessTV/Views/PieceBoardOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Views/PieceBoardOverlay.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,6 +96,7 @@
 			isa = PBXGroup;
 			children = (
 				7E88A65EA62B3E09276A41F2 /* ChessTV/Sounds/capture.mp3 */,
+				FEECC001122334455667788A /* ChessTV/Sounds/move-check.mp3 */,
 				BCAB68134A164EA983F823D1 /* ChessTV/Sounds/move-self.mp3 */,
 				E76C4D45F52B102B73B854FC /* ChessTVTests/BoardTransitionTests.swift */,
 				0B0BE6B4DF96240D99FABCF7 /* ChessTV/Services/BoardSounds.swift */,
@@ -202,6 +205,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8E7DA00E28D6EC70D27A3DC9 /* ChessTV/Sounds/capture.mp3 in Resources */,
+				FEECC0011223344556677889 /* ChessTV/Sounds/move-check.mp3 in Resources */,
 				81C8D57ABCAB08AF05B37812 /* ChessTV/Sounds/move-self.mp3 in Resources */,
 				2E03FC9C8D896B37E45626A1 /* ChessTV/Assets.xcassets in Resources */,
 			);
@@ -269,6 +273,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = Z5Z34R777D;
 				ENABLE_TESTABILITY = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.chesstv.app;
@@ -344,6 +349,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = Z5Z34R777D;
 				ENABLE_TESTABILITY = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.chesstv.app;

@@ -3,6 +3,7 @@ import AVFoundation
 enum BoardSound: String {
   case move = "move-self"
   case capture
+  case check = "move-check"
 }
 
 @MainActor protocol BoardSoundPlaying {
@@ -15,7 +16,7 @@ enum BoardSound: String {
   private var players: [String: AVAudioPlayer] = [:]
 
   init(bundle: Bundle = .main) {
-    for sound in [BoardSound.move, .capture] {
+    for sound in [BoardSound.move, .capture, .check] {
       guard let url = bundle.url(forResource: sound.rawValue, withExtension: "mp3"),
         let player = try? AVAudioPlayer(contentsOf: url)
       else { continue }

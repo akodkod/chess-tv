@@ -68,7 +68,7 @@ function command(snapshot: Extract<Message, { type: "snapshot" }>, from = "e2", 
   return {
     kind: "move",
     move: {
-      v: 1,
+      v: 2,
       type: "move",
       gameId: snapshot.gameId,
       generation: snapshot.generation,
@@ -332,3 +332,33 @@ it.each([false, true])(
     expect(updated.clocks.white.remainingMs).toBe(9800)
   },
 )
+
+it("publishes legal destinations including special moves without duplicate promotions", async () => {
+  const initial = await sync(fixture().adapter)
+  expect(initial.legalMoves).toHaveLength(20)
+  expect(initial.legalMoves).toContainEqual({ from: "e2", to: "e4" })
+  expect(initial.checkSquare).toBeNull()
+  const castle = await sync(fixture(["e4", "e5", "Nf3", "Nc6", "Bc4", "Nf6"]).adapter)
+  expect(castle.legalMoves).toContainEqual({ from: "e1", to: "g1" })
+  const ep = await sync(fixture(["e4", "a6", "e5", "d5"]).adapter)
+  expect(ep.legalMoves).toContainEqual({ from: "e5", to: "d6" })
+  const promotion = await sync(
+    fixture(["a4", "h5", "a5", "h4", "a6", "h3", "axb7", "hxg2"]).adapter,
+  )
+  expect(promotion.legalMoves.filter((m) => m.from === "b7" && m.to === "a8")).toEqual([
+    { from: "b7", to: "a8" },
+  ])
+})
+
+it("excludes pinned moves and identifies checks and checkmate for either king", async () => {
+  const pinned = await sync(fixture(["e4", "e5", "Nf3", "Nc6", "Bb5", "d6", "d3"]).adapter)
+  expect(pinned.legalMoves.some((m) => m.from === "c6")).toBe(false)
+  const checked = await sync(fixture(["e4", "d6", "Bb5+"]).adapter)
+  expect(checked.checkSquare).toBe("e8")
+  expect(checked.legalMoves).toContainEqual({ from: "c7", to: "c6" })
+  expect(checked.legalMoves).not.toContainEqual({ from: "a7", to: "a6" })
+  const mate = await sync(fixture(["f3", "e5", "g4", "Qh4#"]).adapter)
+  expect(mate.checkSquare).toBe("e1")
+  expect(mate.legalMoves).toEqual([])
+  expect(mate.result).toBe("black-won")
+})

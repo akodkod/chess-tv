@@ -22,7 +22,7 @@ class Socket {
     this.readyState = 1
     this.onopen?.()
     this.onmessage?.({
-      data: JSON.stringify({ v: 1, type: "authenticated", role: "extension", pairingId: "pair" }),
+      data: JSON.stringify({ v: 2, type: "authenticated", role: "extension", pairingId: "pair" }),
     })
   }
   closed(code: number, reason = "") {
@@ -82,7 +82,7 @@ it("retries send failures without throwing or replaying messages", async () => {
   Socket.instances[0]!.send.mockImplementation(() => {
     throw new Error("offline")
   })
-  expect(link.send({ v: 1, type: "ping", nonce: "ping" })).toBe(false)
+  expect(link.send({ v: 2, type: "ping", nonce: "ping" })).toBe(false)
   await vi.advanceTimersByTimeAsync(1000)
   Socket.instances[1]!.authenticate()
   expect(Socket.instances[1]!.send).toHaveBeenCalledTimes(1)

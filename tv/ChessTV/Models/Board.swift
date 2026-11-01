@@ -9,8 +9,11 @@ enum Square {
     }
     return (8 - Int(bytes[1] - 48)) * 8 + Int(bytes[0] - 97)
   }
+  static func displayIndex(_ index: Int, for color: PieceColor?) -> Int {
+    color == .black ? 63 - index : index
+  }
   static func order(for color: PieceColor?) -> [Int] {
-    color == .black ? Array((0..<64).reversed()) : Array(0..<64)
+    (0..<64).map { displayIndex($0, for: color) }
   }
   static func color(of piece: String?) -> PieceColor? {
     guard let piece else { return nil }

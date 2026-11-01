@@ -35,10 +35,15 @@ struct Clocks: Codable, Equatable {
   var observedAt: Double?
 }
 
-/// Protocol v1 uses required nullable fields. Validation runs before decoding, and
+struct LegalMove: Codable, Equatable {
+  var from: String
+  var to: String
+}
+
+/// Protocol v2 uses required nullable fields. Validation runs before decoding, and
 /// encoding reinstates explicit nulls for those fields (Swift normally omits them).
 struct Message: Codable, Equatable {
-  var v = 1
+  var v = 2
   var type: String
   var credential: String?
   var role: String?
@@ -51,6 +56,8 @@ struct Message: Codable, Equatable {
   var reason: String?
   var revision: Int64?
   var board: [String?]?
+  var legalMoves: [LegalMove]?
+  var checkSquare: String?
   var players: Players?
   var playerColor: PieceColor?
   var turn: PieceColor?
@@ -72,7 +79,7 @@ struct Message: Codable, Equatable {
     "status": ["gameId", "generation", "available", "reason"],
     "snapshot": [
       "gameId", "generation", "revision", "board", "players", "playerColor", "turn", "clocks",
-      "result",
+      "result", "legalMoves", "checkSquare",
     ],
     "move": ["gameId", "generation", "revision", "commandId", "from", "to"],
     "outcome": ["gameId", "generation", "commandId", "outcome", "reason"],
@@ -85,7 +92,7 @@ struct Message: Codable, Equatable {
       throw ProtocolFailure("Invalid relay message.")
     }
     guard let version = object["v"] as? NSNumber,
-      CFGetTypeID(version) != CFBooleanGetTypeID(), version == 1
+      CFGetTypeID(version) != CFBooleanGetTypeID(), version == 2
     else {
       throw ProtocolFailure("Unsupported relay protocol. Update Chess TV and the relay together.")
     }
@@ -95,9 +102,13 @@ struct Message: Codable, Equatable {
     let required = fields.union(["v", "type"])
     let allowed = type == "move" ? required.union(["promotion"]) : required
     guard required.isSubset(of: Set(object.keys)), Set(object.keys).isSubset(of: allowed) else {
-      throw ProtocolFailure("Relay message fields do not match protocol v1.")
+      throw ProtocolFailure("Relay message fields do not match protocol v2.")
     }
     if type == "snapshot" {
+      guard let moves = object["legalMoves"] as? [[String: Any]] else {
+        throw ProtocolFailure("Invalid legal moves.")
+      }
+      for move in moves { try exact(move, keys: ["from", "to"]) }
       guard let players = object["players"] as? [String: Any],
         Set(["white", "black"]).isSubset(of: Set(players.keys)),
         Set(players.keys).isSubset(of: ["white", "black", "whiteAvatar", "blackAvatar"])
@@ -184,6 +195,14 @@ struct Message: Codable, Equatable {
         board?.count == 64
           && board!.allSatisfy { $0 == nil || "PNBRQKpnbrqk".map(String.init).contains($0!) })
       try require(players != nil && clocks != nil)
+      try require(
+        legalMoves.map { moves in
+          moves.count <= 256
+            && moves.allSatisfy {
+              Square.index($0.from) != nil && Square.index($0.to) != nil
+            }
+        } ?? false)
+      try require(checkSquare.map { Square.index($0) != nil } ?? true)
       try require(
         [players?.white, players?.black].allSatisfy { $0.map { $0.utf16.count <= 128 } ?? true })
       for avatar in [players?.whiteAvatar, players?.blackAvatar].compactMap({ $0 }) {

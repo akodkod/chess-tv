@@ -81,7 +81,7 @@ it("adopts new sessions after TV replacement and stops after extension replaceme
   await expect.poll(() => received.some((m) => m.type === "session")).toBe(true)
   const session = received.find((m) => m.type === "session")!
   if (session.type !== "session") throw new Error()
-  link.send({ v: 1, type: "attachment", gameId: "sim-game", generation: session.generation })
+  link.send({ v: 2, type: "attachment", gameId: "sim-game", generation: session.generation })
   const tv = await h!.client(paired.tv)
   await tv.take("authenticated")
   const first = await tv.take("session")
@@ -110,7 +110,7 @@ it.each(["extension", "tv", "both", "relay"])(
         if (message.type === "session") {
           session = message
           if (!message.gameId)
-            link!.send({ v: 1, type: "attachment", generation: message.generation, gameId: "game" })
+            link!.send({ v: 2, type: "attachment", generation: message.generation, gameId: "game" })
         }
       },
       () => {},
@@ -143,7 +143,7 @@ it.each(["extension", "tv", "both", "relay"])(
     expect(link.authenticated).toBe(true)
     expect(authentications).toBe(interruption === "tv" ? 1 : 2)
     link.send({
-      v: 1,
+      v: 2,
       type: "status",
       generation: session!.generation,
       gameId: "game",

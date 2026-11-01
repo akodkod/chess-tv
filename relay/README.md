@@ -23,7 +23,41 @@ The default address is `http://127.0.0.1:3000`. `GET /health` returns `{"status"
 
 The database schema initializes automatically. SIGINT/SIGTERM closes connections and SQLite. There is no build step for the server.
 
-Production requires a trusted TLS reverse proxy and persistent storage for the database and WAL files. Bind externally only within that deployment. Forwarded IP headers are deliberately ignored; limits behind a proxy apply to its actual peer address. Do not log request bodies, authorization headers, or WebSocket frames. Docker and deployment automation are deferred.
+Production requires a trusted TLS reverse proxy and persistent storage for the database and WAL files. Bind externally only within that deployment. Forwarded IP headers are deliberately ignored; limits behind a proxy apply to its actual peer address. Do not log request bodies, authorization headers, or WebSocket frames.
+
+## Railway deployment
+
+The `chess-tv` project has a `relay` service in `production`, exposed at
+`https://chess-tv-relay.kodkod.me`. Both clients must use this origin
+for physical Apple TV play. The service uses the repository root and Railpack;
+the root `packageManager` pins Bun 1.4.2. Runtime settings are managed on Railway:
+
+- Start command: `bun run start`; health check: `/health` (60-second timeout).
+- One replica in Europe, with sleeping disabled. Live sessions and pending
+  challenges are process-local; do not add replicas without changing the relay.
+- `HOST=0.0.0.0`, `NODE_ENV=production`, and Railway's supplied `PORT`.
+- `DATABASE_PATH=/data/relay.db`, backed by the service's persistent `/data` volume.
+- Restart on failure, at most 10 retries.
+- GitHub source: `akodkod/chess-tv`, branch `main`. Watch paths include `relay`,
+  `protocol`, root `package.json`, and `bun.lock`.
+
+To deploy current local source with the authenticated Railway CLI:
+
+```sh
+railway up --project e1954941-391c-44bb-a3a3-fe27b11e55a2 --environment production --service relay --detach
+curl --fail https://chess-tv-relay.kodkod.me/health
+```
+
+Wait for the uploaded deployment to reach `SUCCESS` before treating the health
+response as verification of that version. Redeployments disconnect sockets;
+clients reconnect and resynchronize, while pairing credentials survive on the
+volume. Pending pairing challenges must be started again after a restart.
+
+For this personal deployment the existing conservative IP rate limits are kept:
+clients sharing a Railway proxy peer may share the 5 creation / 10 claim attempts
+per minute. Forwarded headers are not trusted. Before broader use, implement and
+test a proxy trust policy for Railway's ingress rather than blindly trusting
+client-supplied `X-Forwarded-For` or `X-Real-IP`.
 
 ## Pairing HTTP API
 
@@ -45,12 +79,12 @@ Creation is limited to 5 attempts per peer IP per minute, claims to 10. There ar
 Connect to `/v1/ws` and send within five seconds:
 
 ```json
-{ "v": 1, "type": "authenticate", "credential": "<64 hex characters>" }
+{ "v": 2, "type": "authenticate", "credential": "<64 hex characters>" }
 ```
 
 Wait for `authenticated` (`role`, `pairingId`) and `session` (`generation`, nullable `gameId`, `peerConnected`). The server derives the role from the credential. A replacement connection closes the previous connection with 4001; revocation closes both with 4003. Every client must disable move submission on a new generation until it obtains authoritative fresh state.
 
-All messages use `v: 1` and `type`. The definitive strict schemas and TypeScript union are in `protocol/src/index.ts`; JSON fixtures are in `protocol/fixtures` for future Swift tests. Extra fields and incompatible versions are rejected. All messages are text JSON, at most 64 KiB, at most 60 messages per connection per second. Oversized frames may terminate without a WebSocket close frame.
+All messages use `v: 2` and `type`. Snapshot messages require `legalMoves` (source/destination pairs) and `checkSquare` (square name or null). Update all components together; v1 is unsupported. The `/v1` HTTP and WebSocket endpoint paths are unchanged. The definitive strict schemas and TypeScript union are in `protocol/src/index.ts`; JSON fixtures are in `protocol/fixtures` for future Swift tests. Extra fields and incompatible versions are rejected. All messages are text JSON, at most 64 KiB, at most 60 messages per connection per second. Oversized frames may terminate without a WebSocket close frame.
 
 | Type               | Direction               | Fields besides `v` and `type`                                                                     |
 | ------------------ | ----------------------- | ------------------------------------------------------------------------------------------------- |

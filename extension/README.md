@@ -9,7 +9,6 @@ From the repository root:
 ```sh
 bun install --frozen-lockfile
 (cd extension && vp build)
-bun run dev
 ```
 
 1. Load `extension/dist-chesscom` with **Load unpacked** in `chrome://extensions` (Developer mode enabled).
@@ -21,7 +20,7 @@ bun run dev
 
 After rebuilding, reload the extension and the game page, then Continue the game in Chess.com. Pairing is remembered. Keep Chrome awake with the bot-game tab selected and visible; it need not have keyboard focus. Minimized windows, hidden tabs, history navigation, and obscured boards cannot accept moves.
 
-The default relay is `http://127.0.0.1:3000`, suitable for the Mac's TV simulator. For a physical Apple TV, build with `RELAY_URL=https://your-relay.example vp build` from `extension`, and configure the same reachable HTTPS relay in the native app. See `../tv/README.md`. The manifest grants access only to Chess.com and the configured relay host.
+Builds default to `https://chess-tv-relay.kodkod.me`, matching the native app. To use a local relay with the Mac's TV simulator, build with `RELAY_URL=http://127.0.0.1:3000 vp build` from `extension` and override the native app's relay origin to match. See `../tv/README.md`. The manifest grants access only to Chess.com and the configured relay host.
 
 ## Play and recovery
 

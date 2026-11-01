@@ -1,6 +1,6 @@
 // A slash variable avoids xcconfig's // comment syntax in URLs.
 SLASH = /
-RELAY_ORIGIN = http:$(SLASH)$(SLASH)127.0.0.1:3000
+RELAY_ORIGIN = https:$(SLASH)$(SLASH)chess-tv-relay.kodkod.me
 INFOPLIST_FILE = Config/Debug-Info.plist
 SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG
 #include? "Local.xcconfig"

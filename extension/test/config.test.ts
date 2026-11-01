@@ -2,12 +2,12 @@ import { expect, it } from "vite-plus/test"
 
 import { buildSettings } from "../config"
 
-it("builds Chess.com with the default local relay access", () => {
+it("builds Chess.com with the default hosted relay access", () => {
   const settings = buildSettings("production")
   expect(settings.manifest.name).toBe("Chess TV")
   expect(settings.manifest.host_permissions).toEqual([
     "https://www.chess.com/play/computer/*",
-    "http://127.0.0.1/*",
+    "https://chess-tv-relay.kodkod.me/*",
   ])
   expect(settings.manifest.permissions).toEqual(["storage", "scripting", "alarms"])
 })

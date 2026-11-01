@@ -8,7 +8,7 @@ describe("protocol", () => {
   })
   it("rejects incompatible versions, extra fields and invalid boards", () => {
     for (const value of [
-      { ...snapshot, v: 2 },
+      { ...snapshot, v: 1 },
       { ...snapshot, secret: "no" },
       { ...snapshot, board: [] },
     ])
@@ -30,7 +30,7 @@ describe("protocol", () => {
   })
   it("accepts all promotions and rejects invalid coordinates", () => {
     const move = {
-      v: 1,
+      v: 2,
       type: "move",
       gameId: "g",
       generation: "s",
@@ -43,4 +43,21 @@ describe("protocol", () => {
       expect(parseMessage({ ...move, promotion }).type).toBe("move")
     expect(() => parseMessage({ ...move, from: "a9" })).toThrow()
   })
+})
+
+it("requires and validates move and check metadata", () => {
+  for (const key of ["legalMoves", "checkSquare"]) {
+    const missing: Record<string, unknown> = { ...snapshot }
+    delete missing[key]
+    expect(() => parseMessage(missing)).toThrow()
+  }
+  for (const metadata of [
+    { legalMoves: null },
+    { legalMoves: [{ from: "a9", to: "a1" }] },
+    { legalMoves: [{ from: "a1", to: "a2", promotion: "q" }] },
+    { legalMoves: Array(257).fill({ from: "a1", to: "a2" }) },
+    { checkSquare: "z9" },
+  ])
+    expect(() => parseMessage({ ...snapshot, ...metadata })).toThrow()
+  expect(parseMessage({ ...snapshot, checkSquare: "e1" })).toBeDefined()
 })

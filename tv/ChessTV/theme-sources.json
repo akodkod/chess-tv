@@ -65,6 +65,10 @@
     {
       "name": "capture",
       "url": "https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3"
+    },
+    {
+      "name": "move-check",
+      "url": "https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3"
     }
   ]
 }

@@ -137,7 +137,7 @@ it("dispatches moves from a visible attached tab while the TV simulator has focu
     { frameId: 0 },
   )
   const move = {
-    v: 1,
+    v: 2,
     type: "move",
     gameId,
     generation: "attached-generation",
@@ -169,7 +169,7 @@ it.each(["inactive tab", "minimized window"])("blocks game moves for an %s", asy
     { frameId: 0 },
   )
   const move = {
-    v: 1,
+    v: 2,
     type: "move",
     gameId,
     generation: "attached-generation",

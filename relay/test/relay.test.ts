@@ -26,7 +26,7 @@ async function attached(h: Harness) {
   await tv.take("authenticated")
   await tv.take("session")
   const before = await extension.take("session")
-  extension.send({ v: 1, type: "attachment", generation: before.generation, gameId: "game-1" })
+  extension.send({ v: 2, type: "attachment", generation: before.generation, gameId: "game-1" })
   const session = await extension.take("session")
   await tv.take("session")
   await extension.take("snapshot-request")
@@ -104,7 +104,7 @@ describe("real Bun relay", () => {
     expect(await tv.take("snapshot")).toEqual(state)
     for (const promotion of ["q", "r", "b", "n"] as const) {
       const move = {
-        v: 1 as const,
+        v: 2 as const,
         type: "move" as const,
         gameId: "game-1",
         generation,
@@ -119,7 +119,7 @@ describe("real Bun relay", () => {
       tv.send(move)
       expect(await extension.take("move")).toEqual(move)
       const outcome = {
-        v: 1 as const,
+        v: 2 as const,
         type: "outcome" as const,
         gameId: "game-1",
         generation,
@@ -164,7 +164,7 @@ describe("real Bun relay", () => {
     const h = await setup()
     const a = await attached(h)
     a.tv.send({
-      v: 1,
+      v: 2,
       type: "move",
       gameId: "game-1",
       generation: a.generation,
@@ -184,12 +184,12 @@ describe("real Bun relay", () => {
     await a.tv.take("session")
     expect(fresh.gameId).toBeNull()
     expect(replacement.messages.some((m) => m.type === "move")).toBe(false)
-    replacement.send({ v: 1, type: "attachment", generation: fresh.generation, gameId: "game-1" })
+    replacement.send({ v: 2, type: "attachment", generation: fresh.generation, gameId: "game-1" })
     const newSession = await replacement.take("session")
     await replacement.take("snapshot-request")
     await a.tv.take("session")
     expect(newSession.generation).not.toBe(a.generation)
-    replacement.send({ v: 1, type: "attachment", generation: newSession.generation, gameId: null })
+    replacement.send({ v: 2, type: "attachment", generation: newSession.generation, gameId: null })
     expect((await a.tv.take("session")).gameId).toBeNull()
   })
   it("rejects invalid authentication and closes unauthenticated or silent clients", async () => {
@@ -209,7 +209,7 @@ describe("real Bun relay", () => {
     const h = await setup()
     for (const input of [
       "{",
-      JSON.stringify({ v: 2, type: "authenticate", credential: "0".repeat(64) }),
+      JSON.stringify({ v: 1, type: "authenticate", credential: "0".repeat(64) }),
       "x".repeat(65537),
       new Uint8Array([1]),
     ]) {
@@ -223,7 +223,7 @@ describe("real Bun relay", () => {
     const p = await pair(h)
     const client = await h.client(p.tv)
     await client.take("authenticated")
-    for (let i = 0; i < 61; i++) client.send({ v: 1, type: "ping", nonce: String(i) })
+    for (let i = 0; i < 61; i++) client.send({ v: 2, type: "ping", nonce: String(i) })
     expect(await client.closed).toBe(1008)
     expect(h.logs()).not.toContain(p.tv)
     expect(h.logs()).not.toContain(p.code)

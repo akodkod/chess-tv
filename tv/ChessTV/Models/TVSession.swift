@@ -17,6 +17,7 @@ import Observation
   private(set) var checkingMove = false
   private(set) var needsReconnect = false
   private(set) var notice = "Pair this TV with the Chrome extension."
+  private var noticeIsWarning = false
   private(set) var moveNotice: String?
   private(set) var now: TimeInterval = ProcessInfo.processInfo.systemUptime
   private var snapshotAt: TimeInterval?
@@ -77,12 +78,17 @@ import Observation
       return "Move interrupted. Inspect Chrome and reconnect the game. Nothing will be resent."
     }
     if checkingMove { return "Checking move. Inspect Chrome if it remains unresolved." }
-    if pending != nil { return "Waiting for the observed move…" }
-    if available, fresh, snapshot?.result == nil, let turn = snapshot?.turn,
-      let player = snapshot?.playerColor, turn != player {
-      return "Waiting for the bot's move…"
-    }
     return notice
+  }
+
+  /// Gameplay displays actionable notices; setup screens can still show statusText.
+  var gameplayWarning: String? {
+    if pendingInterrupted || checkingMove { return statusText }
+    return noticeIsWarning ? notice : nil
+  }
+  private func setNotice(_ text: String, warning: Bool = false) {
+    notice = text
+    noticeIsWarning = warning
   }
 
   func setActive(_ value: Bool) {
@@ -92,7 +98,9 @@ import Observation
       now = uptime()
       if !started {
         started = true
-        do { credential = try store.load() } catch { notice = error.localizedDescription }
+        do { credential = try store.load() } catch {
+          setNotice(error.localizedDescription, warning: true)
+        }
       }
       ticker = Task { [weak self] in
         while !Task.isCancelled {
@@ -110,7 +118,7 @@ import Observation
       ticker?.cancel()
       ticker = nil
       stopConnection()
-      notice = "TV paused. Waiting to synchronize."
+      setNotice("TV paused. Waiting to synchronize.")
     }
   }
 
@@ -127,12 +135,12 @@ import Observation
         guard op == operation, active else { return }
         challenge = value
         busy = false
-        notice = "Enter this code in the Chrome extension."
+        setNotice("Enter this code in the Chrome extension.")
         pollChallenge()
       } catch {
         guard op == operation else { return }
         busy = false
-        notice = error.localizedDescription
+        setNotice(error.localizedDescription, warning: true)
       }
     }
   }
@@ -145,14 +153,14 @@ import Observation
       while !Task.isCancelled, op == operation, active {
         if challenge.expiresAt <= Date().timeIntervalSince1970 * 1000 {
           self.challenge = nil
-          notice = "Code expired. Request a new code."
+          setNotice("Code expired. Request a new code.", warning: true)
           return
         }
         do {
           let status = try await api.status(challenge)
           guard op == operation, active else { return }
           if status.state == "claimed" {
-            notice = "Connecting to the extension…"
+            setNotice("Connecting to the extension…")
             // Entering this TV's code completes pairing; no second remote action is needed.
             // If the response is lost, poll again before deciding whether to retry.
             try await api.decide(challenge, confirm: true)
@@ -164,11 +172,11 @@ import Observation
         } catch let error as HTTPFailure where [401, 404].contains(error.status) {
           guard op == operation else { return }
           self.challenge = nil
-          notice = error.localizedDescription
+          setNotice(error.localizedDescription, warning: true)
           return
         } catch {
           guard op == operation else { return }
-          notice = error.localizedDescription
+          setNotice(error.localizedDescription, warning: true)
           // Keep the challenge so credential delivery / Keychain persistence can be retried.
         }
         do { try await Task.sleep(for: .seconds(1)) } catch { return }
@@ -192,9 +200,9 @@ import Observation
       connect()
     case "rejected":
       challenge = nil
-      notice = "Pairing declined. Request a new code."
+      setNotice("Pairing declined. Request a new code.", warning: true)
     case "claimed":
-      notice = "Connecting to the extension…"
+      setNotice("Connecting to the extension…")
     default: break
     }
   }
@@ -223,12 +231,13 @@ import Observation
         pendingInterrupted = false
         checkingMove = false
         needsReconnect = false
-        notice = "Unpaired. Request a new code to connect again."
+        setNotice("Unpaired. Request a new code to connect again.")
       } catch {
         guard op == operation else { return }
         needsReconnect = true
-        notice =
-          "Unpair incomplete. The saved credential was retained. \(error.localizedDescription)"
+        setNotice(
+          "Unpair incomplete. The saved credential was retained. \(error.localizedDescription)",
+          warning: true)
       }
       busy = false
     }
@@ -256,7 +265,7 @@ import Observation
     guard active, let credential else { return }
     stopConnection()
     let epoch = connection
-    notice = "Connecting to relay…"
+    setNotice("Connecting to relay…")
     socket.onMessage = { [weak self] message in
       guard let self, self.connection == epoch else { return }
       self.receive(message)
@@ -270,19 +279,23 @@ import Observation
   }
   func closed(code: Int, reason: String) {
     stopConnection()
-    notice = reason
+    setNotice(reason, warning: true)
     guard active, credential != nil else { return }
     if [4001, 4003, 1002, 1007, 1009].contains(code)
       || (code == 1008 && !["Heartbeat timeout", "Authentication timeout"].contains(reason))
     {
       needsReconnect = true
-      if code == 4001 { notice = "Another TV replaced this connection. Reconnect to take over." }
-      if code == 4003 { notice = "Pairing was revoked. Unpair here, then request a new code." }
+      if code == 4001 {
+        setNotice("Another TV replaced this connection. Reconnect to take over.", warning: true)
+      }
+      if code == 4003 {
+        setNotice("Pairing was revoked. Unpair here, then request a new code.", warning: true)
+      }
       return
     }
     let delay = min(30, pow(2, Double(min(attempt, 5))) * Double.random(in: 0.75...1.25))
     attempt = min(attempt + 1, 5)
-    notice = "Relay disconnected. Reconnecting…"
+    setNotice("Relay disconnected. Reconnecting…", warning: true)
     reconnectAt = uptime() + delay
   }
   func receive(_ message: Message) {
@@ -297,7 +310,7 @@ import Observation
       attempt = 0
       authenticateBy = nil
       reconnectAt = nil
-      notice = "Waiting for the extension…"
+      setNotice("Waiting for the extension…")
       return
     }
     if message.type == "error" {
@@ -310,7 +323,7 @@ import Observation
         fresh = false
         freezeClocks()
         if message.code == "peer_unavailable" { peerConnected = false }
-        notice = message.message ?? "Relay request failed."
+        setNotice(message.message ?? "Relay request failed.", warning: true)
         // Routing errors cannot repair the context they rejected. Wait for the
         // relay's next session instead of looping snapshot requests into errors.
       }
@@ -328,6 +341,7 @@ import Observation
       snapshotAt = nil
       statusAt = nil
       freezeClocks()
+      noticeIsWarning = !peerConnected
       notice =
         !peerConnected
         ? "Waiting for the Chrome extension to reconnect…"
@@ -344,6 +358,8 @@ import Observation
       if fresh, message.revision == snapshot?.revision,
         message.board != snapshot?.board || message.turn != snapshot?.turn
           || message.playerColor != snapshot?.playerColor || message.result != snapshot?.result
+          || message.legalMoves != snapshot?.legalMoves
+          || message.checkSquare != snapshot?.checkSquare
       {
         closed(code: 1002, reason: "Position changed without a new revision. Reconnect the game.")
         return
@@ -353,7 +369,8 @@ import Observation
       if soundsEnabled, fresh,
         let previous = snapshot, let transition = BoardTransition.between(previous, message)
       {
-        sounds.play(transition.capturedSquare == nil ? .move : .capture)
+        sounds.play(
+          message.checkSquare != nil ? .check : transition.capturedSquare == nil ? .move : .capture)
       }
       // Reset presentation on the arriving baseline too: a reconnect may have
       // advanced the board while preserving the same game and generation.
@@ -369,7 +386,9 @@ import Observation
     case "status":
       available = message.available == true
       statusAt = now
-      notice = message.reason ?? "Your move"
+      setNotice(
+        message.reason ?? "",
+        warning: !available && snapshot?.result == nil && message.reason != nil)
       reconcileInterrupted()
     case "outcome":
       guard message.commandId == pending?.commandId, !pendingInterrupted else { return }
@@ -459,7 +478,7 @@ import Observation
     if fresh, snapshotAt.map({ now - $0 > 5 }) == true || statusAt.map({ now - $0 > 5 }) == true {
       available = false
       freezeClocks()
-      notice = "Game observation is stale. Waiting for fresh state."
+      setNotice("Game observation is stale. Waiting for fresh state.", warning: true)
     }
   }
   private func freezeClocks() {

@@ -119,6 +119,59 @@ final class MemoryCredentials: CredentialStoring {
     session.receive(clockUpdate)
     XCTAssertEqual(sounds.played, [.move])
   }
+  func testCheckSoundOverridesMoveAndCaptureAndHonorsMute() throws {
+    for capture in [false, true] {
+      state()
+      var initial = try soundPosition()
+      initial.board![52] = nil
+      initial.board![4] = nil
+      initial.board![0] = "k"
+      initial.board![57] = "R"
+      if capture { initial.board![1] = "n" }
+      session.receive(initial)
+      let count = sounds.played.count
+      var checked = initial
+      checked.revision! += 1
+      checked.board![57] = nil
+      checked.board![1] = "R"
+      checked.turn = .black
+      checked.checkSquare = "a8"
+      session.receive(checked)
+      session.receive(checked)
+      XCTAssertEqual(Array(sounds.played.dropFirst(count)), [.check])
+      state()
+      session.receive(checked)
+      XCTAssertEqual(sounds.played.count, count + 1)
+      session.setSoundsEnabled(false)
+      state()
+      session.receive(initial)
+      session.receive(checked)
+      XCTAssertEqual(sounds.played.count, count + 1)
+      session.setSoundsEnabled(true)
+    }
+  }
+  func testGameplayHidesRoutineStatusButPreservesWarnings() throws {
+    try ready()
+    XCTAssertNil(session.gameplayWarning)
+    session.submit(from: 60, to: 59)
+    XCTAssertNotNil(session.pending)
+    XCTAssertFalse(session.canMove)
+    XCTAssertNil(session.gameplayWarning)
+    time += 6
+    session.tick()
+    XCTAssertTrue(session.gameplayWarning?.contains("Checking move") == true)
+    outcome("rejected")
+    XCTAssertEqual(session.moveNotice, "Move rejected.")
+    session.closed(code: 4001, reason: "Replaced")
+    XCTAssertTrue(session.gameplayWarning?.contains("replaced") == true)
+  }
+  func testRejectsMetadataChangeWithoutRevision() throws {
+    try ready()
+    var changed = try ProtocolTests.fixture()
+    changed.checkSquare = "e1"
+    session.receive(changed)
+    XCTAssertTrue(session.needsReconnect)
+  }
   func testCaptureSoundAndMute() throws {
     state()
     var initial = try soundPosition()
@@ -177,7 +230,7 @@ final class MemoryCredentials: CredentialStoring {
       }
     }
     XCTAssertNotNil(UIImage(named: "chess-walnut", in: bundle, compatibleWith: nil))
-    for name in ["move-self", "capture"] {
+    for name in ["move-self", "capture", "move-check"] {
       let url = try XCTUnwrap(bundle.url(forResource: name, withExtension: "mp3"), name)
       let player = try AVAudioPlayer(contentsOf: url)
       XCTAssertGreaterThan(player.duration, 0, name)
@@ -235,14 +288,17 @@ final class MemoryCredentials: CredentialStoring {
       }
       environment.preferredFocusEnvironments.forEach(collectFocusItems)
       if let container = environment.focusItemContainer {
-        for item in container.focusItems(in: CGRect(x: -10000, y: -10000, width: 20000, height: 20000)) {
+        for item in container.focusItems(
+          in: CGRect(x: -10000, y: -10000, width: 20000, height: 20000))
+        {
           collectFocusItems(item)
         }
       }
       if let view = environment as? UIView { view.subviews.forEach(collectFocusItems) }
     }
     collectFocusItems(window)
-    XCTAssertEqual(candidates.count, 66, "Connection, Settings and all 64 squares must be focusable")
+    XCTAssertEqual(
+      candidates.count, 66, "Connection, Settings and all 64 squares must be focusable")
     XCTAssertNotNil(candidates[ObjectIdentifier(square)])
     snapshot.revision! += 1
     session.receive(snapshot)
@@ -271,6 +327,7 @@ final class MemoryCredentials: CredentialStoring {
     for color in [PieceColor.white, .black] {
       position.playerColor = color
       position.turn = color
+      position.checkSquare = color == .white ? "e1" : "e8"
       position.revision! += 1
       session.receive(position)
       available()
@@ -284,6 +341,21 @@ final class MemoryCredentials: CredentialStoring {
       try XCTUnwrap(image.pngData()).write(to: url)
       print("Board rendering: \(url.path)")
     }
+    let markers = HStack(spacing: 0) {
+      ForEach([false, true], id: \.self) { capture in
+        ZStack {
+          Color(red: 0.65, green: 0.45, blue: 0.28)
+          LegalMoveMarker(size: 160, capture: capture)
+          if capture { Image("chess-bn").resizable().scaledToFit() }
+        }.frame(width: 160, height: 160)
+      }
+    }
+    let renderer = ImageRenderer(content: markers)
+    let image = try XCTUnwrap(renderer.uiImage)
+    let directory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+    let url = directory.appendingPathComponent("Move-markers.png")
+    try XCTUnwrap(image.pngData()).write(to: url)
+    print("Move markers rendering: \(url.path)")
   }
   func testFailedSubmissionIsNotReplayedOnReconnect() async throws {
     try ready()
@@ -444,9 +516,10 @@ final class MemoryCredentials: CredentialStoring {
     XCTAssertFalse(session.authenticated)
   }
   func testTransientDisconnectsAutomaticallyReconnectWithFreshState() throws {
-    for (code, reason) in [(1006, "Offline"), (1001, "Server shutdown"),
-      (1008, "Heartbeat timeout"), (1008, "Authentication timeout")]
-    {
+    for (code, reason) in [
+      (1006, "Offline"), (1001, "Server shutdown"),
+      (1008, "Heartbeat timeout"), (1008, "Authentication timeout"),
+    ] {
       try ready()
       let before = socket.connects
       session.closed(code: code, reason: reason)

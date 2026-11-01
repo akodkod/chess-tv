@@ -20,7 +20,10 @@ final class ProtocolTests: XCTestCase {
     var snapshot = try Self.fixture()
     snapshot.players?.whiteAvatar = "https://images.chesscomfiles.com/avatar.png"
     XCTAssertEqual(try Message.decode(snapshot.encoded()), snapshot)
-    for value in ["http://example.com/avatar.png", "file:///avatar.png", "https://user:password@example.com/a.png"] {
+    for value in [
+      "http://example.com/avatar.png", "file:///avatar.png",
+      "https://user:password@example.com/a.png",
+    ] {
       snapshot.players?.whiteAvatar = value
       XCTAssertThrowsError(try snapshot.encoded())
     }
@@ -29,7 +32,7 @@ final class ProtocolTests: XCTestCase {
     let valid = try Self.fixture().encoded()
     let object = try XCTUnwrap(JSONSerialization.jsonObject(with: valid) as? [String: Any])
     for (key, value) in [
-      ("v", 2 as Any), ("v", true as Any), ("board", [] as Any), ("revision", -1 as Any),
+      ("v", 1 as Any), ("v", true as Any), ("board", [] as Any), ("revision", -1 as Any),
       ("revision", 1.5 as Any), ("extra", true as Any), ("gameId", NSNull()),
     ] {
       var bad = object
@@ -47,6 +50,27 @@ final class ProtocolTests: XCTestCase {
     ]
     XCTAssertThrowsError(try Message.decode(JSONSerialization.data(withJSONObject: badClock)))
     XCTAssertThrowsError(try Message.decode(Data(repeating: 32, count: 65_537)))
+  }
+  func testRequiredMoveAndCheckMetadata() throws {
+    let valid = try Self.fixture().encoded()
+    let object = try XCTUnwrap(JSONSerialization.jsonObject(with: valid) as? [String: Any])
+    for key in ["legalMoves", "checkSquare"] {
+      var missing = object
+      missing.removeValue(forKey: key)
+      XCTAssertThrowsError(try Message.decode(JSONSerialization.data(withJSONObject: missing)))
+    }
+    for (key, value) in [
+      ("checkSquare", "z9" as Any), ("legalMoves", NSNull()),
+      ("legalMoves", [["from": "a9", "to": "a1"]]),
+      ("legalMoves", [["from": "a1", "to": "a2", "promotion": "q"]]),
+    ] {
+      var bad = object
+      bad[key] = value
+      XCTAssertThrowsError(try Message.decode(JSONSerialization.data(withJSONObject: bad)))
+    }
+    var checked = try Self.fixture()
+    checked.checkSquare = "e1"
+    XCTAssertEqual(try Message.decode(checked.encoded()), checked)
   }
   func testMoveEncodingAndAllPromotions() throws {
     for promotion in ["q", "r", "b", "n"] {
@@ -73,6 +97,14 @@ final class ProtocolTests: XCTestCase {
     for index in 0..<64 { XCTAssertEqual(Square.index(Square.name(index)), index) }
     XCTAssertEqual(Square.order(for: .white).first, Square.index("a8"))
     XCTAssertEqual(Square.order(for: .black).first, Square.index("h1"))
+    for color in [PieceColor.white, .black] {
+      let order = Square.order(for: color)
+      for (displayed, square) in order.enumerated() {
+        XCTAssertEqual(Square.displayIndex(square, for: color), displayed)
+      }
+      let bottomRank = color == .black ? "8" : "1"
+      XCTAssertTrue(order.suffix(8).allSatisfy { Square.name($0).hasSuffix(bottomRank) })
+    }
     XCTAssertNil(Square.index("a9"))
     XCTAssertNil(Square.index("z1"))
     XCTAssertTrue(Square.promotion(piece: "P", destination: 0))

@@ -1,7 +1,7 @@
 export function buildSettings(mode: string, relayValue?: string) {
   if (!["production", "development", "chesscom"].includes(mode))
     throw new Error("Unsupported build mode. Use the default Chess.com build.")
-  const relay = new URL(relayValue || "http://127.0.0.1:3000")
+  const relay = new URL(relayValue || "https://chess-tv-relay.kodkod.me")
   const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(relay.hostname)
   if (
     (relay.protocol !== "https:" && !(loopback && relay.protocol === "http:")) ||

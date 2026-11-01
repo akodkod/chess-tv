@@ -51,7 +51,7 @@ export class ChessComAdapter {
   }
   private sync(): ContentReply {
     const p = this.read()
-    const context = { v: 1 as const, gameId: this.gameId, generation: this.generation }
+    const context = { v: 2 as const, gameId: this.gameId, generation: this.generation }
     const available = this.enabled && !this.doc.hidden && !this.controller.unresolved && !p.result
     return this.reply([
       {
@@ -64,6 +64,21 @@ export class ChessComAdapter {
         turn: p.chess.turn() === "w" ? "white" : "black",
         clocks: p.clocks,
         result: p.result,
+        legalMoves: p.result
+          ? []
+          : [
+              ...new Map(
+                p.chess
+                  .moves({ verbose: true })
+                  .map(({ from, to }) => [`${from}${to}`, { from, to }]),
+              ).values(),
+            ],
+        checkSquare: p.chess.isCheck()
+          ? p.chess
+              .board()
+              .flat()
+              .find((piece) => piece?.type === "k" && piece.color === p.chess.turn())!.square
+          : null,
       },
       {
         ...context,
@@ -85,7 +100,7 @@ export class ChessComAdapter {
       reason: string,
     ): ContentReply => {
       const message: Message = {
-        v: 1,
+        v: 2,
         type: "outcome",
         gameId: move.gameId,
         generation: move.generation,

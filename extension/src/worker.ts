@@ -117,7 +117,7 @@ function connect() {
 function sendAttachment(gameId: string | null) {
   if (generation && link?.authenticated) {
     phase = gameId === null ? "detaching" : "attaching"
-    link.send({ v: 1, type: "attachment", generation, gameId })
+    link.send({ v: 2, type: "attachment", generation, gameId })
   }
 }
 async function processReply(reply: ContentReply) {
@@ -176,7 +176,7 @@ async function processReply(reply: ContentReply) {
 function reportUnavailable(reason: string) {
   available = false
   if (generation && attached && peerConnected)
-    link?.send({ v: 1, type: "status", gameId: attached, generation, available: false, reason })
+    link?.send({ v: 2, type: "status", gameId: attached, generation, available: false, reason })
 }
 async function synchronize() {
   if (!binding || !generation || !link?.authenticated || phase !== "idle") return
@@ -257,7 +257,7 @@ async function receive(message: Message) {
           await saveBinding()
         }
         link?.send({
-          v: 1,
+          v: 2,
           type: "outcome",
           gameId: message.gameId,
           generation: message.generation,

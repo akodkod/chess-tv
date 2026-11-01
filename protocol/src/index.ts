@@ -12,6 +12,16 @@ const context = { gameId: id, generation: id }
 const base = { v: z.literal(VERSION) }
 const message = <T extends string, S extends z.ZodRawShape>(type: T, shape: S) =>
   z.strictObject({ ...base, type: z.literal(type), ...shape })
+const avatar = z
+  .string()
+  .max(2048)
+  .url()
+  .refine((value) => {
+    const url = new URL(value)
+    return url.protocol === "https:" && !url.username && !url.password
+  })
+  .nullable()
+  .optional()
 const clock = z.strictObject({
   remainingMs: z.number().nonnegative().nullable(),
   running: z.boolean().nullable(),
@@ -33,6 +43,8 @@ export const messageSchema = z.discriminatedUnion("type", [
     players: z.strictObject({
       white: z.string().max(128).nullable(),
       black: z.string().max(128).nullable(),
+      whiteAvatar: avatar,
+      blackAvatar: avatar,
     }),
     playerColor: color.nullable(),
     turn: color.nullable(),

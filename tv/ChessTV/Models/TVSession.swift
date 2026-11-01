@@ -24,13 +24,20 @@ import Observation
   private var pendingAt: TimeInterval?
   private var pendingInterrupted = false
   private var sawDetachAfterPending = false
-  private var fresh = false
+  private(set) var presentationEpoch = 0
+  private var fresh = false {
+    didSet {
+      if !fresh { presentationEpoch += 1 }
+    }
+  }
   private var started = false
   private var attempt = 0
   private var reconnectAt: TimeInterval?
   private var authenticateBy: TimeInterval?
   private var operation = UUID()
   private var connection = UUID()
+  private var soundsEnabled = true
+  @ObservationIgnored private let sounds: any BoardSoundPlaying
   @ObservationIgnored private let api: PairingAPI
   @ObservationIgnored private let store: any CredentialStoring
   @ObservationIgnored private let socket: any RelayConnecting
@@ -41,12 +48,18 @@ import Observation
   init(
     configuration: RelayConfiguration, store: (any CredentialStoring)? = nil,
     socket: (any RelayConnecting)? = nil, api: PairingAPI? = nil,
+    sounds: (any BoardSoundPlaying)? = nil,
     uptime: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }
   ) {
     self.api = api ?? PairingAPI(configuration: configuration)
     self.store = store ?? CredentialStore(origin: configuration.origin.absoluteString)
     self.socket = socket ?? RelaySocket()
+    self.sounds = sounds ?? BoardSounds()
     self.uptime = uptime
+  }
+  func setSoundsEnabled(_ enabled: Bool) {
+    soundsEnabled = enabled
+    if !enabled { sounds.stop() }
   }
   var canMove: Bool {
     active && authenticated && peerConnected && fresh && available && pending == nil
@@ -65,6 +78,10 @@ import Observation
     }
     if checkingMove { return "Checking move. Inspect Chrome if it remains unresolved." }
     if pending != nil { return "Waiting for the observed move…" }
+    if available, fresh, snapshot?.result == nil, let turn = snapshot?.turn,
+      let player = snapshot?.playerColor, turn != player {
+      return "Waiting for the bot's move…"
+    }
     return notice
   }
 
@@ -223,6 +240,7 @@ import Observation
     busy = false
   }
   private func stopConnection() {
+    sounds.stop()
     connection = UUID()
     socket.disconnect()
     reconnectAt = nil
@@ -314,7 +332,7 @@ import Observation
         !peerConnected
         ? "Waiting for the Chrome extension to reconnect…"
         : gameId == nil
-          ? "Chess.com TV connection is in development. Use the Chrome extension to inspect your bot game."
+          ? "Start a Chess.com bot game, then connect it in the Chrome extension."
           : "Synchronizing game…"
       requestSnapshot()
       return
@@ -330,6 +348,16 @@ import Observation
         closed(code: 1002, reason: "Position changed without a new revision. Reconnect the game.")
         return
       }
+      // Only live, observed single-move transitions produce a cue. Reconnects,
+      // duplicate snapshots, and missed positions establish a silent baseline.
+      if soundsEnabled, fresh,
+        let previous = snapshot, let transition = BoardTransition.between(previous, message)
+      {
+        sounds.play(transition.capturedSquare == nil ? .move : .capture)
+      }
+      // Reset presentation on the arriving baseline too: a reconnect may have
+      // advanced the board while preserving the same game and generation.
+      if !fresh { presentationEpoch += 1 }
       snapshot = message
       fresh = true
       snapshotAt = now

@@ -3,6 +3,8 @@ import SwiftUI
 struct ContentView: View {
   let session: TVSession
   @AppStorage("showSquareLabels") private var showSquareLabels = true
+  @AppStorage("edgeSquareLabelsOnly") private var edgeSquareLabelsOnly = true
+  @AppStorage("soundsEnabled") private var soundsEnabled = true
   @State private var showConnection = false
   @State private var showSettings = false
   var body: some View {
@@ -24,7 +26,9 @@ struct ContentView: View {
             .font(.caption)
           }.focusSection()
           if let snapshot = session.snapshot {
-            BoardView(session: session, snapshot: snapshot, showSquareLabels: showSquareLabels)
+            BoardView(
+              session: session, snapshot: snapshot, showSquareLabels: showSquareLabels,
+              edgeSquareLabelsOnly: edgeSquareLabelsOnly)
           } else {
             Spacer()
             Image(systemName: "checkerboard.rectangle").font(.system(size: 80)).accessibilityHidden(
@@ -37,7 +41,9 @@ struct ContentView: View {
       }
     }
     .sheet(isPresented: $showSettings) {
-      BoardSettingsView(showSquareLabels: $showSquareLabels)
+      BoardSettingsView(
+        showSquareLabels: $showSquareLabels, edgeSquareLabelsOnly: $edgeSquareLabelsOnly,
+        soundsEnabled: $soundsEnabled)
     }
     .sheet(isPresented: $showConnection) {
       VStack(spacing: 30) {
@@ -52,20 +58,27 @@ struct ContentView: View {
       }.padding(80)
     }
     .onChange(of: session.credential) { _, value in if value == nil { showConnection = false } }
+    .onChange(of: soundsEnabled, initial: true) { _, value in session.setSoundsEnabled(value) }
   }
 }
 
 private struct BoardSettingsView: View {
   @Binding var showSquareLabels: Bool
+  @Binding var edgeSquareLabelsOnly: Bool
+  @Binding var soundsEnabled: Bool
   @Environment(\.dismiss) private var dismiss
 
   var body: some View {
     VStack(spacing: 30) {
       Text("Settings").font(.title)
       Toggle("Show square labels", isOn: $showSquareLabels)
-      Text("Display coordinates such as a1 and e4 on the board.")
+      Toggle("Labels on board edges only", isOn: $edgeSquareLabelsOnly)
+        .disabled(!showSquareLabels)
+      Text("Show ranks along the left edge and files along the bottom edge.")
         .font(.callout).foregroundStyle(.secondary)
         .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)
+      Toggle("Game sounds", isOn: $soundsEnabled)
       Button("Done") { dismiss() }
     }
     .frame(maxWidth: 700)

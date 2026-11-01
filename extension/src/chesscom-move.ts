@@ -1,20 +1,17 @@
-import { z } from "zod"
+import { Chess } from "chess.js"
 
 import { readChessComTurn } from "./chesscom-turn"
 
-const request = z.discriminatedUnion("kind", [
-  z.strictObject({ kind: z.literal("bot-inspect") }),
-  z.strictObject({
-    kind: z.literal("bot-move"),
-    id: z.string().uuid(),
-    token: z.string(),
-    from: z.string().regex(/^[a-h][1-8]$/),
-    to: z.string().regex(/^[a-h][1-8]$/),
-    color: z.enum(["white", "black"]),
-  }),
-])
-type MoveRequest = Extract<z.infer<typeof request>, { kind: "bot-move" }>
-export type BotReply = { token?: string; turn?: string; message: string }
+type MoveRequest = {
+  kind: "bot-move"
+  id: string
+  token: string
+  from: string
+  to: string
+  color: "white" | "black"
+  promotion?: "q" | "r" | "b" | "n"
+}
+type BotReply = { message: string; outcome: "observed-complete" | "uncertain" }
 
 export function position(doc: Document) {
   const turn = readChessComTurn(doc)
@@ -34,8 +31,16 @@ export function position(doc: Document) {
   )
     throw new Error("Board is incomplete.")
   const history = Array.from(
-    doc.querySelectorAll("wc-simple-move-list .main-line-ply"),
-    (e) => e.textContent?.trim() ?? "",
+    doc.querySelectorAll('wc-simple-move-list[board-id="board-play-computer"] .main-line-ply'),
+    (e) => {
+      const notation = e.querySelector(".node-highlight-content")!.cloneNode(true) as HTMLElement
+      for (const figurine of notation.querySelectorAll("[data-figurine]")) {
+        const piece = figurine.getAttribute("data-figurine")
+        if (!piece || !/^[KQRBNP]$/.test(piece)) throw new Error("Unrecognized move notation.")
+        figurine.replaceWith(piece)
+      }
+      return (notation.textContent ?? "").replace(/\s/g, "")
+    },
   )
   const fingerprint = JSON.stringify([
     history,
@@ -65,24 +70,68 @@ export function moveObserved(
   move: MoveRequest,
 ) {
   const piece = before.pieces.get(move.from)!.code
+  const promoted = move.promotion ? piece[0] + move.promotion : piece
+  const castle = piece[1] === "k" && Math.abs(move.from.charCodeAt(0) - move.to.charCodeAt(0)) === 2
+  const notation = after.history[before.history.length]?.replace(/[+#]$/, "")
+  const matchingNotation = castle
+    ? notation === (move.to[0] === "g" ? "O-O" : "O-O-O")
+    : new RegExp(
+        `${move.to}${move.promotion ? "=" + move.promotion.toUpperCase() : ""}[+#]?$`,
+      ).test(after.history[before.history.length] ?? "")
+  // A fast bot capture can remove our piece before the observer runs. In that
+  // case, validate the entire resulting board against the appended legal history.
+  let boardMatchesAfterReply = false
+  if (after.history.length > before.history.length + 1) {
+    try {
+      const chess = new Chess()
+      for (const san of after.history) chess.move(san)
+      const pieces = chess
+        .board()
+        .flat()
+        .filter((p) => p !== null)
+      boardMatchesAfterReply =
+        pieces.length === after.pieces.size &&
+        pieces.every((p) => after.pieces.get(p.square)?.code === p.color + p.type)
+    } catch {
+      /* Incomplete history cannot confirm a move. */
+    }
+  }
   return (
     after.history.length > before.history.length &&
     before.history.every((text, i) => after.history[i] === text) &&
-    !after.pieces.has(move.from) &&
-    after.pieces.get(move.to)?.code === piece &&
-    new RegExp(`${move.to}[+#]?$`).test(after.history[before.history.length]!)
+    (boardMatchesAfterReply ||
+      (!after.pieces.has(move.from) && after.pieces.get(move.to)?.code === promoted)) &&
+    matchingNotation
   )
 }
 
-export function installChessComMoves() {
-  const scope = globalThis as typeof globalThis & { chessTVBotInstalled?: boolean }
-  if (
-    scope.chessTVBotInstalled ||
-    location.origin !== "https://www.chess.com" ||
-    !location.pathname.startsWith("/play/computer/")
-  )
-    return
-  scope.chessTVBotInstalled = true
+function clickAt(target: Element, p: { x: number; y: number }) {
+  for (const type of ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]) {
+    const down = type.endsWith("down")
+    const init = {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      clientX: p.x,
+      clientY: p.y,
+      button: 0,
+      buttons: down ? 1 : 0,
+      view: window,
+    }
+    target.dispatchEvent(
+      type.startsWith("pointer")
+        ? new PointerEvent(type, {
+            ...init,
+            pointerId: 1,
+            pointerType: "mouse",
+            isPrimary: true,
+          })
+        : new MouseEvent(type, init),
+    )
+  }
+}
+
+export function createMoveController() {
   const instance = crypto.randomUUID()
   let pending = false
   let uncertain = false
@@ -102,11 +151,6 @@ export function installChessComMoves() {
       throw new Error("Choose one of your pieces and a different destination.")
     if (before.pieces.get(move.to)?.code[0] === move.color[0])
       throw new Error("Destination has your piece.")
-    if (
-      (piece.code[1] === "p" && /[18]$/.test(move.to)) ||
-      (piece.code[1] === "k" && Math.abs(move.from.charCodeAt(0) - move.to.charCodeAt(0)) === 2)
-    )
-      throw new Error("Promotion and castling are not supported by this test build yet.")
     const rect = before.board.getBoundingClientRect()
     if (rect.width < 80 || Math.abs(rect.width - rect.height) > 2)
       throw new Error("Board geometry unavailable.")
@@ -138,10 +182,24 @@ export function installChessComMoves() {
         clearTimeout(timeout)
         pending = false
         uncertain = unresolved
-        resolve({ message })
+        resolve({ message, outcome: unresolved ? "uncertain" : "observed-complete" })
       }
+      let promotionSelected = false
       const observer = new MutationObserver(() => {
         try {
+          if (move.promotion && !promotionSelected) {
+            const choice = before.board.querySelector<HTMLElement>(
+              `.promotion-window--visible .promotion-piece.${move.color[0]}${move.promotion}`,
+            )
+            if (choice && !document.hidden) {
+              const r = choice.getBoundingClientRect()
+              const target = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
+              if (r.width > 0 && target && choice.contains(target)) {
+                promotionSelected = true
+                clickAt(choice, { x: r.left + r.width / 2, y: r.top + r.height / 2 })
+              }
+            }
+          }
           if (moveObserved(before, position(document), move))
             finish(`Observed ${move.from} → ${move.to} in Chess.com.`, false)
         } catch {
@@ -167,29 +225,7 @@ export function installChessComMoves() {
           if (document.hidden) throw new Error("Tab hidden")
           const target = document.elementFromPoint(p.x, p.y)
           if (!target || !before.board.contains(target)) throw new Error("Board obscured")
-          for (const type of ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]) {
-            const down = type.endsWith("down")
-            const init = {
-              bubbles: true,
-              cancelable: true,
-              composed: true,
-              clientX: p.x,
-              clientY: p.y,
-              button: 0,
-              buttons: down ? 1 : 0,
-              view: window,
-            }
-            target.dispatchEvent(
-              type.startsWith("pointer")
-                ? new PointerEvent(type, {
-                    ...init,
-                    pointerId: 1,
-                    pointerType: "mouse",
-                    isPrimary: true,
-                  })
-                : new MouseEvent(type, init),
-            )
-          }
+          clickAt(target, p)
         }
       } catch {
         finish("Interaction interrupted. Inspect Chrome; the move will not be retried.", true)
@@ -197,40 +233,18 @@ export function installChessComMoves() {
     })
   }
 
-  chrome.runtime.onMessage.addListener((raw: unknown, sender, reply) => {
-    if (
-      sender.id !== chrome.runtime.id ||
-      sender.tab ||
-      sender.url !== chrome.runtime.getURL("popup.html")
-    )
-      return
-    const parsed = request.safeParse(raw)
-    if (!parsed.success) return
-    const action = parsed.data
-    void (async (): Promise<BotReply> => {
-      if (action.kind === "bot-inspect") {
-        if (pending || uncertain)
-          return {
-            message: "Move unresolved. Inspect Chrome before reloading or trying another move.",
-          }
-        const p = position(document)
-        return {
-          token: token(p),
-          turn: p.turn.nextColorInLatestPosition,
-          message: `${p.turn.nextColorInLatestPosition} to move; ${p.turn.latestPly} plies recorded.`,
-        }
-      }
+  return {
+    token,
+    get unresolved() {
+      return pending || uncertain
+    },
+    async move(action: MoveRequest) {
       const known = outcomes.get(action.id)
       if (known) return await known
-      if (outcomes.size >= 500) throw new Error("Test session limit reached. Reload the page.")
+      if (outcomes.size >= 500) throw new Error("Session move limit reached. Reconnect the game.")
       const result = submit(action)
       outcomes.set(action.id, result)
       return await result
-    })()
-      .then(reply)
-      .catch((e: unknown) =>
-        reply({ message: e instanceof Error ? e.message : "Move unavailable." }),
-      )
-    return true
-  })
+    },
+  }
 }

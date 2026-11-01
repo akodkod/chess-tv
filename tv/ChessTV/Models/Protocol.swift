@@ -22,6 +22,8 @@ enum GameResult: String, Codable {
 struct Players: Codable, Equatable {
   var white: String?
   var black: String?
+  var whiteAvatar: String?
+  var blackAvatar: String?
 }
 struct ObservedClock: Codable, Equatable {
   var remainingMs: Double?
@@ -96,7 +98,10 @@ struct Message: Codable, Equatable {
       throw ProtocolFailure("Relay message fields do not match protocol v1.")
     }
     if type == "snapshot" {
-      try exact(object["players"], keys: ["white", "black"])
+      guard let players = object["players"] as? [String: Any],
+        Set(["white", "black"]).isSubset(of: Set(players.keys)),
+        Set(players.keys).isSubset(of: ["white", "black", "whiteAvatar", "blackAvatar"])
+      else { throw ProtocolFailure("Invalid player fields.") }
       try exact(object["clocks"], keys: ["white", "black", "observedAt"])
       if let clocks = object["clocks"] as? [String: Any] {
         try exact(clocks["white"], keys: ["remainingMs", "running"])
@@ -116,9 +121,12 @@ struct Message: Codable, Equatable {
       try JSONSerialization.jsonObject(with: JSONEncoder().encode(self)) as! [String: Any]
     for field in Self.fields[type] ?? [] where object[field] == nil { object[field] = NSNull() }
     if type == "snapshot" {
-      object["players"] = [
+      var playerObject: [String: Any] = [
         "white": players?.white as Any? ?? NSNull(), "black": players?.black as Any? ?? NSNull(),
       ]
+      if let avatar = players?.whiteAvatar { playerObject["whiteAvatar"] = avatar }
+      if let avatar = players?.blackAvatar { playerObject["blackAvatar"] = avatar }
+      object["players"] = playerObject
       func clock(_ value: ObservedClock?) -> [String: Any] {
         [
           "remainingMs": value?.remainingMs as Any? ?? NSNull(),
@@ -178,6 +186,12 @@ struct Message: Codable, Equatable {
       try require(players != nil && clocks != nil)
       try require(
         [players?.white, players?.black].allSatisfy { $0.map { $0.utf16.count <= 128 } ?? true })
+      for avatar in [players?.whiteAvatar, players?.blackAvatar].compactMap({ $0 }) {
+        let url = URLComponents(string: avatar)
+        try require(
+          avatar.utf16.count <= 2048 && url?.scheme == "https"
+            && url?.host?.isEmpty == false && url?.user == nil && url?.password == nil)
+      }
       for number in [clocks?.white.remainingMs, clocks?.black.remainingMs, clocks?.observedAt] {
         try require(number.map { $0.isFinite && $0 >= 0 } ?? true)
       }

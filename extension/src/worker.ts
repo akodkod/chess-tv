@@ -14,6 +14,7 @@ const bindingSchema = z.strictObject({
   locked: z.boolean(),
 })
 type Binding = z.infer<typeof bindingSchema>
+let selectedColor: "white" | "black" = "white"
 let autoConnect = true
 let binding: Binding | undefined
 let link: RelayLink | undefined
@@ -31,6 +32,8 @@ const pairing = new Pairing(__SETTINGS__.relay, async (saved) => {
 const ready = (async () => {
   await chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" })
   await chrome.storage.session.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" })
+  selectedColor =
+    (await chrome.storage.local.get("playerColor")).playerColor === "black" ? "black" : "white"
   autoConnect = (await chrome.storage.local.get("autoConnect")).autoConnect !== false
   const stored = savedSchema.safeParse((await chrome.storage.local.get("pairing")).pairing)
   if (stored.success && stored.data.relay === __SETTINGS__.relay) pairing.saved = stored.data
@@ -83,7 +86,7 @@ async function active() {
   const tab = await chrome.tabs.get(binding.tabId)
   if (!supported(tab.url) || !tab.active) return false
   const window = await chrome.windows.get(tab.windowId)
-  return window.state !== "minimized" && window.focused
+  return window.state !== "minimized"
 }
 function connect() {
   if (!pairing.saved.device || pairing.saved.revocationPending || link) return
@@ -179,7 +182,7 @@ async function synchronize() {
   if (!binding || !generation || !link?.authenticated || phase !== "idle") return
   try {
     if (!attached) {
-      const reply = await content({ kind: "inspect" })
+      const reply = await content({ kind: "inspect", color: selectedColor })
       if (reply.error || reply.gameId !== binding.gameId) {
         await detach()
         status = reply.error || "Game changed. Waiting for the current game to connect."
@@ -306,7 +309,11 @@ async function attach(automatic = false) {
   await detach()
   await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content.js"] })
   const reply = contentReply.parse(
-    await chrome.tabs.sendMessage(tab.id, { kind: "inspect" }, { frameId: 0 }),
+    await chrome.tabs.sendMessage(
+      tab.id,
+      { kind: "inspect", color: selectedColor },
+      { frameId: 0 },
+    ),
   )
   if (reply.error || !reply.gameId) throw new Error(reply.error || "No supported game found.")
   binding = {
@@ -336,8 +343,7 @@ async function autoAttach() {
   try {
     await attach(true)
   } catch {
-    status =
-      "Chess.com TV connection is not implemented yet. Use the popup to inspect the bot game."
+    status = "Start a bot game, select your color, and connect it to the TV."
   }
 }
 async function tick() {
@@ -374,6 +380,10 @@ chrome.runtime.onMessage.addListener((raw: unknown, sender, reply) => {
       }
       if (action.kind === "attach") {
         error = null
+        if (action.color) {
+          selectedColor = action.color
+          await chrome.storage.local.set({ playerColor: selectedColor })
+        }
         await attach()
         await setAutoConnect(true)
       }

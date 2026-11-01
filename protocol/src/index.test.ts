@@ -14,6 +14,20 @@ describe("protocol", () => {
     ])
       expect(() => parseMessage(value)).toThrow()
   })
+  it("accepts optional HTTPS avatars and rejects unsafe image URLs", () => {
+    const withAvatar = (url: string) => ({
+      ...snapshot,
+      players: { ...snapshot.players, whiteAvatar: url },
+    })
+    expect(parseMessage(withAvatar("https://images.chesscomfiles.com/avatar.png"))).toBeDefined()
+    for (const url of [
+      "http://example.com/a.png",
+      "file:///a.png",
+      "javascript:alert(1)",
+      "https://user:password@example.com/a.png",
+    ])
+      expect(() => parseMessage(withAvatar(url))).toThrow()
+  })
   it("accepts all promotions and rejects invalid coordinates", () => {
     const move = {
       v: 1,

@@ -1,0 +1,70 @@
+{
+  "source": "Chess.com theme copied for ChessTV",
+  "selected": {
+    "pieces": "Neo-Wood",
+    "board": "Walnut",
+    "sounds": "Default"
+  },
+  "assets": [
+    {
+      "name": "chess-wp",
+      "url": "https://images.chesscomfiles.com/chess-themes/pieces/neo_wood/150/wp.png"
+    },
+    {
+      "name": "chess-wr",
+      "url": "https://images.chesscomfiles.com/chess-themes/pieces/neo_wood/150/wr.png"
+    },
+    {
+      "name": "chess-wn",
+      "url": "https://images.chesscomfiles.com/chess-themes/pieces/neo_wood/150/wn.png"
+    },
+    {
+      "name": "chess-wb",
+      "url": "https://images.chesscomfiles.com/chess-themes/pieces/neo_wood/150/wb.png"
+    },
+    {
+      "name": "chess-wq",
+      "url": "https://images.chesscomfiles.com/chess-themes/pieces/neo_wood/150/wq.png"
+    },
+    {
+      "name": "chess-wk",
+      "url": "https://images.chesscomfiles.com/chess-themes/pieces/neo_wood/150/wk.png"
+    },
+    {
+      "name": "chess-bp",
+      "url": "https://images.chesscomfiles.com/chess-themes/pieces/neo_wood/150/bp.png"
+    },
+    {
+      "name": "chess-br",
+      "url": "https://images.chesscomfiles.com/chess-themes/pieces/neo_wood/150/br.png"
+    },
+    {
+      "name": "chess-bn",
+      "url": "https://images.chesscomfiles.com/chess-themes/pieces/neo_wood/150/bn.png"
+    },
+    {
+      "name": "chess-bb",
+      "url": "https://images.chesscomfiles.com/chess-themes/pieces/neo_wood/150/bb.png"
+    },
+    {
+      "name": "chess-bq",
+      "url": "https://images.chesscomfiles.com/chess-themes/pieces/neo_wood/150/bq.png"
+    },
+    {
+      "name": "chess-bk",
+      "url": "https://images.chesscomfiles.com/chess-themes/pieces/neo_wood/150/bk.png"
+    },
+    {
+      "name": "chess-walnut",
+      "url": "https://images.chesscomfiles.com/chess-themes/boards/walnut/200.png"
+    },
+    {
+      "name": "move-self",
+      "url": "https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-self.mp3"
+    },
+    {
+      "name": "capture",
+      "url": "https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3"
+    }
+  ]
+}

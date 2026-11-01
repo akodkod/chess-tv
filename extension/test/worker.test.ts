@@ -125,8 +125,9 @@ it("waits for Chrome focus and ignores unsupported pages", async () => {
   await vi.advanceTimersByTimeAsync(1000)
   expect((await action()).gameId).toBe("game-one")
 })
-it("dispatches moves while the attached game is focused", async () => {
+it("dispatches moves from a visible attached tab while the TV simulator has focus", async () => {
   await start()
+  focused = false
   relay.receive({ type: "session", generation: "attached-generation", gameId, peerConnected: true })
   await action()
   await vi.advanceTimersByTimeAsync(1000)
@@ -149,48 +150,45 @@ it("dispatches moves while the attached game is focused", async () => {
   await action()
   expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(1, { kind: "move", move }, { frameId: 0 })
 })
-it.each(["inactive tab", "minimized window", "unfocused window"])(
-  "blocks game moves for an %s",
-  async (condition) => {
-    await start()
-    relay.receive({
-      type: "session",
-      generation: "attached-generation",
-      gameId,
-      peerConnected: true,
-    })
-    await action()
-    focused = false
-    if (condition === "inactive tab") tabActive = false
-    else if (condition === "minimized window") windowState = "minimized"
-    await vi.advanceTimersByTimeAsync(1000)
-    expect(chrome.tabs.sendMessage).toHaveBeenLastCalledWith(
-      1,
-      { kind: "sync", generation: "attached-generation", enabled: false },
-      { frameId: 0 },
-    )
-    const move = {
-      v: 1,
-      type: "move",
-      gameId,
-      generation: "attached-generation",
-      revision: 1,
-      commandId: "blocked-move",
-      from: "e2",
-      to: "e4",
-    }
-    relay.receive(move)
-    await action()
-    expect(chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
-      1,
-      { kind: "move", move },
-      { frameId: 0 },
-    )
-    expect(relay.send).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "outcome", commandId: "blocked-move", outcome: "rejected" }),
-    )
-  },
-)
+it.each(["inactive tab", "minimized window"])("blocks game moves for an %s", async (condition) => {
+  await start()
+  relay.receive({
+    type: "session",
+    generation: "attached-generation",
+    gameId,
+    peerConnected: true,
+  })
+  await action()
+  focused = false
+  if (condition === "inactive tab") tabActive = false
+  else if (condition === "minimized window") windowState = "minimized"
+  await vi.advanceTimersByTimeAsync(1000)
+  expect(chrome.tabs.sendMessage).toHaveBeenLastCalledWith(
+    1,
+    { kind: "sync", generation: "attached-generation", enabled: false },
+    { frameId: 0 },
+  )
+  const move = {
+    v: 1,
+    type: "move",
+    gameId,
+    generation: "attached-generation",
+    revision: 1,
+    commandId: "blocked-move",
+    from: "e2",
+    to: "e4",
+  }
+  relay.receive(move)
+  await action()
+  expect(chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+    1,
+    { kind: "move", move },
+    { frameId: 0 },
+  )
+  expect(relay.send).toHaveBeenCalledWith(
+    expect.objectContaining({ type: "outcome", commandId: "blocked-move", outcome: "rejected" }),
+  )
+})
 it("Disconnect persists a pause across worker restarts", async () => {
   await start()
   await action("disconnect")

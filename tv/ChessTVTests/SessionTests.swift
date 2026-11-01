@@ -1,3 +1,4 @@
+import AVFoundation
 import SwiftUI
 import XCTest
 
@@ -31,16 +32,24 @@ final class MemoryCredentials: CredentialStoring {
   }
   func disconnect() {}
 }
+@MainActor final class FakeBoardSounds: BoardSoundPlaying {
+  var played: [BoardSound] = []
+  var stops = 0
+  func play(_ sound: BoardSound) { played.append(sound) }
+  func stop() { stops += 1 }
+}
 @MainActor final class SessionTests: XCTestCase {
   var socket: FakeSocket!
+  var sounds: FakeBoardSounds!
   var session: TVSession!
   var time = 100.0
   override func setUp() async throws {
     time = 100
     socket = FakeSocket()
+    sounds = FakeBoardSounds()
     session = TVSession(
       configuration: try RelayConfiguration("https://example.com"), store: MemoryCredentials(),
-      socket: socket, uptime: { [unowned self] in self.time })
+      socket: socket, sounds: sounds, uptime: { [unowned self] in self.time })
     session.setActive(true)
     var auth = Message(type: "authenticated")
     auth.role = "tv"
@@ -78,6 +87,116 @@ final class MemoryCredentials: CredentialStoring {
     message.commandId = command ?? session.pending?.commandId
     message.outcome = result
     session.receive(message)
+  }
+  private func soundPosition() throws -> Message {
+    var position = try ProtocolTests.fixture()
+    position.board = Array(repeating: nil, count: 64)
+    position.board![60] = "K"
+    position.board![4] = "k"
+    position.board![52] = "P"
+    position.turn = .white
+    position.result = nil
+    return position
+  }
+  private func pawnMove(_ initial: Message) -> Message {
+    var next = initial
+    next.revision! += 1
+    next.board![52] = nil
+    next.board![36] = "P"
+    next.turn = .black
+    return next
+  }
+  func testSoundsOnlyForObservedMovesAndNotDuplicateSnapshots() throws {
+    state()
+    let initial = try soundPosition()
+    session.receive(initial)
+    XCTAssertTrue(sounds.played.isEmpty)
+    let next = pawnMove(initial)
+    session.receive(next)
+    session.receive(next)
+    var clockUpdate = next
+    clockUpdate.clocks?.white.remainingMs = 12_000
+    session.receive(clockUpdate)
+    XCTAssertEqual(sounds.played, [.move])
+  }
+  func testCaptureSoundAndMute() throws {
+    state()
+    var initial = try soundPosition()
+    initial.board![43] = "p"
+    session.receive(initial)
+    var next = initial
+    next.revision! += 1
+    next.board![52] = nil
+    next.board![43] = "P"
+    next.turn = .black
+    session.receive(next)
+    XCTAssertEqual(sounds.played, [.capture])
+    session.setSoundsEnabled(false)
+    let stops = sounds.stops
+    state()
+    session.receive(initial)
+    session.receive(pawnMove(initial))
+    XCTAssertEqual(sounds.played, [.capture])
+    XCTAssertGreaterThan(stops, 0)
+  }
+  func testSoundBaselineResetsAfterSessionButLongThinkStillPlays() throws {
+    state()
+    let initial = try soundPosition()
+    session.receive(initial)
+    state()
+    session.receive(pawnMove(initial))
+    XCTAssertTrue(sounds.played.isEmpty)
+    state()
+    session.receive(initial)
+    time += 6
+    session.receive(pawnMove(initial))
+    XCTAssertEqual(sounds.played, [.move])
+  }
+  func testPresentationEpochChangesOnSynchronizationButNotSnapshots() throws {
+    let before = session.presentationEpoch
+    state()
+    XCTAssertGreaterThan(session.presentationEpoch, before)
+    let waiting = session.presentationEpoch
+    let initial = try soundPosition()
+    session.receive(initial)
+    XCTAssertGreaterThan(session.presentationEpoch, waiting)
+    let synchronized = session.presentationEpoch
+    session.receive(pawnMove(initial))
+    XCTAssertEqual(session.presentationEpoch, synchronized)
+    session.reconnect()
+    XCTAssertGreaterThan(session.presentationEpoch, synchronized)
+  }
+  func testBundledChessThemeAndAudioDecode() throws {
+    let bundle = Bundle(for: TVSession.self)
+    for color in ["w", "b"] {
+      for piece in ["p", "n", "b", "r", "q", "k"] {
+        let name = "chess-\(color)\(piece)"
+        let image = try XCTUnwrap(UIImage(named: name, in: bundle, compatibleWith: nil), name)
+        XCTAssertGreaterThan(image.size.width, 0, name)
+        XCTAssertGreaterThan(image.size.height, 0, name)
+      }
+    }
+    XCTAssertNotNil(UIImage(named: "chess-walnut", in: bundle, compatibleWith: nil))
+    for name in ["move-self", "capture"] {
+      let url = try XCTUnwrap(bundle.url(forResource: name, withExtension: "mp3"), name)
+      let player = try AVAudioPlayer(contentsOf: url)
+      XCTAssertGreaterThan(player.duration, 0, name)
+      XCTAssertTrue(player.prepareToPlay(), name)
+    }
+  }
+  func testAmbiguousMoveJumpAndOutcomesAreSilent() throws {
+    state()
+    var initial = try soundPosition()
+    initial.board![12] = "p"
+    session.receive(initial)
+    var skipped = pawnMove(initial)
+    skipped.board![12] = nil
+    skipped.board![28] = "p"
+    skipped.turn = .white
+    skipped.revision! += 1
+    session.receive(skipped)
+    outcome("observed-complete", command: "unrelated")
+    XCTAssertTrue(sounds.played.isEmpty)
   }
   func testWhiteBoardFocusAndSnapshotStability() async throws {
     try await checkBoardFocus(color: .white)

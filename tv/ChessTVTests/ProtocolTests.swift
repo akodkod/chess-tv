@@ -16,6 +16,15 @@ final class ProtocolTests: XCTestCase {
     let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
     XCTAssertTrue(object["result"] is NSNull)
   }
+  func testOptionalAvatarRoundTripAndURLValidation() throws {
+    var snapshot = try Self.fixture()
+    snapshot.players?.whiteAvatar = "https://images.chesscomfiles.com/avatar.png"
+    XCTAssertEqual(try Message.decode(snapshot.encoded()), snapshot)
+    for value in ["http://example.com/avatar.png", "file:///avatar.png", "https://user:password@example.com/a.png"] {
+      snapshot.players?.whiteAvatar = value
+      XCTAssertThrowsError(try snapshot.encoded())
+    }
+  }
   func testRejectsMalformedAndIncompatibleMessages() throws {
     let valid = try Self.fixture().encoded()
     let object = try XCTUnwrap(JSONSerialization.jsonObject(with: valid) as? [String: Any])

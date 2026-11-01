@@ -4,6 +4,7 @@ struct BoardView: View {
   let session: TVSession
   let snapshot: Message
   var showSquareLabels = true
+  var edgeSquareLabelsOnly = true
   @State private var source: Int?
   @State private var promotionTarget: Int?
   @State private var promotionSource: Int?
@@ -80,18 +81,31 @@ struct BoardView: View {
     .onExitCommand(perform: source != nil && promotionTarget == nil ? { source = nil } : nil)
   }
   private func playerLine(_ color: PieceColor) -> some View {
-    HStack {
+    let avatar = color == .white ? snapshot.players?.whiteAvatar : snapshot.players?.blackAvatar
+    return HStack(spacing: 12) {
+      AsyncImage(url: avatar.flatMap(URL.init(string:))) { phase in
+        if let image = phase.image {
+          image.resizable().scaledToFill()
+        } else {
+          Image(systemName: "person.crop.square.fill")
+            .resizable().scaledToFit().foregroundStyle(.secondary)
+        }
+      }
+      .frame(width: 44, height: 44)
+      .clipShape(RoundedRectangle(cornerRadius: 8))
+      .accessibilityHidden(true)
       Text(
         (color == .white ? snapshot.players?.white : snapshot.players?.black)
           ?? "\(color.rawValue.capitalized) player"
       )
       .lineLimit(1).minimumScaleFactor(0.8)
       Spacer()
-      Text(ClockReading.format(session.clockReading?.remaining(color, now: session.now)))
-        .monospacedDigit().font(.title3).frame(minWidth: 100, alignment: .trailing)
-        .accessibilityLabel("\(color.rawValue.capitalized) clock")
-        .accessibilityValue(
-          ClockReading.format(session.clockReading?.remaining(color, now: session.now)))
+      if let remaining = session.clockReading?.remaining(color, now: session.now) {
+        Text(ClockReading.format(remaining))
+          .monospacedDigit().font(.title3).frame(minWidth: 100, alignment: .trailing)
+          .accessibilityLabel("\(color.rawValue.capitalized) clock")
+          .accessibilityValue(ClockReading.format(remaining))
+      }
     }.font(.headline)
   }
   private func grid(side: CGFloat) -> some View {
@@ -105,6 +119,14 @@ struct BoardView: View {
         }
       }
     }.frame(width: side, height: side)
+      .background { Image("chess-walnut").resizable().frame(width: side, height: side) }
+      .overlay {
+        PieceBoardOverlay(
+          snapshot: snapshot, side: side,
+          selectedSquare: source,
+          animateChanges: session.active && session.authenticated && session.peerConnected,
+          resetToken: String(session.presentationEpoch))
+      }
   }
   private func square(_ index: Int, size: CGFloat) -> some View {
     let piece = snapshot.board?[index]
@@ -117,21 +139,12 @@ struct BoardView: View {
     } label: {
       ZStack(alignment: .topLeading) {
         Rectangle().fill(
-          light
-            ? Color(red: 0.83, green: 0.85, blue: 0.78) : Color(red: 0.28, green: 0.37, blue: 0.34))
-        Text(Square.glyph(piece)).font(.system(size: size * 0.72))
-          .foregroundStyle(Square.color(of: piece) == .white ? Color.white : Color.black)
-          .shadow(
-            color: Square.color(of: piece) == .white ? .black : .white.opacity(0.75), radius: 1
-          )
-          .frame(width: size, height: size)
+          selected ? Color.yellow.opacity(contrast == .increased ? 0.38 : 0.22) : Color.clear)
         if showSquareLabels {
-          Text(Square.name(index)).font(.system(size: max(12, size * 0.17) - 1, weight: .regular))
-            .foregroundStyle(light ? Color.black : Color.white)
-            .opacity(0.3).padding(4).offset(x: 4)
+          squareLabels(index, size: size, light: light)
         }
-        if selected || pending {
-          Image(systemName: pending ? "hourglass" : "checkmark.circle.fill")
+        if pending {
+          Image(systemName: "hourglass")
             .font(.system(size: size * 0.22)).foregroundStyle(.black, .yellow)
             .frame(width: size - 8, height: size - 8, alignment: .bottomTrailing)
         }
@@ -145,6 +158,29 @@ struct BoardView: View {
     .accessibilityValue(selected ? "Selected" : pending ? "Move pending" : "")
     .accessibilityHint(session.canMove ? "Select piece or destination" : "Move input unavailable")
     .accessibilityAddTraits(selected ? [.isSelected] : [])
+  }
+  @ViewBuilder private func squareLabels(_ index: Int, size: CGFloat, light: Bool) -> some View {
+    let displayIndex = snapshot.playerColor == .black ? 63 - index : index
+    let name = Square.name(index)
+    ZStack(alignment: .topLeading) {
+      if edgeSquareLabelsOnly {
+        if displayIndex % 8 == 0 {
+          Text(String(name.suffix(1)))
+            .padding(6).frame(width: size, height: size, alignment: .topLeading)
+        }
+        if displayIndex / 8 == 7 {
+          Text(String(name.prefix(1)))
+            .padding(6).frame(width: size, height: size, alignment: .bottomTrailing)
+        }
+      } else {
+        Text(name).padding(4).offset(x: 4)
+      }
+    }
+    .font(.system(size: max(12, size * 0.17) - 1, weight: .regular))
+    .foregroundStyle(light ? Color.black : Color.white)
+    .opacity(edgeSquareLabelsOnly ? 0.65 : 0.3)
+    .accessibilityHidden(true)
+    .allowsHitTesting(false)
   }
   private func select(_ index: Int) {
     guard session.canMove, let board = snapshot.board else { return }

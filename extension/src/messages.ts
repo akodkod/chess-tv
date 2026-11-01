@@ -8,13 +8,13 @@ export const moveSchema = z.custom<Move>((v) => {
 export const popupAction = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("state") }),
   z.strictObject({ kind: z.literal("pair"), code: z.string().regex(/^\d{6}$/) }),
-  z.strictObject({ kind: z.literal("attach") }),
+  z.strictObject({ kind: z.literal("attach"), color: z.enum(["white", "black"]).optional() }),
   z.strictObject({ kind: z.literal("reconnect") }),
   z.strictObject({ kind: z.literal("disconnect") }),
   z.strictObject({ kind: z.literal("unpair") }),
 ])
 export const contentAction = z.discriminatedUnion("kind", [
-  z.strictObject({ kind: z.literal("inspect") }),
+  z.strictObject({ kind: z.literal("inspect"), color: z.enum(["white", "black"]).optional() }),
   z.strictObject({ kind: z.literal("stop") }),
   z.strictObject({ kind: z.literal("sync"), generation: z.string().min(1), enabled: z.boolean() }),
   z.strictObject({ kind: z.literal("move"), move: moveSchema }),

@@ -10,7 +10,13 @@ xcrun simctl terminate "$TV_SIMULATOR_ID" com.chesstv.app 2>/dev/null || true
 xcodebuild -project "$TV_ROOT/ChessTV.xcodeproj" -scheme ChessTV -configuration Debug \
   -destination "platform=tvOS Simulator,id=$TV_SIMULATOR_ID" -derivedDataPath "$TV_ROOT/.build" build
 xcrun simctl install "$TV_SIMULATOR_ID" "$TV_ROOT/.build/Build/Products/Debug-appletvsimulator/ChessTV.app"
-open -a Simulator --args -CurrentDeviceUDID "$TV_SIMULATOR_ID"
+XCODE_DEVELOPER="$(xcode-select -p)"
+if [[ -d "$XCODE_DEVELOPER/Applications/Simulator.app" ]]; then
+  open -a "$XCODE_DEVELOPER/Applications/Simulator.app" --args -CurrentDeviceUDID "$TV_SIMULATOR_ID"
+else
+  # Xcode 27 moved simulator windows into Device Hub.
+  open -a "$XCODE_DEVELOPER/../Applications/DeviceHub.app"
+fi
 case "$MODE" in
   --logs) xcrun simctl launch --console "$TV_SIMULATOR_ID" com.chesstv.app ;;
   --debug) xcrun simctl launch --wait-for-debugger "$TV_SIMULATOR_ID" com.chesstv.app

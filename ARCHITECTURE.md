@@ -1,10 +1,10 @@
 # Chess TV MVP architecture
 
-Status: Chess.com bot games are the only extension target. Real board/turn observation and a manual move handler exist; live move verification and the bridge to the native Apple TV app remain unfinished. The relay, protocol, and native app are retained. See extension/README.md for the current integration milestones.
+Status: Standard Chess.com bot games are connected to the native Apple TV app. Pairing, remote-selected moves, bot replies, recovery, special moves, player names, clocks, and results are implemented. Live browser and tvOS simulator verification is recorded in extension/README.md; physical Apple TV hardware validation remains separate.
 
 ## 1. Goal and scope
 
-Play a standard rapid or bot game on Apple TV with the Siri Remote while an awake Mac keeps Chrome in the foreground and the connected Chess.com tab visible. Sign in and start the game in Chrome, then explicitly attach it through the extension. Installation is manual; one extension pairs with one TV, with one attached game at a time.
+Play a standard Chess.com bot game on Apple TV with the Siri Remote while an awake Mac keeps the connected Chrome tab selected and visible. Sign in and start the game in Chrome, then explicitly attach it through the extension. Installation is manual; one extension pairs with one TV, with one attached game at a time.
 
 The MVP includes remembered pairing, piece moves, all promotion choices, players, turn, clocks, results, and safe reconnection. Move-history UI, resignation, and draw responses stay in Chrome. TV matchmaking, account navigation, premoves, bullet/blitz, Daily chess, variants, analysis, recommendations, gamepad-specific support, public distribution, and horizontal scaling are outside the MVP.
 
@@ -100,7 +100,7 @@ Represent unknown values explicitly, including clocks; unknown is not zero. No h
 
 The relay issues a new opaque session generation whenever either connection is replaced or attachment changes, and shares it with both endpoints. The extension must adopt it before publishing fresh state. Both clients reject older generations. The extension advances position revision for board or move-relevant status changes, but not clock-only updates.
 
-The adapter requires reliable game identity, board, player, and turn observation, plus reliable move acceptance detection. Chess.com enforces legality; neither client reconstructs a rules engine. Extract history only if needed for reliable observation. Piece placement alone must not be presented as complete rules state with inferred castling or en-passant rights.
+The adapter requires reliable game identity, board, player, and turn observation, plus reliable move acceptance detection. Chess.com remains authoritative for acceptance. The extension replays the complete recorded history with chess.js to reject illegal user-selected moves and checks the resulting placement against every rendered square. It never chooses a move, infers castling/en-passant rights from placement alone, or updates the TV speculatively.
 
 ### Move and recovery rules
 
@@ -142,7 +142,7 @@ Sources: [Designing for tvOS](https://developer.apple.com/design/human-interface
 
 ## 6. Integration feasibility and authorization
 
-Observation and page interaction remain unverified assumptions. Chrome's [content-script model](https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts) permits DOM access, but does not establish that Chess.com exposes stable game identity, board, turn, clocks, result, or reliable move acceptance. Verify rapid and bot pages, including all promotion choices.
+Observation and page interaction have been verified on standard bot games in the live browser. Chrome's [content-script model](https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts) permits DOM access, but does not establish that Chess.com exposes stable game identity, board, turn, clocks, result, or reliable move acceptance. Keep compatibility checks focused on bot pages, including all promotion choices.
 
 Use captured Chess.com DOM fixtures and user-selected moves in real bot games. Preserve the requirement to obtain appropriate authorization before real Chess.com integration testing under its [User Agreement](https://www.chess.com/legal/user-agreement); none is assumed granted. Its [public API guidance](https://support.chess.com/en/articles/9650547-what-is-the-pubapi-and-how-do-i-use-it) describes a read-only API and developer application route. Confirm that the proposed interaction can be supported through that route.
 

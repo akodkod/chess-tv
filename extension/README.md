@@ -1,6 +1,6 @@
 # Chess TV Chrome extension
 
-Chrome 116+ extension connecting **standard Chess.com bot games** to the native Apple TV app.
+Chrome 116+ extension connecting **standard Chess.com bot and online games** to the native Apple TV app.
 
 ## Build and pair
 
@@ -14,9 +14,11 @@ bun install --frozen-lockfile
 1. Load `extension/dist` with **Load unpacked** in `chrome://extensions` (Developer mode enabled).
 2. Run the Apple TV app with `./tv/script/build_and_run.sh`, or select your Apple TV in Xcode.
 3. Get a pairing code on the TV. Enter it in the **Chess TV** extension and confirm on the TV.
-4. Start or continue a bot game at `https://www.chess.com/play/computer/…`.
+4. Start or continue a bot game at `https://www.chess.com/play/computer`, or an online game at `https://www.chess.com/game/<id>`.
 5. The current game connects automatically once paired. The extension matches your signed-in Chess.com profile to the player rows. Detection requires a signed-in account that matches exactly one player. If detection is unavailable, connection and moves are blocked; sign in, open your current bot game, and reconnect.
 6. Use the TV remote to select a piece, then its destination. Back cancels selection. Promotion opens a piece chooser on the TV.
+
+Deploy the updated relay and update the TV app before using an extension that sends `resultReason`; older strict protocol readers reject that field. The extension also needs access to `https://www.chess.com/game/computer/*` to observe completed games.
 
 After rebuilding, reload the extension and the game page, then Continue the game in Chess.com. Pairing is remembered. Keep Chrome awake with the bot-game tab selected and visible; it need not have keyboard focus. Minimized windows, hidden tabs, history navigation, and obscured boards cannot accept moves.
 
@@ -28,7 +30,7 @@ The popup shows pairing setup or a short connection status. Open **Debug** for d
 
 The adapter reconstructs legal state from the complete recorded move history and checks it against every rendered square. It supports the starting position, letter and figurine notation, both board orientations, captures, castling, en passant, and all four promotion choices. `chess.js` validates the user's chosen move; it never chooses moves. The browser's observed board and history determine completion.
 
-Snapshots carry game identity, revision, detected player color, turn, and result. Player names and timed-game clocks are read from the page; untimed or unrecognized clocks remain unknown. Custom starting positions and variants are unsupported; use a standard bot game from its normal initial position. Choose bots, time controls, new games, undo, or resign in Chrome.
+Snapshots carry game identity, revision, detected player color, turn, result, and an optional result reason. The final position remains connected when Chess.com changes the live URL to `/game/computer/<id>`. The TV shows wins/losses from your playing color and treats stalemate as a draw. Checkmate and stalemate come from the verified move history; timeout and resignation require a recorded result plus the game-over subtitle. Player names and timed-game clocks are read from the page; untimed or unrecognized clocks remain unknown. Custom starting positions and variants are unsupported; use a standard bot game from its normal initial position. Choose bots, time controls, new games, undo, or resign in Chrome.
 
 Pairing survives reloads and relay restarts. Board resets, changed history, and new documents invalidate the old attachment before moves resume. Automatic color detection follows the current game, including when the browser board is flipped.
 
@@ -55,3 +57,9 @@ Live verification on 2026-11-01:
 - Native relay integration test separately verified pairing, snapshots, promotion command transport, completion, and revocation.
 
 Physical Apple TV hardware has not been exercised by these simulator checks.
+
+### Allowed pages
+
+The URL allowlist includes `/play/computer` (with or without a bot suffix), completed bot games, `/play/coach`, `/play/online`, and `/game/<id>` or `/game/live/<id>` for online games including Rapid. URL permission alone does not establish adapter support: TV input still requires a recognized board, complete move history, and player identity. Coach layouts remain unsupported. Standard online games use the observed `board-single` layout with color-specific player clocks. Unknown layouts report an unsupported-layout message and do not submit moves.
+
+Rapid-game observation was verified in Dia against a friend game and on the connected Apple TV simulator: position, player identities, Black orientation, and running clocks. Fixture tests cover user-selected move dispatch/confirmation and rejection for missing identity, stale history, stopped clocks, or conflicting clock turns. No move was submitted to the live friend game during validation.

@@ -1,6 +1,7 @@
 import type { Message } from "@chess-tv/protocol"
 import { z } from "zod"
 
+import { allowedGameURL as supported } from "./chesscom-url"
 import { contentReply, popupAction, type ContentReply, type PopupState } from "./messages"
 import { Pairing, savedSchema } from "./pairing"
 import { RelayLink } from "./relay"
@@ -55,11 +56,7 @@ async function saveBinding() {
   if (binding) await chrome.storage.session.set({ binding })
   else await chrome.storage.session.remove("binding")
 }
-function supported(url?: string) {
-  if (!url) return false
-  const parsed = new URL(url)
-  return parsed.origin === "https://www.chess.com" && parsed.pathname.startsWith("/play/computer/")
-}
+
 function state(): PopupState {
   return {
     autoConnect,
@@ -302,7 +299,7 @@ async function attach(automatic = false) {
   if (phase !== "idle") throw new Error("Wait for the connection to synchronize.")
   const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
   if (!tab?.id || !supported(tab.url))
-    throw new Error("Open a Chess.com bot game in the active tab.")
+    throw new Error("Open a supported Chess.com game in the active tab.")
   if (automatic && !(await chrome.windows.get(tab.windowId)).focused) return
   await detach()
   await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content.js"] })

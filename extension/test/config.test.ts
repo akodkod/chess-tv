@@ -6,7 +6,11 @@ it("builds Chess.com with the default hosted relay access", () => {
   const settings = buildSettings("production")
   expect(settings.manifest.name).toBe("Chess TV")
   expect(settings.manifest.host_permissions).toEqual([
-    "https://www.chess.com/play/computer/*",
+    "https://www.chess.com/play/computer*",
+    "https://www.chess.com/game/computer/*",
+    "https://www.chess.com/play/coach*",
+    "https://www.chess.com/play/online*",
+    "https://www.chess.com/game/*",
     "https://chess-tv-relay.kodkod.me/*",
   ])
   expect(settings.manifest.permissions).toEqual(["storage", "scripting", "alarms"])
@@ -14,7 +18,11 @@ it("builds Chess.com with the default hosted relay access", () => {
 it("adds only the explicitly configured relay host", () => {
   const settings = buildSettings("production", "https://relay.example.com")
   expect(settings.manifest.host_permissions).toEqual([
-    "https://www.chess.com/play/computer/*",
+    "https://www.chess.com/play/computer*",
+    "https://www.chess.com/game/computer/*",
+    "https://www.chess.com/play/coach*",
+    "https://www.chess.com/play/online*",
+    "https://www.chess.com/game/*",
     "https://relay.example.com/*",
   ])
   expect(settings.socket).toBe("wss://relay.example.com/v1/ws")

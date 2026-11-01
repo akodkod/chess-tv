@@ -1,5 +1,6 @@
 import { Chess } from "chess.js"
 
+import { gameLayout } from "./chesscom-layout"
 import { readChessComTurn } from "./chesscom-turn"
 
 type MoveRequest = {
@@ -15,8 +16,9 @@ type BotReply = { message: string; outcome: "observed-complete" | "uncertain" }
 
 export function position(doc: Document) {
   const turn = readChessComTurn(doc)
+  if (turn.state === "unknown") throw new Error(turn.reason)
   if (turn.state !== "latest") throw new Error("Return to the latest recorded move in Chrome.")
-  const board = doc.querySelector<HTMLElement>("wc-chess-board#board-play-computer")!
+  const { board, list, online } = gameLayout(doc)!
   const pieces = new Map<string, { code: string; element: HTMLElement }>()
   for (const element of board.querySelectorAll<HTMLElement>(".piece")) {
     const square = [...element.classList].find((c) => /^square-[1-8][1-8]$/.test(c))
@@ -30,23 +32,20 @@ export function position(doc: Document) {
     !["wk", "bk"].every((code) => [...pieces.values()].filter((p) => p.code === code).length === 1)
   )
     throw new Error("Board is incomplete.")
-  const history = Array.from(
-    doc.querySelectorAll('wc-simple-move-list[board-id="board-play-computer"] .main-line-ply'),
-    (e) => {
-      const notation = e.querySelector(".node-highlight-content")!.cloneNode(true) as HTMLElement
-      for (const figurine of notation.querySelectorAll("[data-figurine]")) {
-        const piece = figurine.getAttribute("data-figurine")
-        if (!piece || !/^[KQRBNP]$/.test(piece)) throw new Error("Unrecognized move notation.")
-        figurine.replaceWith(piece)
-      }
-      return (notation.textContent ?? "").replace(/\s/g, "")
-    },
-  )
+  const history = Array.from(list.querySelectorAll(".main-line-ply"), (e) => {
+    const notation = e.querySelector(".node-highlight-content")!.cloneNode(true) as HTMLElement
+    for (const figurine of notation.querySelectorAll("[data-figurine]")) {
+      const piece = figurine.getAttribute("data-figurine")
+      if (!piece || !/^[KQRBNP]$/.test(piece)) throw new Error("Unrecognized move notation.")
+      figurine.replaceWith(piece)
+    }
+    return (notation.textContent ?? "").replace(/\s/g, "")
+  })
   const fingerprint = JSON.stringify([
     history,
     [...pieces].sort(([a], [b]) => a.localeCompare(b)).map(([s, p]) => [s, p.code]),
   ])
-  return { board, pieces, turn, history, fingerprint }
+  return { board, list, online, pieces, turn, history, fingerprint }
 }
 
 export function squareCenter(square: string, rect: DOMRect, flipped: boolean) {
@@ -141,7 +140,7 @@ export function createMoveController() {
   async function submit(move: MoveRequest): Promise<BotReply> {
     if (pending || uncertain)
       throw new Error("A move is unresolved. Inspect Chrome; do not resend it.")
-    if (document.hidden) throw new Error("Keep the bot tab visible.")
+    if (document.hidden) throw new Error("Keep the game tab visible.")
     const before = position(document)
     if (token(before) !== move.token) throw new Error("Position changed. Inspect again.")
     if (before.turn.nextColorInLatestPosition !== move.color)

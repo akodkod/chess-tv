@@ -11,6 +11,8 @@ import Observation
   private(set) var generation: String?
   private(set) var gameId: String?
   private(set) var snapshot: Message?
+  private var positions: [Message] = []
+  private(set) var reviewIndex: Int?
   private(set) var clockReading: ClockReading?
   private(set) var available = false
   private(set) var pending: Message?
@@ -62,14 +64,49 @@ import Observation
     soundsEnabled = enabled
     if !enabled { sounds.stop() }
   }
+  var displayedSnapshot: Message? {
+    reviewIndex.map { positions[$0] } ?? snapshot
+  }
+  var isReviewing: Bool { reviewIndex != nil }
+  var movesBehindLive: Int { reviewIndex.map { positions.count - 1 - $0 } ?? 0 }
+  var canGoBack: Bool { (reviewIndex ?? (positions.count - 1)) > 0 }
+  var canGoForward: Bool { reviewIndex != nil }
+  func previousMove() {
+    guard canGoBack else { return }
+    reviewIndex = (reviewIndex ?? (positions.count - 1)) - 1
+  }
+  func nextMove() {
+    guard let index = reviewIndex else { return }
+    reviewIndex = index + 1 < positions.count - 1 ? index + 1 : nil
+  }
+  private func recordPosition(_ message: Message) {
+    guard fresh, let previous = positions.last,
+      previous.generation == message.generation, previous.gameId == message.gameId,
+      previous.playerColor == message.playerColor
+    else {
+      positions = [message]
+      reviewIndex = nil
+      return
+    }
+    if previous.board == message.board {
+      positions[positions.count - 1] = message
+    } else if BoardTransition.between(previous, message) != nil {
+      positions.append(message)
+    } else {
+      // Missing moves or a browser rewind establish a new review baseline.
+      positions = [message]
+      reviewIndex = nil
+      presentationEpoch += 1
+    }
+  }
   var canMove: Bool {
-    active && authenticated && peerConnected && fresh && available && pending == nil
+    !isReviewing && active && authenticated && peerConnected && fresh && available && pending == nil
       && snapshot?.generation == generation && snapshot?.gameId == gameId && snapshot?.result == nil
       && snapshot?.playerColor != nil && snapshot?.turn == snapshot?.playerColor
       && snapshotAt.map { now - $0 <= 5 } == true && statusAt.map { now - $0 <= 5 } == true
   }
   var selectionContext: String {
-    "\(generation ?? "")/\(gameId ?? "")/\(snapshot?.revision ?? -1)/\(canMove)"
+    "\(generation ?? "")/\(gameId ?? "")/\(snapshot?.revision ?? -1)/\(canMove)/\(reviewIndex ?? -1)"
   }
   var clocksStale: Bool { clockReading?.frozenAt != nil }
   var statusText: String {
@@ -225,6 +262,8 @@ import Observation
         guard op == operation else { return }
         try store.remove()
         self.credential = nil
+        positions = []
+        reviewIndex = nil
         snapshot = nil
         clockReading = nil
         pending = nil
@@ -346,7 +385,7 @@ import Observation
         !peerConnected
         ? "Waiting for the Chrome extension to reconnect…"
         : gameId == nil
-          ? "Start a Chess.com bot game, then connect it in the Chrome extension."
+          ? "Start a Chess.com game, then connect it in the Chrome extension"
           : "Synchronizing game…"
       requestSnapshot()
       return
@@ -358,6 +397,7 @@ import Observation
       if fresh, message.revision == snapshot?.revision,
         message.board != snapshot?.board || message.turn != snapshot?.turn
           || message.playerColor != snapshot?.playerColor || message.result != snapshot?.result
+          || message.resultReason != snapshot?.resultReason
           || message.legalMoves != snapshot?.legalMoves
           || message.checkSquare != snapshot?.checkSquare
       {
@@ -366,7 +406,7 @@ import Observation
       }
       // Only live, observed single-move transitions produce a cue. Reconnects,
       // duplicate snapshots, and missed positions establish a silent baseline.
-      if soundsEnabled, fresh,
+      if soundsEnabled, fresh, !isReviewing,
         let previous = snapshot, let transition = BoardTransition.between(previous, message)
       {
         sounds.play(
@@ -375,6 +415,7 @@ import Observation
       // Reset presentation on the arriving baseline too: a reconnect may have
       // advanced the board while preserving the same game and generation.
       if !fresh { presentationEpoch += 1 }
+      recordPosition(message)
       snapshot = message
       fresh = true
       snapshotAt = now

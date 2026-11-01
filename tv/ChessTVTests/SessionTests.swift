@@ -80,6 +80,81 @@ final class MemoryCredentials: CredentialStoring {
     session.receive(try ProtocolTests.fixture())
     available()
   }
+  func testMoveReviewKeepsLiveUpdatesAndPreventsSubmission() throws {
+    state()
+    let initial = try soundPosition()
+    session.receive(initial)
+    available()
+    XCTAssertFalse(session.canGoBack)
+    let next = pawnMove(initial)
+    session.receive(next)
+    session.receive(next)
+    session.previousMove()
+    XCTAssertEqual(session.displayedSnapshot?.board, initial.board)
+    XCTAssertFalse(session.canGoBack)
+    XCTAssertFalse(session.canMove)
+    session.submit(from: 52, to: 36)
+    XCTAssertNil(session.pending)
+    var reply = next
+    reply.revision! += 1
+    reply.board![4] = nil
+    reply.board![3] = "k"
+    reply.turn = .white
+    session.receive(reply)
+    XCTAssertEqual(session.displayedSnapshot?.board, initial.board)
+    XCTAssertEqual(session.snapshot?.board, reply.board)
+    session.nextMove()
+    XCTAssertEqual(session.displayedSnapshot?.board, next.board)
+    XCTAssertTrue(session.isReviewing)
+    session.nextMove()
+    XCTAssertEqual(session.displayedSnapshot?.board, reply.board)
+    XCTAssertFalse(session.isReviewing)
+    XCTAssertFalse(session.canGoForward)
+    XCTAssertTrue(session.canMove)
+    XCTAssertEqual(sounds.played, [.move])
+  }
+  func testReviewResetsOnResynchronizationAndPositionGaps() throws {
+    state()
+    let initial = try soundPosition()
+    session.receive(initial)
+    session.receive(pawnMove(initial))
+    session.previousMove()
+    state(generation: "new")
+    var baseline = initial
+    baseline.generation = "new"
+    session.receive(baseline)
+    XCTAssertFalse(session.isReviewing)
+    XCTAssertFalse(session.canGoBack)
+    session.receive(pawnMove(baseline))
+    var skipped = baseline
+    skipped.revision = 10
+    skipped.board![52] = nil
+    skipped.board![28] = "P"
+    session.receive(skipped)
+    XCTAssertFalse(session.canGoBack)
+    XCTAssertEqual(session.displayedSnapshot?.board, skipped.board)
+  }
+  func testFinalPositionAndResultArriveBeforeUnavailableStatus() throws {
+    try ready()
+    var final = try ProtocolTests.fixture()
+    final.revision = (final.revision ?? 0) + 1
+    final.board?[12] = "Q"
+    final.board?[26] = nil
+    final.result = .whiteWon
+    final.resultReason = .checkmate
+    final.legalMoves = []
+    session.receive(final)
+    var status = Message(type: "status")
+    status.gameId = final.gameId
+    status.generation = final.generation
+    status.available = false
+    status.reason = "Game finished"
+    session.receive(status)
+    XCTAssertEqual(session.snapshot, final)
+    XCTAssertFalse(session.canMove)
+    XCTAssertNil(session.gameplayWarning)
+  }
+
   func outcome(_ result: String, command: String? = nil) {
     var message = Message(type: "outcome")
     message.generation = "generation-1"

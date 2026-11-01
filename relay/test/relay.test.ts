@@ -229,3 +229,18 @@ describe("real Bun relay", () => {
     expect(h.logs()).not.toContain(p.code)
   })
 })
+
+it("forwards the terminal position and result reason together", async () => {
+  const h = await setup()
+  const { extension, tv, generation } = await attached(h)
+  const final = {
+    ...snapshot,
+    generation,
+    revision: 2,
+    result: "black-won",
+    resultReason: "checkmate",
+    legalMoves: [],
+  }
+  extension.send(parseMessage(final))
+  expect(await tv.take("snapshot")).toEqual(final)
+})

@@ -28,6 +28,25 @@ final class ProtocolTests: XCTestCase {
       XCTAssertThrowsError(try snapshot.encoded())
     }
   }
+  func testResultReasonsAndPlayerPerspective() throws {
+    var snapshot = try Self.fixture()
+    snapshot.result = .whiteWon
+    for reason in GameResultReason.allCases {
+      snapshot.resultReason = reason
+      XCTAssertEqual(try Message.decode(snapshot.encoded()), snapshot)
+    }
+    XCTAssertEqual(GameResult.whiteWon.title(for: .white), "You won")
+    XCTAssertEqual(GameResult.blackWon.title(for: .black), "You won")
+    XCTAssertEqual(GameResult.whiteWon.title(for: .black), "You lost")
+    XCTAssertEqual(GameResult.blackWon.title(for: .white), "You lost")
+    XCTAssertEqual(GameResult.whiteWon.detail(reason: .checkmate, player: .white), "by checkmate 🎉")
+    XCTAssertEqual(GameResult.whiteWon.detail(reason: .checkmate, player: .black), "by checkmate 😔")
+    XCTAssertEqual(GameResult.draw.title(for: .black), "Draw")
+    XCTAssertEqual(GameResult.draw.detail(reason: .stalemate, player: .black), "by stalemate 🤝")
+    XCTAssertEqual(GameResult.blackWon.detail(reason: .timeout, player: .black), "by timeout 🎉")
+    XCTAssertEqual(GameResult.whiteWon.title(for: nil), "White wins")
+  }
+
   func testRejectsMalformedAndIncompatibleMessages() throws {
     let valid = try Self.fixture().encoded()
     let object = try XCTUnwrap(JSONSerialization.jsonObject(with: valid) as? [String: Any])

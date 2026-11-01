@@ -13,6 +13,16 @@ struct BoardTransition: Equatable {
   let kind: Kind
   let capturedSquare: Int?
 
+  /// History can play a confirmed move backward, including castling and promotion.
+  static func presentationBetween(_ previous: Message, _ next: Message) -> BoardTransition? {
+    if let forward = between(previous, next) { return forward }
+    guard let forward = between(next, previous) else { return nil }
+    return Self(
+      moves: forward.moves.map {
+        Movement(piece: $0.resultPiece, from: $0.to, to: $0.from, resultPiece: $0.piece)
+      }, kind: forward.kind, capturedSquare: nil)
+  }
+
   static func between(_ previous: Message, _ next: Message) -> BoardTransition? {
     guard let before = previous.board, let after = next.board,
       before.count == 64, after.count == 64, before != after,

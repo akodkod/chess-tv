@@ -308,3 +308,37 @@ it.each(["tab", "focus", "load"])("attaches immediately on %s activity", async (
   else (callback as () => void)()
   expect((await action()).gameId).toBe("game-one")
 })
+
+it("keeps synchronizing the attached game after its completed-game URL transition", async () => {
+  await start()
+  relay.receive({ type: "session", generation: "attached-generation", gameId, peerConnected: true })
+  await action()
+  url = "https://www.chess.com/game/computer/2494028730"
+  // Chrome event methods are replaced by receiver-independent test spies above.
+  // oxlint-disable-next-line typescript/unbound-method
+  const updated = vi.mocked(chrome.tabs.onUpdated.addListener).mock.calls[0]![0]
+  updated(1, { url }, { id: 1, url } as chrome.tabs.Tab)
+  await action()
+  await vi.advanceTimersByTimeAsync(1000)
+  expect((await action()).gameId).toBe("game-one")
+  expect(chrome.tabs.sendMessage).toHaveBeenLastCalledWith(
+    1,
+    { kind: "sync", generation: "attached-generation", enabled: true },
+    { frameId: 0 },
+  )
+})
+
+it.each(["https://www.chess.com/play/computer", "https://www.chess.com/play/computer?color=black"])(
+  "automatically attaches the base bot page %s",
+  async (page) => {
+    url = page
+    await start()
+    expect((await action()).gameId).toBe("game-one")
+  },
+)
+
+it("automatically attaches a live game at its numeric URL", async () => {
+  url = "https://www.chess.com/game/186358488264"
+  await start()
+  expect((await action()).gameId).toBe("game-one")
+})

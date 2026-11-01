@@ -5,6 +5,8 @@ struct BoardView: View {
   let snapshot: Message
   var showSquareLabels = true
   var edgeSquareLabelsOnly = true
+  var onSettings: () -> Void
+  var onConnection: () -> Void
   @State private var source: Int?
   @State private var promotionTarget: Int?
   @State private var promotionSource: Int?
@@ -19,29 +21,52 @@ struct BoardView: View {
         VStack(spacing: 10) {
           playerLine(snapshot.playerColor == .black ? .white : .black)
           grid(side: max(240, side))
+            .zIndex(1)
           playerLine(snapshot.playerColor == .black ? .black : .white)
         }.frame(width: max(240, side))
-        // Keep the primary status centered independently of transient messages.
-        Group {
-          if let result = snapshot.result {
-            Text(result.label).font(.title.weight(.semibold))
-          } else {
-            Text(snapshot.turn.map { "\($0.rawValue.capitalized)\nto move" } ?? "Turn\nunknown")
-              .font(.title2.weight(.semibold))
-              .lineSpacing(4)
+          .zIndex(1)
+        VStack(alignment: .leading, spacing: 32) {
+          VStack(alignment: .leading, spacing: 20) {
+            Button("Settings", systemImage: "gearshape", action: onSettings)
+            Button(
+              "Connection", systemImage: "antenna.radiowaves.left.and.right",
+              action: onConnection)
           }
-        }
-        .fixedSize(horizontal: false, vertical: true)
-        .frame(width: 340, alignment: .leading)
-        .frame(maxHeight: .infinity)
-        .overlay(alignment: .bottomLeading) {
+          .font(.caption)
+          .focusSection()
+          Spacer(minLength: 24)
           statusMessages
-            .padding(.bottom, 12)
+          Group {
+            if session.isReviewing {
+              Text("\(session.movesBehindLive) \(session.movesBehindLive == 1 ? "move" : "moves") ago")
+                .font(.title2.weight(.semibold))
+            } else if let result = snapshot.result {
+              VStack(alignment: .leading, spacing: 8) {
+                Text(result.title(for: snapshot.playerColor)).font(.title2.weight(.semibold))
+                Text(result.detail(reason: snapshot.resultReason, player: snapshot.playerColor))
+                  .font(.title3)
+              }
+            } else {
+              Text(snapshot.turn.map { "\($0.rawValue.capitalized)\nto move" } ?? "Turn\nunknown")
+                .font(.title2.weight(.semibold))
+                .lineSpacing(4)
+            }
+          }
+          .fixedSize(horizontal: false, vertical: true)
+          HStack(spacing: 24) {
+            Button("Previous move", systemImage: "chevron.left") { session.previousMove() }
+              .disabled(!session.canGoBack)
+            Button("Next move", systemImage: "chevron.right") { session.nextMove() }
+              .disabled(!session.canGoForward)
+          }
+          .labelStyle(.iconOnly)
+          .font(.caption)
+          .focusSection()
         }
+        .frame(width: 340, height: max(240, side), alignment: .leading)
       }.frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-    // Include the side panel so Down from Connection can reach the board,
-    // even though the button isn't horizontally aligned with a square.
+    // Group the board and side-panel controls for remote focus navigation.
     .focusSection()
     .task {
       // A game can arrive while Connection already owns focus. Hand focus to
@@ -86,9 +111,9 @@ struct BoardView: View {
       {
         Text("\(color.rawValue.capitalized) in check").font(.headline)
       }
-      if let warning = session.gameplayWarning { Text(warning).font(.callout) }
-      if let notice = session.moveNotice { Text(notice).font(.callout) }
-      if session.clocksStale && snapshot.result == nil {
+      if let warning = session.gameplayWarning.flatMap(messageText) { Text(warning).font(.callout) }
+      if let notice = session.moveNotice.flatMap(messageText) { Text(notice).font(.callout) }
+      if !session.isReviewing && session.clocksStale && snapshot.result == nil {
         Label("Clocks paused", systemImage: "pause.circle").font(.caption)
       }
       if session.needsReconnect { Button("Reconnect relay") { session.reconnect() } }
@@ -96,6 +121,22 @@ struct BoardView: View {
     .fixedSize(horizontal: false, vertical: true)
     .frame(width: 340, alignment: .leading)
   }
+  private func messageText(_ message: String) -> String? {
+    let text = message.trimmingCharacters(in: .whitespacesAndNewlines)
+    // These transient observation states need no action from the TV player.
+    if text == "Board is animating. Inspect again."
+      || text == "Wait for board animation to finish, then inspect again."
+    {
+      return nil
+    }
+    guard text.hasSuffix(".") else { return text }
+    var sentenceCount = 0
+    text.enumerateSubstrings(in: text.startIndex..<text.endIndex, options: .bySentences) {
+      _, _, _, _ in sentenceCount += 1
+    }
+    return sentenceCount == 1 ? String(text.dropLast()) : text
+  }
+
   private func playerLine(_ color: PieceColor) -> some View {
     let avatar = color == .white ? snapshot.players?.whiteAvatar : snapshot.players?.blackAvatar
     return HStack(spacing: 12) {
@@ -116,9 +157,9 @@ struct BoardView: View {
       )
       .lineLimit(1).minimumScaleFactor(0.8)
       Spacer()
-      if let remaining = session.clockReading?.remaining(color, now: session.now) {
+      if !session.isReviewing, let remaining = session.clockReading?.remaining(color, now: session.now) {
         Text(ClockReading.format(remaining))
-          .monospacedDigit().font(.title3).frame(minWidth: 100, alignment: .trailing)
+          .monospacedDigit().font(.headline).frame(minWidth: 100, alignment: .trailing)
           .accessibilityLabel("\(color.rawValue.capitalized) clock")
           .accessibilityValue(ClockReading.format(remaining))
       }
@@ -136,6 +177,7 @@ struct BoardView: View {
       }
     }.frame(width: side, height: side)
       .background { Image("chess-walnut").resizable().frame(width: side, height: side) }
+      .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
       .overlay {
         PieceBoardOverlay(
           snapshot: snapshot, side: side,
@@ -157,6 +199,9 @@ struct BoardView: View {
       } == true
     let isFocused = focused == index
     let light = (index / 8 + index % 8).isMultiple(of: 2)
+    let highlightColor = light ? Color(red: 0.72, green: 0.52, blue: 0.06) : Color.yellow
+    let highlightOpacity = contrast == .increased
+      ? (light ? 0.55 : 0.52) : 0.40
     return Button {
       select(index)
     } label: {
@@ -165,16 +210,14 @@ struct BoardView: View {
           Rectangle().fill(Color.red.opacity(contrast == .increased ? 0.85 : 0.65))
         }
         Rectangle().fill(
-          selected ? Color.yellow.opacity(contrast == .increased ? 0.38 : 0.22) : Color.clear)
+          selected || isFocused
+            ? highlightColor.opacity(highlightOpacity) : Color.clear)
         if showSquareLabels {
           squareLabels(index, size: size, light: light)
         }
         if destination {
-          LegalMoveMarker(size: size, capture: piece != nil)
+          LegalMoveMarker(size: size, capture: piece != nil, lightSquare: light)
         }
-        Rectangle().strokeBorder(
-          isFocused ? Color.white : selected ? Color.yellow : Color.clear,
-          lineWidth: isFocused ? (contrast == .increased ? 7 : 5) : 4)
       }.frame(width: size, height: size)
     }
     .buttonStyle(BoardSquareButtonStyle()).focused($focused, equals: index)
@@ -235,7 +278,7 @@ struct BoardView: View {
 }
 
 // Even the plain tvOS button style adds system focus chrome around its label.
-// Squares draw their own inset focus and selection borders, so keep the label's
+// Squares draw their own focus and selection tint, so keep the label's
 // exact bounds and provide press feedback without lifting it above its neighbors.
 private struct BoardSquareButtonStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
@@ -249,12 +292,14 @@ private struct BoardSquareButtonStyle: ButtonStyle {
 struct LegalMoveMarker: View {
   let size: CGFloat
   let capture: Bool
+  var lightSquare = true
   var body: some View {
     if capture {
-      Circle().strokeBorder(Color.black.opacity(0.5), lineWidth: size * 0.065)
-        .padding(size * 0.04)
+      Circle().strokeBorder(
+        Color.black.opacity(lightSquare ? 0.24 : 0.30), lineWidth: size * 0.075)
+        .padding(size * 0.13)
     } else {
-      Circle().fill(Color.black.opacity(0.35))
+      Circle().fill(Color.black.opacity(0.25))
         .frame(width: size * 0.24, height: size * 0.24)
         .frame(width: size, height: size)
     }

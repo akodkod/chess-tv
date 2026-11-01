@@ -2,6 +2,7 @@ import type { Message } from "@chess-tv/protocol"
 
 import { readGame } from "./chesscom-game"
 import { createMoveController } from "./chesscom-move"
+import { completedBotPath, liveBotPath } from "./chesscom-url"
 import { contentAction, type ContentReply, type Move } from "./messages"
 
 type Color = "white" | "black"
@@ -16,6 +17,8 @@ export class ChessComAdapter {
   private history: string[] = []
   private boardElement?: HTMLElement
   private path = ""
+  private finalResult: ReturnType<typeof readGame>["result"] = null
+  private finalReason: ReturnType<typeof readGame>["resultReason"] = null
   private controller = createMoveController()
   private outcomes = new Map<string, { request: string; result: Promise<ContentReply> }>()
   constructor(private doc: Document = document) {}
@@ -25,27 +28,41 @@ export class ChessComAdapter {
     const color = p.playerColor
     if (!color)
       throw new Error(
-        "Cannot detect your playing color. Sign in to Chess.com, open your current bot game, and reconnect.",
+        "Cannot detect your playing color. Sign in to Chess.com, open your current game, and reconnect.",
       )
     this.color = color
     const path = this.doc.location?.pathname ?? ""
+    const completedSameGame = liveBotPath(this.path) && completedBotPath(path)
     if (
       this.boardElement &&
       (this.boardElement !== p.board ||
-        this.path !== path ||
+        (this.path !== path && !completedSameGame) ||
         this.history.some((san, i) => p.history[i] !== san))
     ) {
       this.gameId = crypto.randomUUID()
       this.enabled = false
       this.fingerprint = ""
       this.history = []
+      this.finalResult = null
+      this.finalReason = null
       this.boardElement = undefined
       throw new Error("Game changed. Connect the current game again.")
     }
     this.boardElement = p.board
     this.path = path
     this.history = p.history
-    const fingerprint = JSON.stringify([p.fingerprint, this.color, p.result])
+    // Closing the game-over modal must not erase a previously observed reason.
+    if (p.result && p.result === this.finalResult && !p.resultReason)
+      p.resultReason = this.finalReason
+    this.finalResult = p.result
+    this.finalReason = p.resultReason
+    const fingerprint = JSON.stringify([
+      p.fingerprint,
+      this.color,
+      p.result,
+      p.resultReason,
+      p.playable,
+    ])
     if (fingerprint !== this.fingerprint) {
       this.revision++
       this.fingerprint = fingerprint
@@ -58,7 +75,13 @@ export class ChessComAdapter {
   private sync(): ContentReply {
     const p = this.read()
     const context = { v: 2 as const, gameId: this.gameId, generation: this.generation }
-    const available = this.enabled && !this.doc.hidden && !this.controller.unresolved && !p.result
+    const available =
+      this.enabled &&
+      !this.doc.hidden &&
+      !this.controller.unresolved &&
+      !p.result &&
+      p.playable &&
+      !completedBotPath(this.path)
     return this.reply([
       {
         ...context,
@@ -70,6 +93,7 @@ export class ChessComAdapter {
         turn: p.chess.turn() === "w" ? "white" : "black",
         clocks: p.clocks,
         result: p.result,
+        ...(p.resultReason ? { resultReason: p.resultReason } : {}),
         legalMoves: p.result
           ? []
           : [
@@ -95,8 +119,8 @@ export class ChessComAdapter {
           : this.controller.unresolved
             ? "Move unresolved. Inspect Chrome and reconnect the game."
             : p.result
-              ? "Game finished. Start a new bot game in Chrome."
-              : "Keep the bot game visible and connected.",
+              ? "Game finished. Start a new game in Chrome."
+              : "Keep the game visible and connected.",
       },
     ])
   }
@@ -130,15 +154,22 @@ export class ChessComAdapter {
         move.revision !== this.revision
       )
         throw new Error("Position changed. Choose your move again.")
-      if (!this.enabled || this.doc.hidden || p.result || this.controller.unresolved)
+      if (
+        !this.enabled ||
+        this.doc.hidden ||
+        p.result ||
+        !p.playable ||
+        completedBotPath(this.path) ||
+        this.controller.unresolved
+      )
         throw new Error("Game is not available for a move.")
       if ((p.chess.turn() === "w" ? "white" : "black") !== this.color)
-        throw new Error("Wait for the bot's move.")
+        throw new Error("Wait for your opponent's move.")
       // Validation only: the engine never chooses a move or updates TV state speculatively.
       const legal = p.chess
         .moves({ verbose: true })
         .some((m) => m.from === move.from && m.to === move.to && m.promotion === move.promotion)
-      if (!legal) throw new Error("That move is not legal. Choose another destination.")
+      if (!legal) throw new Error("This move is not legal")
       const reply = await this.controller.move({
         kind: "bot-move",
         id: move.commandId,

@@ -27,9 +27,7 @@ export function readGame(doc: Document) {
     const rendered = piece ? (piece[0] === "w" ? piece[1]!.toUpperCase() : piece[1]!) : null
     if (rendered !== board[i]) throw new Error("Waiting for board and move history to agree.")
   }
-  const resultText = doc
-    .querySelector('wc-simple-move-list[board-id="board-play-computer"] .game-result')
-    ?.textContent?.trim()
+  const resultText = observed.list.querySelector(".game-result")?.textContent?.trim()
   let result: Snapshot["result"] =
     resultText === "1-0"
       ? "white-won"
@@ -38,22 +36,44 @@ export function readGame(doc: Document) {
         : resultText === "1/2-1/2"
           ? "draw"
           : null
-  if (chess.isCheckmate()) result = chess.turn() === "w" ? "black-won" : "white-won"
-  else if (chess.isStalemate() || chess.isInsufficientMaterial()) result = "draw"
+  let resultReason: Snapshot["resultReason"] = null
+  if (chess.isCheckmate()) {
+    result = chess.turn() === "w" ? "black-won" : "white-won"
+    resultReason = "checkmate"
+  } else if (chess.isStalemate()) {
+    result = "draw"
+    resultReason = "stalemate"
+  } else if (chess.isInsufficientMaterial()) {
+    result = "draw"
+    resultReason = "insufficient-material"
+  }
+  // Only accept a page-supplied reason once the move list confirms a result.
+  // The modal can appear a rendering pass later than the final board position.
+  if (result && !resultReason) {
+    const subtitle = doc
+      .querySelector(".game-over-modal-subtitle-text")
+      ?.textContent?.trim()
+      .toLowerCase()
+    if (subtitle && /\b(time(?:out)?|time out)\b/.test(subtitle)) resultReason = "timeout"
+    else if (subtitle?.includes("resignation")) resultReason = "resignation"
+    else if (result === "draw") {
+      if (chess.isThreefoldRepetition()) resultReason = "repetition"
+      else if (chess.isDrawByFiftyMoves()) resultReason = "fifty-move-rule"
+      else if (subtitle?.includes("agreement")) resultReason = "agreement"
+    }
+  }
   const players: Snapshot["players"] = { white: null, black: null }
   const clocks: Snapshot["clocks"] = {
     white: { remainingMs: null, running: null },
     black: { remainingMs: null, running: null },
     observedAt: null,
   }
-  const rows = doc.querySelectorAll(".player-row-component")
-  if (
-    rows.length === 2 &&
-    [...rows].filter((r) => r.classList.contains("player-row-top")).length === 1
-  ) {
+  const rows = doc.querySelectorAll(observed.online ? ".player-component" : ".player-row-component")
+  const topClass = observed.online ? "player-top" : "player-row-top"
+  if (rows.length === 2 && [...rows].filter((r) => r.classList.contains(topClass)).length === 1) {
     const flipped = observed.board.classList.contains("flipped")
     for (const row of rows) {
-      const top = row.classList.contains("player-row-top")
+      const top = row.classList.contains(topClass)
       const color = top === flipped ? "white" : "black"
       players[color] =
         row
@@ -63,11 +83,25 @@ export function readGame(doc: Document) {
       const image = row.querySelector<HTMLImageElement>("img.cc-avatar-img")
       const avatar = avatarURL(image?.currentSrc || image?.getAttribute("src"), doc.baseURI)
       if (avatar) players[color === "white" ? "whiteAvatar" : "blackAvatar"] = avatar
-      const remainingMs = parseClock(row.querySelector(".move-time-content")?.textContent ?? "")
+      const clock = row.querySelector(".clock-component")
+      if (
+        observed.online &&
+        (!clock?.classList.contains(`clock-${color}`) ||
+          clock.classList.contains(`clock-${color === "white" ? "black" : "white"}`))
+      )
+        throw new Error("Waiting for player colors and clocks to agree.")
+      const remainingMs = parseClock(
+        row.querySelector(observed.online ? ".clock-time-monospace" : ".move-time-content")
+          ?.textContent ?? "",
+      )
       if (remainingMs !== null) {
         clocks[color] = {
           remainingMs,
-          running: !result && (chess.turn() === "w" ? "white" : "black") === color,
+          running:
+            !result &&
+            (observed.online
+              ? clock!.classList.contains("clock-player-turn")
+              : (chess.turn() === "w" ? "white" : "black") === color),
         }
         clocks.observedAt = Date.now()
       }
@@ -85,7 +119,24 @@ export function readGame(doc: Document) {
       if (matches.length === 1) playerColor = matches[0]!
     }
   }
-  return { ...observed, chess, boardCells: board, result, players, clocks, playerColor }
+  const activeClocks = doc.querySelectorAll(".player-component .clock-player-turn")
+  const playable =
+    !observed.online ||
+    (activeClocks.length === 1 &&
+      activeClocks[0]!.classList.contains(`clock-${chess.turn() === "w" ? "white" : "black"}`) &&
+      clocks.white.remainingMs !== null &&
+      clocks.black.remainingMs !== null)
+  return {
+    ...observed,
+    playable,
+    chess,
+    boardCells: board,
+    result,
+    resultReason,
+    players,
+    clocks,
+    playerColor,
+  }
 }
 
 // Chess.com uses m:ss, h:mm:ss, and fractional seconds near time control.

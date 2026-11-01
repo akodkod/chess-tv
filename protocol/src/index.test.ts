@@ -61,3 +61,22 @@ it("requires and validates move and check metadata", () => {
     expect(() => parseMessage({ ...snapshot, ...metadata })).toThrow()
   expect(parseMessage({ ...snapshot, checkSquare: "e1" })).toBeDefined()
 })
+
+it("accepts optional result reasons and rejects unsupported reasons", () => {
+  for (const resultReason of [
+    "checkmate",
+    "stalemate",
+    "timeout",
+    "resignation",
+    "insufficient-material",
+    "repetition",
+    "fifty-move-rule",
+    "agreement",
+    null,
+  ]) {
+    expect(parseMessage({ ...snapshot, result: "white-won", resultReason })).toMatchObject({
+      resultReason,
+    })
+  }
+  expect(() => parseMessage({ ...snapshot, resultReason: "guessed" })).toThrow()
+})

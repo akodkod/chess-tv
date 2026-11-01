@@ -56,6 +56,19 @@ export const messageSchema = z.discriminatedUnion("type", [
     legalMoves: z.array(z.strictObject({ from: square, to: square })).max(256),
     checkSquare: square.nullable(),
     result: z.enum(["white-won", "black-won", "draw"]).nullable(),
+    resultReason: z
+      .enum([
+        "checkmate",
+        "stalemate",
+        "timeout",
+        "resignation",
+        "insufficient-material",
+        "repetition",
+        "fifty-move-rule",
+        "agreement",
+      ])
+      .nullable()
+      .optional(),
   }),
   message("move", {
     ...context,

@@ -13,22 +13,18 @@ struct ContentView: View {
         PairingView(session: session)
       } else {
         VStack(spacing: 20) {
-          HStack {
-            Spacer()
-            Button("Settings", systemImage: "gearshape") {
-              showSettings = true
-            }
-            .font(.caption)
-            Button("Connection", systemImage: "antenna.radiowaves.left.and.right") {
-              showConnection = true
-            }
-            .font(.caption)
-          }.focusSection()
-          if let snapshot = session.snapshot {
+          if let snapshot = session.displayedSnapshot {
             BoardView(
               session: session, snapshot: snapshot, showSquareLabels: showSquareLabels,
-              edgeSquareLabelsOnly: edgeSquareLabelsOnly)
+              edgeSquareLabelsOnly: edgeSquareLabelsOnly,
+              onSettings: { showSettings = true }, onConnection: { showConnection = true })
           } else {
+            HStack(spacing: 24) {
+              Button("Settings", systemImage: "gearshape") { showSettings = true }
+              Button("Connection", systemImage: "antenna.radiowaves.left.and.right") {
+                showConnection = true
+              }
+            }.font(.caption).focusSection()
             Spacer()
             Image(systemName: "checkerboard.rectangle").font(.system(size: 80)).accessibilityHidden(
               true)

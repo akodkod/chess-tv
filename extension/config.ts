@@ -24,9 +24,16 @@ export function buildSettings(mode: string, relayValue?: string) {
       name: "Chess TV",
       version: "0.1.0",
       minimum_chrome_version: "116",
-      description: "Play your Chess.com bot game from Apple TV.",
+      description: "Play your Chess.com game from Apple TV.",
       permissions: ["storage", "scripting", "alarms"],
-      host_permissions: ["https://www.chess.com/play/computer/*", host],
+      host_permissions: [
+        "https://www.chess.com/play/computer*",
+        "https://www.chess.com/game/computer/*",
+        "https://www.chess.com/play/coach*",
+        "https://www.chess.com/play/online*",
+        "https://www.chess.com/game/*",
+        host,
+      ],
       icons: {
         16: "icons/icon-16.png",
         32: "icons/icon-32.png",

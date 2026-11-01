@@ -29,6 +29,29 @@ final class BoardTransitionTests: XCTestCase {
     XCTAssertEqual(BoardTransition.between(old, capture)?.kind, .capture)
     XCTAssertEqual(BoardTransition.between(old, capture)?.capturedSquare, Square.index("d3"))
   }
+  func testHistoryReversesCapturesCastlesAndPromotions() throws {
+    let pairs: [(Message, Message)] = [
+      (position(["e2": "P", "d3": "p"]),
+       position(["d3": "P"], turn: .black, revision: 2)),
+      (position(["e1": "K", "h1": "R"]),
+       position(["g1": "K", "f1": "R"], turn: .black, revision: 2)),
+      (position(["a7": "P", "b8": "r"]),
+       position(["b8": "Q"], turn: .black, revision: 2)),
+    ]
+    for (before, after) in pairs {
+      let forward = try XCTUnwrap(BoardTransition.between(before, after))
+      XCTAssertEqual(BoardTransition.presentationBetween(before, after), forward)
+      let reverse = try XCTUnwrap(BoardTransition.presentationBetween(after, before))
+      XCTAssertNil(reverse.capturedSquare, "Undoing a capture must not eject a piece again")
+      XCTAssertEqual(reverse.moves.count, forward.moves.count)
+      for (move, undo) in zip(forward.moves, reverse.moves) {
+        XCTAssertEqual(undo.from, move.to)
+        XCTAssertEqual(undo.to, move.from)
+        XCTAssertEqual(undo.piece, move.resultPiece)
+        XCTAssertEqual(undo.resultPiece, move.piece)
+      }
+    }
+  }
   func testAllCastlesMoveBothPieces() throws {
     for color in [PieceColor.white, .black] {
       let rank = color == .white ? "1" : "8"

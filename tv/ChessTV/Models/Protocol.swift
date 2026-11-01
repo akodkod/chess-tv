@@ -19,6 +19,38 @@ enum GameResult: String, Codable {
     }
   }
 }
+enum GameResultReason: String, Codable, CaseIterable {
+  case checkmate, stalemate, timeout, resignation
+  case insufficientMaterial = "insufficient-material"
+  case repetition
+  case fiftyMoveRule = "fifty-move-rule"
+  case agreement
+
+  var label: String {
+    switch self {
+    case .insufficientMaterial: "insufficient material"
+    case .fiftyMoveRule: "the fifty-move rule"
+    default: rawValue
+    }
+  }
+}
+
+extension GameResult {
+  func title(for player: PieceColor?) -> String {
+    guard self != .draw, let player else { return label }
+    let won = (self == .whiteWon) == (player == .white)
+    return won ? "You won" : "You lost"
+  }
+
+  func detail(reason: GameResultReason?, player: PieceColor?) -> String {
+    let emoji = self == .draw ? "🤝" : player.map {
+      (self == .whiteWon) == ($0 == .white) ? "🎉" : "😔"
+    } ?? ""
+    return [reason.map { "by \($0.label)" }, emoji.isEmpty ? nil : emoji]
+      .compactMap { $0 }.joined(separator: " ")
+  }
+}
+
 struct Players: Codable, Equatable {
   var white: String?
   var black: String?
@@ -63,6 +95,7 @@ struct Message: Codable, Equatable {
   var turn: PieceColor?
   var clocks: Clocks?
   var result: GameResult?
+  var resultReason: GameResultReason?
   var commandId: String?
   var from: String?
   var to: String?
@@ -100,7 +133,8 @@ struct Message: Codable, Equatable {
       throw ProtocolFailure("Unknown relay message type. Update Chess TV.")
     }
     let required = fields.union(["v", "type"])
-    let allowed = type == "move" ? required.union(["promotion"]) : required
+    let allowed = type == "move" ? required.union(["promotion"])
+      : type == "snapshot" ? required.union(["resultReason"]) : required
     guard required.isSubset(of: Set(object.keys)), Set(object.keys).isSubset(of: allowed) else {
       throw ProtocolFailure("Relay message fields do not match protocol v2.")
     }

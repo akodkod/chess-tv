@@ -62,7 +62,7 @@ function fixture(moves: string[] = [], color = "white") {
   }))
     vi.stubGlobal(name, value)
   render()
-  return { doc, board, chess, render, adapter: new ChessComAdapter(doc) }
+  return { dom, doc, board, chess, render, adapter: new ChessComAdapter(doc) }
 }
 afterEach(() => vi.unstubAllGlobals())
 async function sync(adapter: ChessComAdapter) {
@@ -110,7 +110,7 @@ it("rejects illegal and stale moves before dispatch without locking later input"
     expect.objectContaining({
       type: "outcome",
       outcome: "rejected",
-      reason: expect.stringContaining("not legal"),
+      reason: "This move is not legal",
     }),
   )
   chess.move("d4")
@@ -446,3 +446,227 @@ it.each(["Other", "Human"])("rejects unmatched or ambiguous player identity (%s)
   )
   expect(readGame(doc).playerColor).toBeNull()
 })
+
+const finalGameMoves = [
+  "d4",
+  "d5",
+  "c4",
+  "Nc6",
+  "e3",
+  "Nxd4",
+  "c5",
+  "c6",
+  "exd4",
+  "Bf5",
+  "g4",
+  "Bxb1",
+  "Rxb1",
+  "e5",
+  "Nf3",
+  "exd4",
+  "Qxd4",
+  "Qg5",
+  "Bxg5",
+  "Bxc5",
+  "Qxc5",
+  "f6",
+  "Kd2",
+  "f5",
+  "Re1+",
+  "Ne7",
+  "Qxe7#",
+]
+it.each(["/play/computer", "/play/computer/Zach-BOT"])(
+  "publishes the final capture and result when %s becomes a finished-game URL",
+  async (path) => {
+    const { dom, doc, chess, render, adapter } = fixture(finalGameMoves.slice(0, -1), "black")
+    dom.reconfigure({ url: `https://www.chess.com${path}` })
+    const before = await sync(adapter)
+    chess.move("Qxe7#")
+    render()
+    dom.reconfigure({ url: "https://www.chess.com/game/computer/2494028730" })
+    doc.body.insertAdjacentHTML(
+      "beforeend",
+      '<div class="game-over-modal-subtitle-text">by checkmate</div>',
+    )
+    const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
+    expect(reply.error).toBeNull()
+    expect(reply.gameId).toBe(before.gameId)
+    expect(reply.messages).toContainEqual(
+      expect.objectContaining({
+        type: "snapshot",
+        result: "white-won",
+        resultReason: "checkmate",
+        revision: before.revision + 1,
+        playerColor: "black",
+        legalMoves: [],
+      }),
+    )
+    const final = reply.messages.find((m) => m.type === "snapshot")!
+    expect(final.type === "snapshot" && final.board[12]).toBe("Q")
+    expect(final.type === "snapshot" && final.board[26]).toBeNull()
+  },
+)
+
+it("reports stalemate as a draw with its reason", async () => {
+  const s = await sync(
+    fixture(
+      "e3 a5 Qh5 Ra6 Qxa5 h5 Qxc7 Rah6 h4 f6 Qxd7+ Kf7 Qxb7 Qd3 Qxb8 Qh7 Qxc8 Kg6 Qe6".split(" "),
+    ).adapter,
+  )
+  expect(s).toMatchObject({ result: "draw", resultReason: "stalemate", legalMoves: [] })
+})
+
+it.each(["1-0", "0-1"])("reports timeout only after a recorded %s result", async (score) => {
+  const { doc, adapter } = fixture(["e4", "e5"])
+  doc.body.insertAdjacentHTML(
+    "beforeend",
+    '<div class="game-over-modal-subtitle-text">by timeout</div>',
+  )
+  const live = await sync(adapter)
+  expect(live.result).toBeNull()
+  expect(live.resultReason).toBeUndefined()
+  doc
+    .querySelector("wc-simple-move-list")!
+    .insertAdjacentHTML("beforeend", `<div class="game-result">${score}</div>`)
+  const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
+  expect(reply.messages).toContainEqual(
+    expect.objectContaining({
+      type: "snapshot",
+      result: score === "1-0" ? "white-won" : "black-won",
+      resultReason: "timeout",
+      legalMoves: [],
+    }),
+  )
+})
+
+it("publishes late result reasons in a new revision without changing the final board", async () => {
+  const { doc, adapter } = fixture(["e4", "e5"])
+  doc
+    .querySelector("wc-simple-move-list")!
+    .insertAdjacentHTML("beforeend", '<div class="game-result">0-1</div>')
+  const ended = await sync(adapter)
+  doc.body.insertAdjacentHTML(
+    "beforeend",
+    '<div class="game-over-modal-subtitle-text">by resignation</div>',
+  )
+  const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
+  expect(reply.messages).toContainEqual(
+    expect.objectContaining({
+      type: "snapshot",
+      result: "black-won",
+      resultReason: "resignation",
+      revision: ended.revision + 1,
+      board: ended.board,
+    }),
+  )
+})
+
+it("still rejects navigation to a different completed game", async () => {
+  const { dom, adapter } = fixture(finalGameMoves)
+  dom.reconfigure({ url: "https://www.chess.com/game/computer/2494028730" })
+  const before = await sync(adapter)
+  dom.reconfigure({ url: "https://www.chess.com/game/computer/999999" })
+  const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
+  expect(reply.error).toContain("Game changed")
+  expect(reply.gameId).not.toBe(before.gameId)
+})
+
+it("retains the observed timeout reason after the game-over modal closes", async () => {
+  const { doc, adapter } = fixture(["e4", "e5"])
+  doc
+    .querySelector("wc-simple-move-list")!
+    .insertAdjacentHTML("beforeend", '<div class="game-result">0-1</div>')
+  doc.body.insertAdjacentHTML(
+    "beforeend",
+    '<div class="game-over-modal-subtitle-text">by timeout</div>',
+  )
+  const ended = await sync(adapter)
+  doc.querySelector(".game-over-modal-subtitle-text")!.remove()
+  const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
+  expect(reply.messages).toContainEqual(
+    expect.objectContaining({
+      type: "snapshot",
+      resultReason: "timeout",
+      revision: ended.revision,
+    }),
+  )
+})
+
+// Live-game markup observed in Dia at /game/186358488264.
+function onlineFixture(moves = ["d4", "e5", "e4"], color = "black") {
+  const f = fixture(moves, color)
+  f.dom.reconfigure({ url: "https://www.chess.com/game/186358488264" })
+  f.board.id = "board-single"
+  f.doc.querySelector("wc-simple-move-list")!.setAttribute("board-id", "board-single")
+  for (const row of f.doc.querySelectorAll(".player-row-component")) {
+    const top = row.classList.contains("player-row-top")
+    const side = top ? "black" : "white"
+    row.className = `player-component player-${top ? "top" : "bottom"}`
+    row.insertAdjacentHTML(
+      "beforeend",
+      `<div class="clock-component clock-${side} ${f.chess.turn() === side[0] ? "clock-player-turn" : ""}"><span class="clock-time-monospace">13:41</span></div>`,
+    )
+  }
+  return f
+}
+
+it("publishes a rapid game's position, identity, clocks, and available TV input", async () => {
+  const { adapter } = onlineFixture()
+  const s = await sync(adapter)
+  expect(s.playerColor).toBe("black")
+  expect(s.turn).toBe("black")
+  expect(s.players).toMatchObject({ black: "Human", white: "Zach" })
+  expect(s.clocks.black).toEqual({ remainingMs: 821000, running: true })
+  expect(s.clocks.white).toEqual({ remainingMs: 821000, running: false })
+  expect(s.legalMoves).toContainEqual({ from: "d7", to: "d5" })
+  const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
+  expect(reply.messages).toContainEqual(
+    expect.objectContaining({ type: "status", available: true }),
+  )
+})
+
+it("dispatches a user-selected rapid move and confirms the recorded response", async () => {
+  const { adapter, board, chess, render, doc } = onlineFixture()
+  const s = await sync(adapter)
+  let clicks = 0
+  board.addEventListener("click", () => {
+    if (++clicks !== 2) return
+    chess.move("d5")
+    render()
+    doc.querySelector(".clock-black")!.classList.remove("clock-player-turn")
+    doc.querySelector(".clock-white")!.classList.add("clock-player-turn")
+  })
+  const request = command(s, "d7", "d5")
+  const reply = await adapter.handle(request)
+  expect(reply.messages).toContainEqual(
+    expect.objectContaining({ type: "outcome", outcome: "observed-complete" }),
+  )
+  await adapter.handle(request)
+  expect(clicks).toBe(2)
+})
+
+it.each(["stopped clocks", "wrong turn", "missing identity", "history view"])(
+  "blocks rapid input for %s",
+  async (condition) => {
+    const { adapter, doc, board } = onlineFixture()
+    const s = await sync(adapter)
+    const click = vi.fn()
+    board.addEventListener("click", click)
+    if (condition === "stopped clocks" || condition === "wrong turn") {
+      doc.querySelector(".clock-black")!.classList.remove("clock-player-turn")
+      if (condition === "wrong turn")
+        doc.querySelector(".clock-white")!.classList.add("clock-player-turn")
+    } else if (condition === "missing identity")
+      doc.querySelector('a[data-user-activity-key="profile"]')!.remove()
+    else {
+      doc.querySelector(".selected")!.classList.remove("selected")
+      doc.querySelector(".node-highlight-content")!.classList.add("selected")
+    }
+    const reply = await adapter.handle(command(s, "d7", "d5"))
+    expect(reply.messages).toContainEqual(
+      expect.objectContaining({ type: "outcome", outcome: "rejected" }),
+    )
+    expect(click).not.toHaveBeenCalled()
+  },
+)

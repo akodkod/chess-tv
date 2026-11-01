@@ -1,3 +1,5 @@
+import { gameLayout } from "./chesscom-layout"
+
 type Color = "white" | "black"
 
 export type TurnReading =
@@ -10,16 +12,13 @@ export type TurnReading =
       nextColorInDisplayedPosition: Color
     }
 
-// Observed on Chess.com's standard bot page. This reports history evidence, not
+// Observed on Chess.com's standard bot and online game pages. This reports history evidence, not
 // permission to play: player identity, game result and board consistency are separate.
 export function readChessComTurn(doc: Document): TurnReading {
   const unknown = (reason: string): TurnReading => ({ state: "unknown", reason })
-  const boards = doc.querySelectorAll("wc-chess-board#board-play-computer")
-  const lists = doc.querySelectorAll('wc-simple-move-list[board-id="board-play-computer"]')
-  if (boards.length !== 1 || lists.length !== 1)
-    return unknown("Expected one bot board and its move list.")
-
-  const list = lists[0]!
+  const layout = gameLayout(doc)
+  if (!layout) return unknown("This game layout is not supported yet.")
+  const { board, list } = layout
   const moves = Array.from(list.querySelectorAll(".main-line-ply"))
   // An empty history is actionable only with the complete standard start board.
   if (!moves.length) {
@@ -34,7 +33,7 @@ export function readChessComTurn(doc: Document): TurnReading {
       ] as const)
         expected.set(`square-${file}${rank}`, code)
     }
-    const pieces = boards[0]!.querySelectorAll(".piece")
+    const pieces = board.querySelectorAll(".piece")
     if (
       pieces.length !== 32 ||
       ![...pieces].every((p) => {

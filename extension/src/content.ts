@@ -1,11 +1,8 @@
 import { ChessComAdapter } from "./chesscom-adapter"
+import { allowedGameURL } from "./chesscom-url"
 
 const scope = globalThis as typeof globalThis & { chessTVInstalled?: boolean }
-if (
-  !scope.chessTVInstalled &&
-  location.origin === "https://www.chess.com" &&
-  location.pathname.startsWith("/play/computer/")
-) {
+if (!scope.chessTVInstalled && allowedGameURL(location.href)) {
   scope.chessTVInstalled = true
   const adapter = new ChessComAdapter()
   chrome.runtime.onMessage.addListener((raw: unknown, sender, reply) => {

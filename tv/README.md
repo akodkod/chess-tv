@@ -26,7 +26,7 @@ The playing side always appears at the bottom, including Black. Selecting a piec
 
 Snapshots use protocol v2 with required legal-move and checked-king metadata from the extension’s chess engine. Update the TV, extension, and relay together; v1 is unsupported.
 
-The board uses bundled Chess.com Neo-Wood pieces and the Walnut texture. Confirmed single moves animate for 180 ms, including castling, en passant, and promotions; Reduce Motion disables animation. Initial loads, reconnects, and ambiguous position jumps update immediately.
+The board uses bundled Chess.com Neo-Wood pieces and the Walnut texture. Confirmed single moves animate for 180 ms, including castling, en passant, and promotions. Opponent captures approach over 350 ms and send the captured piece into a slower 1.75-second flight; Reduce Motion disables animation. Initial loads, reconnects, and ambiguous position jumps update immediately.
 
 Open **Settings** in the top bar to control **Show square labels**, **Labels on board edges only**, and **Game sounds**. All three default to on and persist between launches. Edge labels follow the visible left and bottom edges for either playing color; disable edge-only mode to label every square. Sounds use bundled Chess.com Default move, capture, and check clips and play only for confirmed single moves. A check cue replaces the move/capture cue. Theme source URLs are recorded in `ChessTV/theme-sources.json`; later Chess.com theme changes do not change this bundled theme.
 
@@ -72,3 +72,5 @@ One root-owned `TVSession` owns pairing, transport, pending moves, and authorita
 Board order is a8–h8 through a1–h1 regardless of orientation. Revisions change placement or move-relevant state, while clocks may refresh at the same revision. Unknown clocks remain unknown. Clock estimates use monotonic elapsed time from receipt and freeze on disconnect, inactivity, stale observations, or a reported result. Displayed zero never establishes a timeout result.
 
 Input requires an authenticated, active connection, a peer, a fresh matching snapshot and status, known player/turn, and no unresolved command. Observation freshness expires after five seconds. Old connection callbacks and mismatched game/generation messages cannot alter the current game. Credentials and game payloads are never logged by the app.
+
+Use the icon-only back/forward buttons below the turn text to review moves observed by the TV since its latest synchronization. Pieces animate in both directions, including castling and promotions; stepping back restores captured pieces and clears any outgoing capture flight. Reduce Motion disables these animations. Incoming moves remain available while reviewing; move input and live clocks resume when you reach the latest position. Reconnection or a missing/ambiguous move starts a new review history.

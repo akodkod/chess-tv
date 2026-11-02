@@ -3,7 +3,9 @@ import type { Message } from "@chess-tv/protocol"
 import { readGame } from "./chesscom-game"
 import { createMoveController } from "./chesscom-move"
 import { completedBotPath, liveBotPath } from "./chesscom-url"
-import { contentAction, type ContentReply, type Move } from "./messages"
+import { ContentErrorCode, contentAction, type ContentReply, type Move } from "./messages"
+
+class GameChangedError extends Error {}
 
 type Color = "white" | "black"
 export class ChessComAdapter {
@@ -46,7 +48,7 @@ export class ChessComAdapter {
       this.finalResult = null
       this.finalReason = null
       this.boardElement = undefined
-      throw new Error("Game changed. Connect the current game again.")
+      throw new GameChangedError("Game changed. Connect the current game again.")
     }
     this.boardElement = p.board
     this.path = path
@@ -69,7 +71,7 @@ export class ChessComAdapter {
     }
     return p
   }
-  private reply(messages: Message[] = [], error: string | null = null): ContentReply {
+  private reply(messages: Message[] = [], error: ContentReply["error"] = null): ContentReply {
     return { instance: this.instance, gameId: this.gameId, messages, error }
   }
   private sync(): ContentReply {
@@ -224,7 +226,13 @@ export class ChessComAdapter {
       this.outcomes.set(key, { request, result })
       return await result
     } catch (e) {
-      return this.reply([], e instanceof Error ? e.message.slice(0, 256) : "Game unavailable.")
+      return this.reply([], {
+        code:
+          e instanceof GameChangedError
+            ? ContentErrorCode.GameChanged
+            : ContentErrorCode.Unavailable,
+        message: e instanceof Error ? e.message.slice(0, 256) : "Game unavailable.",
+      })
     }
   }
 }

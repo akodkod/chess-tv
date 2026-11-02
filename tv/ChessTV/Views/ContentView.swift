@@ -5,6 +5,7 @@ struct ContentView: View {
   @AppStorage("showSquareLabels") private var showSquareLabels = true
   @AppStorage("edgeSquareLabelsOnly") private var edgeSquareLabelsOnly = true
   @AppStorage("soundsEnabled") private var soundsEnabled = true
+  @AppStorage("captureSound") private var captureSound = CaptureSound.classic
   @AppStorage("lastMoveColor") private var lastMoveColor = BoardHighlightColor.yellow
   @AppStorage("selectedSquareColor") private var selectedSquareColor = BoardHighlightColor.yellow
   @State private var showConnection = false
@@ -41,7 +42,8 @@ struct ContentView: View {
     .sheet(isPresented: $showSettings) {
       BoardSettingsView(
         showSquareLabels: $showSquareLabels, edgeSquareLabelsOnly: $edgeSquareLabelsOnly,
-        soundsEnabled: $soundsEnabled,
+        soundsEnabled: $soundsEnabled, captureSound: $captureSound,
+        previewCaptureSound: session.previewCaptureSound,
         lastMoveColor: $lastMoveColor, selectedSquareColor: $selectedSquareColor)
     }
     .sheet(isPresented: $showConnection) {
@@ -58,6 +60,7 @@ struct ContentView: View {
     }
     .onChange(of: session.credential) { _, value in if value == nil { showConnection = false } }
     .onChange(of: soundsEnabled, initial: true) { _, value in session.setSoundsEnabled(value) }
+    .onChange(of: captureSound, initial: true) { _, value in session.setCaptureSound(value) }
   }
 }
 
@@ -65,27 +68,39 @@ private struct BoardSettingsView: View {
   @Binding var showSquareLabels: Bool
   @Binding var edgeSquareLabelsOnly: Bool
   @Binding var soundsEnabled: Bool
+  @Binding var captureSound: CaptureSound
+  var previewCaptureSound: () -> Void
   @Binding var lastMoveColor: BoardHighlightColor
   @Binding var selectedSquareColor: BoardHighlightColor
   @Environment(\.dismiss) private var dismiss
 
   var body: some View {
-    VStack(spacing: 30) {
-      Text("Settings").font(.title)
-      Toggle("Show square labels", isOn: $showSquareLabels)
-      Toggle("Labels on board edges only", isOn: $edgeSquareLabelsOnly)
-        .disabled(!showSquareLabels)
-      Text("Show ranks along the left edge and files along the bottom edge.")
-        .font(.callout).foregroundStyle(.secondary)
-        .multilineTextAlignment(.center)
-        .fixedSize(horizontal: false, vertical: true)
-      Toggle("Game sounds", isOn: $soundsEnabled)
-      highlightPicker("Last move color", selection: $lastMoveColor)
-      highlightPicker("Selected square color", selection: $selectedSquareColor)
-      Button("Done") { dismiss() }
+    ScrollView {
+      VStack(spacing: 30) {
+        Text("Settings").font(.title)
+        Toggle("Show square labels", isOn: $showSquareLabels)
+        Toggle("Labels on board edges only", isOn: $edgeSquareLabelsOnly)
+          .disabled(!showSquareLabels)
+        Text("Show ranks along the left edge and files along the bottom edge.")
+          .font(.callout).foregroundStyle(.secondary)
+          .multilineTextAlignment(.center)
+          .fixedSize(horizontal: false, vertical: true)
+        Toggle("Game sounds", isOn: $soundsEnabled)
+        Picker("Capture sound", selection: $captureSound) {
+          ForEach(CaptureSound.allCases, id: \.self) { sound in
+            Text(sound.title).tag(sound)
+          }
+        }
+        Button("Preview capture sound", systemImage: "speaker.wave.2", action: previewCaptureSound)
+          .disabled(!soundsEnabled)
+        highlightPicker("Last move color", selection: $lastMoveColor)
+        highlightPicker("Selected square color", selection: $selectedSquareColor)
+        Button("Done") { dismiss() }
+      }
+      .frame(maxWidth: 700)
+      .padding(80)
+      .frame(maxWidth: .infinity)
     }
-    .frame(maxWidth: 700)
-    .padding(80)
   }
 
   private func highlightPicker(

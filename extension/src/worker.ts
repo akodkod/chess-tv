@@ -2,7 +2,13 @@ import type { Message } from "@chess-tv/protocol"
 import { z } from "zod"
 
 import { allowedGameURL as supported } from "./chesscom-url"
-import { contentReply, popupAction, type ContentReply, type PopupState } from "./messages"
+import {
+  ContentErrorCode,
+  contentReply,
+  popupAction,
+  type ContentReply,
+  type PopupState,
+} from "./messages"
 import { Pairing, savedSchema } from "./pairing"
 import { RelayLink } from "./relay"
 
@@ -118,9 +124,9 @@ async function processReply(reply: ContentReply) {
   if (!binding || !generation) return
   if (reply.error) {
     available = false
-    status = reply.error
-    if (reply.error.startsWith("Game changed")) await detach()
-    else reportUnavailable(reply.error)
+    status = reply.error.message
+    if (reply.error.code === ContentErrorCode.GameChanged) await detach()
+    else reportUnavailable(reply.error.message)
     return
   }
   if (reply.gameId !== binding.gameId) {
@@ -179,7 +185,7 @@ async function synchronize() {
       const reply = await content({ kind: "inspect" })
       if (reply.error || reply.gameId !== binding.gameId) {
         await detach()
-        status = reply.error || "Game changed. Waiting for the current game to connect."
+        status = reply.error?.message || "Game changed. Waiting for the current game to connect."
         return
       }
       if (reply.instance !== binding.instance) {
@@ -306,7 +312,8 @@ async function attach(automatic = false) {
   const reply = contentReply.parse(
     await chrome.tabs.sendMessage(tab.id, { kind: "inspect" }, { frameId: 0 }),
   )
-  if (reply.error || !reply.gameId) throw new Error(reply.error || "No supported game found.")
+  if (reply.error || !reply.gameId)
+    throw new Error(reply.error?.message || "No supported game found.")
   binding = {
     tabId: tab.id,
     gameId: reply.gameId,

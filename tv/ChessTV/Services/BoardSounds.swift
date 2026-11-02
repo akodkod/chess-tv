@@ -6,9 +6,41 @@ enum BoardSound: String, CaseIterable {
   case check = "move-check"
   case win = "game-win"
   case lose = "game-lose"
+  case boing = "capture-boing"
+  case yoink = "capture-yoink"
+  case bonk = "capture-bonk"
+  case pop = "capture-pop"
 
   var fileExtension: String {
-    self == .win || self == .lose ? "wav" : "mp3"
+    switch self {
+    case .move, .capture, .check: "mp3"
+    default: "wav"
+    }
+  }
+}
+
+enum CaptureSound: String, CaseIterable {
+  case classic, boing, pop, bonk
+  // Preserve the stored choice when replacing the old generated whistle.
+  case yoink = "slideWhistle"
+
+  var title: String {
+    switch self {
+    case .classic: "Default"
+    case .boing: "Spring boing"
+    case .yoink: "Yoink!"
+    case .bonk: "Bonk!"
+    case .pop: "Cartoon pop"
+    }
+  }
+  var sound: BoardSound {
+    switch self {
+    case .classic: .capture
+    case .boing: .boing
+    case .yoink: .yoink
+    case .bonk: .bonk
+    case .pop: .pop
+    }
   }
 }
 

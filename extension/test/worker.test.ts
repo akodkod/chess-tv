@@ -21,6 +21,7 @@ vi.mock("../src/pairing", async (original) => {
     },
   }
 })
+const sendMessage = vi.fn<() => Promise<unknown>>()
 let listener: (raw: unknown, sender: unknown, reply: (value: any) => void) => void
 let local: Record<string, unknown>
 let session: Record<string, unknown>
@@ -64,6 +65,13 @@ beforeEach(() => {
   vi.resetModules()
   vi.useFakeTimers()
   relay.send.mockClear()
+  sendMessage.mockReset()
+  sendMessage.mockImplementation(async () => ({
+    instance: "instance",
+    gameId,
+    messages: [],
+    error: null,
+  }))
   focused = true
   tabActive = true
   windowState = "normal"
@@ -91,7 +99,7 @@ beforeEach(() => {
     tabs: {
       query: async () => [{ id: 1, windowId: 1, url, active: true }],
       get: async () => ({ id: 1, windowId: 1, url, active: tabActive }),
-      sendMessage: vi.fn(async () => ({ instance: "instance", gameId, messages: [], error: null })),
+      sendMessage,
       onRemoved: event(),
       onUpdated: event(),
       onActivated: event(),
@@ -342,3 +350,30 @@ it("automatically attaches a live game at its numeric URL", async () => {
   await start()
   expect((await action()).gameId).toBe("game-one")
 })
+
+it.each([
+  { code: "game_changed", message: "A different game is now open.", detached: true },
+  { code: "unavailable", message: "Game changed appearance; wait for animation.", detached: false },
+])(
+  "routes content errors by $code rather than display text",
+  async ({ code, message, detached }) => {
+    await start()
+    focused = false
+    sendMessage.mockResolvedValueOnce({
+      instance: "instance",
+      gameId,
+      messages: [],
+      error: { code, message },
+    })
+    relay.receive({
+      type: "session",
+      generation: "attached-generation",
+      gameId,
+      peerConnected: true,
+    })
+    const current = await action()
+    expect(current.gameId).toBe(detached ? null : gameId)
+    expect(current.available).toBe(false)
+    if (!detached) expect(current.status).toBe(message)
+  },
+)

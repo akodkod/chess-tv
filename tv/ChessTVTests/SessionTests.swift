@@ -80,6 +80,14 @@ final class MemoryCredentials: CredentialStoring {
     session.receive(try ProtocolTests.fixture())
     available()
   }
+  func testDisplayTextCannotGiveTransportErrorUnpairPriority() throws {
+    try ready()
+    session.submit(from: 60, to: 59)
+    XCTAssertNotNil(session.pending)
+    session.closed(code: 1002, reason: "Unpair incomplete is merely transport error text")
+    XCTAssertTrue(session.statusText.hasPrefix("Move interrupted."))
+  }
+
   func testMoveReviewKeepsLiveUpdatesAndPreventsSubmission() throws {
     state()
     let initial = try soundPosition()
@@ -262,6 +270,7 @@ final class MemoryCredentials: CredentialStoring {
     XCTAssertEqual(sounds.played, [.move])
   }
   func testCheckSoundOverridesMoveAndCaptureAndHonorsMute() throws {
+    session.setCaptureSound(.boing)
     for capture in [false, true] {
       state()
       var initial = try soundPosition()
@@ -354,6 +363,9 @@ final class MemoryCredentials: CredentialStoring {
         forResource: sound.rawValue, withExtension: sound.fileExtension))
       let player = try AVAudioPlayer(contentsOf: url)
       XCTAssertGreaterThan(player.duration, 0)
+      if CaptureSound.allCases.filter({ $0 != .classic }).contains(where: { $0.sound == sound }) {
+        XCTAssertLessThanOrEqual(player.duration, 0.6, "Capture effects must stay snappy")
+      }
     }
   }
   func testGameplayHidesRoutineStatusButPreservesWarnings() throws {
@@ -397,6 +409,37 @@ final class MemoryCredentials: CredentialStoring {
     session.receive(pawnMove(initial))
     XCTAssertEqual(sounds.played, [.capture])
     XCTAssertGreaterThan(stops, 0)
+  }
+  func testCaptureSoundOptionsPreviewAndPlayOnlyOnConfirmedCapture() throws {
+    for option in CaptureSound.allCases {
+      state()
+      var initial = try soundPosition()
+      initial.board![43] = "p"
+      initial.legalMoves = [LegalMove(from: "e2", to: "d3")]
+      session.receive(initial)
+      available()
+      var count = sounds.played.count
+      session.setCaptureSound(option)
+      XCTAssertEqual(count, sounds.played.count, "Selecting a sound is silent")
+      session.previewCaptureSound()
+      XCTAssertEqual(Array(sounds.played.dropFirst(count)), [option.sound])
+      count = sounds.played.count
+      session.submit(from: 52, to: 43)
+      XCTAssertEqual(sounds.played.count, count, "Optimistic animation must not play a confirmed cue")
+      let next = try XCTUnwrap(session.displayedSnapshot)
+      session.receive(next)
+      outcome("observed-complete")
+      session.receive(next)
+      XCTAssertEqual(Array(sounds.played.dropFirst(count)), [option.sound])
+      session.setSoundsEnabled(false)
+      count = sounds.played.count
+      session.previewCaptureSound()
+      state()
+      session.receive(initial)
+      session.receive(next)
+      XCTAssertEqual(sounds.played.count, count, "Mute includes previews and selected capture sounds")
+      session.setSoundsEnabled(true)
+    }
   }
   func testSoundBaselineResetsAfterSessionButLongThinkStillPlays() throws {
     state()
@@ -469,6 +512,23 @@ final class MemoryCredentials: CredentialStoring {
     let window = UIWindow(windowScene: scene)
     let host = BoardFocusHostingController(rootView: ContentView(session: session))
     window.rootViewController = host
+    // Programmatic focus updates do not play sounds. Replay their real contexts
+    // through the callback to catch crashes when focus leaves the board.
+    let observer = NotificationCenter.default.addObserver(
+      forName: UIFocusSystem.didUpdateNotification, object: nil, queue: .main
+    ) { notification in
+      guard let context = notification.userInfo?[UIFocusSystem.focusUpdateContextUserInfoKey]
+        as? UIFocusUpdateContext else { return }
+      MainActor.assumeIsolated {
+        let sound = host.soundIdentifierForFocusUpdate(in: context)
+        if host.isBoardSquare(context.nextFocusedItem) {
+          XCTAssertEqual(sound, UIFocusSoundIdentifier.none)
+        } else {
+          XCTAssertNil(sound)
+        }
+      }
+    }
+    defer { NotificationCenter.default.removeObserver(observer) }
     window.makeKeyAndVisible()
     defer {
       window.isHidden = true

@@ -1,0 +1,39 @@
+{
+  "license": "Pixabay Content License",
+  "license_url": "https://pixabay.com/service/license-summary/",
+  "modifications": "Silence trimmed; pitch lowered five semitones; duration compressed; peak normalized; fades applied.",
+  "sources": [
+    {
+      "file": "capture-yoink.wav",
+      "title": "Cartoon Yoink 1",
+      "author": "floraphonic",
+      "url": "https://pixabay.com/sound-effects/film-special-effects-cartoon-yoink-1-183915/",
+      "source_sha256": "8b851e2d169f2f7c1ed23d933e16758639f10055ee0b51eefec69c3a9fbdbf9f",
+      "duration_seconds": 0.3814
+    },
+    {
+      "file": "capture-pop.wav",
+      "title": "Pop Cartoon",
+      "author": "CreatorsHome",
+      "url": "https://pixabay.com/sound-effects/film-special-effects-pop-cartoon-328167/",
+      "source_sha256": "e2021114f80d630692c04ace6bd05219fa0a0fad029819682322fc011d7ef6a7",
+      "duration_seconds": 0.0749
+    },
+    {
+      "file": "capture-boing.wav",
+      "title": "Spring Boing",
+      "author": "Universfield",
+      "url": "https://pixabay.com/sound-effects/film-special-effects-spring-boing-229170/",
+      "source_sha256": "f1411773b6a8878d0693951b93518672a6e3df9bc7844bffb648aab33a6059f4",
+      "duration_seconds": 0.5442
+    },
+    {
+      "file": "capture-bonk.wav",
+      "title": "Cartoon Impact 02",
+      "author": "Universfield",
+      "url": "https://pixabay.com/sound-effects/film-special-effects-cartoon-impact-02-278820/",
+      "source_sha256": "d3dfc35ada62e026f00c6e2eac8ebbce6d21347a075d69b433c022ec61ff8c15",
+      "duration_seconds": 0.4
+    }
+  ]
+}

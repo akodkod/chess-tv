@@ -19,8 +19,26 @@ import Observation
   private(set) var pending: Message?
   private(set) var checkingMove = false
   private(set) var needsReconnect = false
-  private(set) var notice = "Pair this TV with the Chrome extension."
-  private var noticeIsWarning = false
+  private enum Notice {
+    case message(String, warning: Bool)
+    case unpairIncomplete(String)
+
+    var text: String {
+      switch self {
+      case .message(let text, _): return text
+      case .unpairIncomplete(let detail):
+        return "Unpair incomplete. The saved credential was retained. \(detail)"
+      }
+    }
+    var isWarning: Bool {
+      switch self {
+      case .message(_, let warning): return warning
+      case .unpairIncomplete: return true
+      }
+    }
+  }
+  private var currentNotice = Notice.message("Pair this TV with the Chrome extension.", warning: false)
+  var notice: String { currentNotice.text }
   private(set) var moveNotice: String?
   private(set) var now: TimeInterval = ProcessInfo.processInfo.systemUptime
   private var snapshotAt: TimeInterval?
@@ -44,6 +62,7 @@ import Observation
   private var operation = UUID()
   private var connection = UUID()
   private var soundsEnabled = true
+  private var captureSound = CaptureSound.classic
   @ObservationIgnored private let sounds: any BoardSoundPlaying
   @ObservationIgnored private let api: PairingAPI
   @ObservationIgnored private let store: any CredentialStoring
@@ -67,6 +86,12 @@ import Observation
   func setSoundsEnabled(_ enabled: Bool) {
     soundsEnabled = enabled
     if !enabled { sounds.stop() }
+  }
+  func setCaptureSound(_ sound: CaptureSound) {
+    captureSound = sound
+  }
+  func previewCaptureSound() {
+    if soundsEnabled { sounds.play(captureSound.sound) }
   }
   var displayedSnapshot: Message? {
     reviewIndex.map { positions[$0] } ?? movePreview ?? snapshot
@@ -126,7 +151,7 @@ import Observation
   }
   var clocksStale: Bool { clockReading?.frozenAt != nil }
   var statusText: String {
-    if notice.hasPrefix("Unpair incomplete") { return notice }
+    if case .unpairIncomplete = currentNotice { return notice }
     if pendingInterrupted {
       return "Move interrupted. Inspect Chrome and reconnect the game. Nothing will be resent."
     }
@@ -137,11 +162,10 @@ import Observation
   /// Gameplay displays actionable notices; setup screens can still show statusText.
   var gameplayWarning: String? {
     if pendingInterrupted || checkingMove { return statusText }
-    return noticeIsWarning ? notice : nil
+    return currentNotice.isWarning ? notice : nil
   }
   private func setNotice(_ text: String, warning: Bool = false) {
-    notice = text
-    noticeIsWarning = warning
+    currentNotice = .message(text, warning: warning)
   }
 
   func setActive(_ value: Bool) {
@@ -290,9 +314,7 @@ import Observation
       } catch {
         guard op == operation else { return }
         needsReconnect = true
-        setNotice(
-          "Unpair incomplete. The saved credential was retained. \(error.localizedDescription)",
-          warning: true)
+        currentNotice = .unpairIncomplete(error.localizedDescription)
       }
       busy = false
     }
@@ -396,13 +418,12 @@ import Observation
       snapshotAt = nil
       statusAt = nil
       freezeClocks()
-      noticeIsWarning = !peerConnected
-      notice =
+      setNotice(
         !peerConnected
         ? "Waiting for the Chrome extension to reconnect…"
         : gameId == nil
           ? "Start a Chess.com game, then connect it in the Chrome extension"
-          : "Synchronizing game…"
+          : "Synchronizing game…", warning: !peerConnected)
       requestSnapshot()
       return
     }
@@ -432,7 +453,8 @@ import Observation
           sounds.play((result == .whiteWon) == (player == .white) ? .win : .lose)
         } else if let transition = BoardTransition.between(previous, message) {
           sounds.play(
-            message.checkSquare != nil ? .check : transition.capturedSquare == nil ? .move : .capture)
+            message.checkSquare != nil ? .check
+              : transition.capturedSquare == nil ? .move : captureSound.sound)
         }
       }
       // Reset presentation on the arriving baseline too: a reconnect may have

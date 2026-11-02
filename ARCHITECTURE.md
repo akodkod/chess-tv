@@ -4,9 +4,9 @@ Status: Standard Chess.com bot games are connected to the native Apple TV app. P
 
 ## 1. Goal and scope
 
-Play a standard Chess.com bot game on Apple TV with the Siri Remote while an awake Mac keeps the connected Chrome tab selected and visible. Sign in and start the game in Chrome, then explicitly attach it through the extension. Installation is manual; one extension pairs with one TV, with one attached game at a time.
+Play a standard Chess.com bot game on Apple TV with the Siri Remote while an awake Mac keeps the connected Chrome tab selected and visible. Sign in and start the game in Chrome, then keep its tab active in the focused Chrome window. Once paired, the extension automatically attaches a supported game when automatic connection is enabled; “Connect this game” also attaches manually. Installation is manual; one extension pairs with one TV, with one attached game at a time.
 
-The MVP includes remembered pairing, piece moves, all promotion choices, players, turn, clocks, results, and safe reconnection. Move-history UI, resignation, and draw responses stay in Chrome. TV matchmaking, account navigation, premoves, bullet/blitz, Daily chess, variants, analysis, recommendations, gamepad-specific support, public distribution, and horizontal scaling are outside the MVP.
+The MVP includes remembered pairing, piece moves, all promotion choices, players, turn, clocks, results, local position review, and safe reconnection. Full game history, resignation, and draw responses stay in Chrome. TV matchmaking, account navigation, premoves, bullet/blitz, Daily chess, variants, analysis, recommendations, gamepad-specific support, public distribution, and horizontal scaling are outside the MVP.
 
 ## 2. Stack and structure
 
@@ -49,14 +49,14 @@ Swift builds and tests remain in Xcode. Sources: [Vite+ checks](https://viteplus
 Keep three platform-required parts:
 
 - **Popup:** pairing, status, “Connect this game,” disconnect, and unpair. Use locally bundled React, Tailwind, and only the shadcn/ui controls needed. Do not inject popup styles into Chess.com. Closing the popup does not stop the connection.
-- **Service worker:** credentials, relay connection, explicit tab binding, protocol validation, and reconnect coordination.
+- **Service worker:** credentials, relay connection, automatic/manual tab binding, protocol validation, and reconnect coordination.
 - **Content script:** one concrete Chess.com adapter for observation and page interaction. It owns verified game revisions and move deduplication before interacting with the page. Keep selectors here; do not introduce a generic adapter framework.
 
 Use Chrome 116+ and exchange application heartbeats every 20 seconds. WebSocket activity can keep the worker alive within Chrome's activity window, but browser exit, sleep, and network loss still require recovery. See [Chrome WebSocket guidance](https://developer.chrome.com/docs/extensions/how-to/web-platform/websockets).
 
 Request storage and scripting permissions with narrowly scoped host access. Store credentials in extension-local storage restricted to trusted extension contexts; do not send them to content scripts. No cookie or general browsing access is needed.
 
-Attach only the user-selected game. Tab hiding, navigation, closure, or unreliable extraction disables TV input. A reload may resume only after verifying the same game; a new game always requires explicit attachment.
+Automatic connection is enabled by default and after pairing or manual attachment. It selects only a supported active tab in the focused Chrome window when no game is attached. Disconnect pauses automatic connection while preserving pairing; “Connect this game” resumes it. Tab hiding, navigation, closure, or unreliable extraction disables TV input. A changed game ends the old attachment and can attach automatically on a subsequent check. Detaching an uncertain or locked move disables automatic connection until the user inspects Chrome and reconnects manually. Game identity is local to the content-script instance; a page reload establishes a new attachment rather than trusting the old identity.
 
 ### Hosted relay
 
@@ -72,15 +72,17 @@ TLS termination and the host are trusted; end-to-end encryption is outside the M
 
 Use SwiftUI's `App` and scene lifecycle, one root-owned `@MainActor @Observable` session model, small views with explicit inputs, and a concrete WebSocket client. Keep local selection in view state and credentials in Keychain. No per-screen view models, coordinator, dependency-injection framework, or local game database.
 
-Render pairing, waiting, board, and result states. Show interruptions inline over the last known board. Orient the board to the player's color while keeping protocol coordinates independent of orientation. Select a source and destination; offer queen, rook, bishop, or knight for promotion. Selection and pending highlights can update immediately; pieces change only after a verified snapshot.
+Render pairing, waiting, board, and result states. Show interruptions inline over the last known board. Orient the board to the player's color while keeping protocol coordinates independent of orientation. Select a source and destination; offer queen, rook, bishop, or knight for promotion. Selection updates immediately. A submitted move may appear as a temporary local board preview, separate from the authoritative snapshot; incoming snapshots replace it, and connection loss or loss of freshness clears it. Move completion still requires observation in Chrome.
+
+The TV keeps an in-memory sequence of observed positions for back/forward review. Incoming snapshots continue updating the live position while reviewing, and move submission is disabled until returning to live play. Reconnection, changed context, or a missing/ambiguous transition resets the review baseline. This is a partial local history, not a complete game-history payload.
 
 ## 4. Pairing, protocol, and recovery
 
 ### Remembered pairing
 
 1. The TV requests a five-minute display code and a separate private challenge credential over TLS.
-2. The user enters the code in the extension; the TV displays a confirmation request.
-3. TV confirmation with the private credential creates the pairing and delivers separate high-entropy credentials to both devices. Store only hashes on the relay and consume the code.
+2. The user enters the code in the extension, which claims the challenge.
+3. The active TV polls the challenge and automatically confirms it with its private credential; no second remote action is required. Confirmation creates the pairing and delivers separate high-entropy credentials to both devices. Persist only credential hashes on the relay and consume the code. If the decision response is lost, poll again before retrying.
 
 Limit code creation and attempts. Expired, consumed, or locked challenges require a new code. Authenticate before routing and allow one active connection per role; a replacement closes the old connection. Disconnect ends attachment while preserving pairing. Unpair revokes both credentials and closes connections. Offline local removal must clearly report that remote revocation remains incomplete; it must not claim success.
 
@@ -88,19 +90,19 @@ Limit code creation and attempts. Expired, consumed, or locked challenges requir
 
 Use a versioned envelope and reject incompatible versions with an actionable error. Pairing, authentication, revocation, and heartbeats accompany these gameplay messages:
 
-| Message           | Contents and responsibility                                                                                                                 |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Attachment/status | Game identity, session generation, availability, and reason when input is blocked                                                           |
-| Full snapshot     | Game identity, generation, position revision, board placement, player/color, side to move, observed clocks with timing metadata, and result |
-| Move request      | Unique command ID, expected game/generation/revision, source, destination, and promotion choice when needed                                 |
-| Move outcome      | Command ID and rejected, pending/uncertain, or observed-complete outcome                                                                    |
-| Snapshot request  | Ask the extension to observe and publish fresh state                                                                                        |
+| Message           | Contents and responsibility                                                                                                                                                                           |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Attachment/status | Game identity, session generation, availability, and reason when input is blocked                                                                                                                     |
+| Full snapshot     | Game identity, generation, position revision, board placement, player/color, side to move, observed clocks with timing metadata, legal destinations, check square, result, and optional result reason |
+| Move request      | Unique command ID, expected game/generation/revision, source, destination, and promotion choice when needed                                                                                           |
+| Move outcome      | Command ID and rejected, uncertain, or observed-complete outcome                                                                                                                                      |
+| Snapshot request  | Ask the extension to observe and publish fresh state                                                                                                                                                  |
 
 Represent unknown values explicitly, including clocks; unknown is not zero. No history payload, general capability framework, resignation command, or draw-response command is needed.
 
 The relay issues a new opaque session generation whenever either connection is replaced or attachment changes, and shares it with both endpoints. The extension must adopt it before publishing fresh state. Both clients reject older generations. The extension advances position revision for board or move-relevant status changes, but not clock-only updates.
 
-The adapter requires reliable game identity, board, player, and turn observation, plus reliable move acceptance detection. Chess.com remains authoritative for acceptance. The extension replays the complete recorded history with chess.js to reject illegal user-selected moves and checks the resulting placement against every rendered square. It never chooses a move, infers castling/en-passant rights from placement alone, or updates the TV speculatively.
+The adapter requires reliable game identity, board, player, and turn observation, plus reliable move acceptance detection. Chess.com remains authoritative for acceptance. The extension replays the complete recorded history with chess.js to reject illegal user-selected moves and checks the resulting placement against every rendered square. It never chooses a move, infers castling/en-passant rights from placement alone, or treats the TV’s temporary move preview as authoritative.
 
 ### Move and recovery rules
 
@@ -109,7 +111,7 @@ The adapter requires reliable game identity, board, player, and turn observation
 - After five seconds without completion, show “Checking move” and request a snapshot. Do not infer rejection or resend.
 - On transport loss, stale observation, hidden tab, Mac sleep, or TV suspension, disable input. Reconnect with bounded exponential backoff and jitter, authenticate, and obtain a new-generation snapshot before enabling moves.
 - Never replay uncertain moves. Reconcile against fresh state; if ambiguous, keep input disabled and ask the user to inspect Chrome and reconnect the game. Lost adapter deduplication state requires a new session generation.
-- A changed game ends attachment. Unsupported page structure produces a visible error, not blind retries.
+- A changed game ends the old attachment; automatic connection may attach the current game unless paused or blocked by an uncertain move. Unsupported page structure produces a visible error and disables input.
 - Estimate running clocks using monotonic elapsed time between observations; correct on new snapshots and freeze or mark stale when disconnected. Only the website establishes results, including timeout.
 
 Full snapshots are the only recovery mechanism; incremental patches and durable command queues are unnecessary.
@@ -154,14 +156,14 @@ Implement in this order: real Chess.com move verification, one complete vertical
 
 Run TypeScript suites with `vp test`. Relay integration tests launch the actual Bun process with a temporary SQLite database and simulated WebSocket clients; do not mock Bun SQL or import Bun-only modules into Node-based Vitest. Clean up processes and databases after each run. Share protocol fixtures with Swift tests and verify the complete extension-to-TV flow against a real Chess.com bot game.
 
-| Area                  | Acceptance scenarios                                                                                                                                                                                                 |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pairing and isolation | TV confirmation, expiry/attempt limits, restart persistence, revocation, replacement connections, wrong-role/pairing rejection, malformed/oversized/version-incompatible messages                                    |
-| Moves                 | Both orientations, coordinate mapping, castling, en passant, all promotions, illegal move rejection, stale/duplicate commands, one pending move, simultaneous Chrome input                                           |
-| Recovery              | Disconnect before submission, after page interaction, and before outcome delivery; no replay; hidden/reloaded tab, Mac sleep, TV suspension, relay restart, lost adapter state, fresh snapshot before input          |
-| Game state            | New game requires attachment, broken layout disables input, observed results include games ended in Chrome, clocks correct and become stale appropriately                                                            |
-| Extension             | Production Manifest V3 package loads with local assets, narrow permissions, isolated popup styling, and a connection that survives popup closure                                                                     |
-| tvOS                  | Xcode build/tests, Siri Remote hardware testing, stable focus during updates, Back behavior, promotion focus restoration, viewing-distance legibility, text sizing, VoiceOver, contrast/motion/transparency settings |
-| Operations            | Health endpoint, SQLite persistence, clean test-process shutdown, and no credentials or game payloads in application/proxy logs                                                                                      |
+| Area                  | Acceptance scenarios                                                                                                                                                                                                                                                 |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pairing and isolation | Automatic TV confirmation after code entry, lost-decision-response recovery, expiry/attempt limits, restart persistence, revocation, replacement connections, wrong-role/pairing rejection, malformed/oversized/version-incompatible messages                        |
+| Moves                 | Both orientations, coordinate mapping, castling, en passant, all promotions, illegal move rejection, stale/duplicate commands, one pending move, simultaneous Chrome input                                                                                           |
+| Recovery              | Disconnect before submission, after page interaction, and before outcome delivery; no replay; hidden/reloaded tab, Mac sleep, TV suspension, relay restart, lost adapter state, fresh snapshot before input                                                          |
+| Game state            | Automatic/manual attachment, disconnect pauses automatic connection, uncertain moves require manual reconnection, broken layout disables input, observed results include games ended in Chrome, clocks correct and become stale appropriately                        |
+| Extension             | Production Manifest V3 package loads with local assets, narrow permissions, isolated popup styling, and a connection that survives popup closure                                                                                                                     |
+| tvOS                  | Xcode build/tests, Siri Remote hardware testing, stable focus during updates, local review and reset on synchronization gaps, Back behavior, promotion focus restoration, viewing-distance legibility, text sizing, VoiceOver, contrast/motion/transparency settings |
+| Operations            | Health endpoint, SQLite persistence, clean test-process shutdown, and no credentials or game payloads in application/proxy logs                                                                                                                                      |
 
-Run `vp check`, `vp test`, and the extension's `vp build` once implementation exists. For this documentation change, verify scope and terminology consistency, source references, and that deferred features do not remain in MVP interfaces or acceptance criteria.
+Run `vp check`, `vp test`, and the extension's `vp build` once implementation exists. Keep this document aligned with implemented behavior and acceptance tests.

@@ -66,7 +66,9 @@ final class BoardFocusHostingController<Content: View>: UIHostingController<Cont
 
   override func soundIdentifierForFocusUpdate(in context: UIFocusUpdateContext) -> UIFocusSoundIdentifier? {
     if isBoardSquare(context.nextFocusedItem) { return UIFocusSoundIdentifier.none }
-    return super.soundIdentifierForFocusUpdate(in: context)
+    // This optional UIFocusEnvironment callback has no superclass implementation.
+    // Defer to the parent for controls outside the board.
+    return nil
   }
 }
 

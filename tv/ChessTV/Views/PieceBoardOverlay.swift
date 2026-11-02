@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Pieces have no focus or hit targets; the underlying square buttons own input.
 struct PieceBoardOverlay: View {
@@ -8,161 +9,232 @@ struct PieceBoardOverlay: View {
   var animateChanges = true
   var resetToken = ""
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @State private var captures: [CaptureFlight] = []
-  @State private var previous: Message?
-  @State private var transition: BoardTransition?
-  @State private var progress: CGFloat = 0
-  @State private var animationTask: Task<Void, Never>?
-  @State private var animationID = UUID()
 
-  private struct CaptureFlight: Identifiable {
-    let id = UUID()
-    let piece: String
-    let square: Int
-    let direction: CGFloat
-    let launch: Date
-    let duration: TimeInterval
-  }
-
-  private struct Position: Equatable {
-    let board: [String?]?
-    let game: String?
-    let generation: String?
-    let color: PieceColor?
-    let revision: Int64?
-  }
-  private var position: Position {
-    Position(
-      board: snapshot.board, game: snapshot.gameId, generation: snapshot.generation,
-      color: snapshot.playerColor, revision: snapshot.revision)
-  }
   var body: some View {
-    let movingDestinations = Set(transition?.moves.map(\.to) ?? [])
-    ZStack(alignment: .topLeading) {
-      ForEach(0..<64, id: \.self) { index in
-        if let board = snapshot.board, let piece = board[index], !movingDestinations.contains(index)
-        {
-          pieceImage(piece)
-            .scaleEffect(selectedSquare == index ? 1.08 : 1, anchor: .center)
-            .shadow(
-              color: .black.opacity(selectedSquare == index ? 0.4 : 0),
-              radius: selectedSquare == index ? side / 100 : 0,
-              x: 0, y: selectedSquare == index ? side / 160 : 0
-            )
-            .animation(reduceMotion ? nil : .easeInOut(duration: 0.15), value: selectedSquare)
-            .position(center(index))
-            .zIndex(selectedSquare == index ? 1 : 0)
-        }
-      }
-      if let transition {
-        ForEach(Array(transition.moves.enumerated()), id: \.offset) { _, move in
-          let start = center(move.from)
-          let end = center(move.to)
-          pieceImage(move.piece)
-            .position(
-              x: start.x + (end.x - start.x) * progress,
-              y: start.y + (end.y - start.y) * progress)
-        }
-      }
-      ForEach(captures) { capture in
-        TimelineView(.animation) { context in
-          let t = CGFloat(max(0, min(1, context.date.timeIntervalSince(capture.launch) / capture.duration)))
-          let origin = center(capture.square)
-          // Ballistic motion: a sharp upward kick, then gravity wins spectacularly.
-          pieceImage(capture.piece)
-            .scaleEffect(1 + 0.2 * sin(min(t * 4, 1) * .pi))
-            .rotationEffect(.degrees(Double(capture.direction * 1080 * t)))
-            .position(
-              x: origin.x + capture.direction * side * 0.65 * t,
-              y: origin.y + side * (-1.4 * t + 4 * t * t))
-        }
-        .zIndex(10)
-        .task {
-          let remaining = max(0, capture.launch.timeIntervalSinceNow + capture.duration)
-          try? await Task.sleep(for: .seconds(remaining))
-          guard !Task.isCancelled else { return }
-          captures.removeAll { $0.id == capture.id }
-        }
-      }
-    }
+    PieceLayerBoard(
+      snapshot: snapshot, side: side, selectedSquare: selectedSquare,
+      animateChanges: animateChanges && !reduceMotion, resetToken: resetToken
+    )
     .frame(width: side, height: side)
     .allowsHitTesting(false)
     .accessibilityHidden(true)
-    .onAppear { reset() }
-    .onChange(of: position) { _, _ in update() }
-    .onChange(of: resetToken) { _, _ in reset() }
-    .onChange(of: reduceMotion) { _, _ in reset() }
-    .onChange(of: animateChanges) { _, _ in reset() }
-    .onDisappear { reset() }
+  }
+}
+
+private struct PieceLayerBoard: UIViewRepresentable {
+  let snapshot: Message
+  let side: CGFloat
+  let selectedSquare: Int?
+  let animateChanges: Bool
+  let resetToken: String
+
+  func makeUIView(context: Context) -> PieceLayerView { PieceLayerView() }
+  func updateUIView(_ view: PieceLayerView, context: Context) {
+    view.update(
+      snapshot, side: side, selectedSquare: selectedSquare,
+      animateChanges: animateChanges, resetToken: resetToken)
+  }
+  static func dismantleUIView(_ view: PieceLayerView, coordinator: ()) { view.clear() }
+}
+
+/// Animate layer properties in the compositor, without a SwiftUI update per frame.
+/// Model positions always hold the latest board; presentation layers retain motion
+/// across clock/confirmation updates and provide the origin of interrupted moves.
+@MainActor final class PieceLayerView: UIView {
+  private var previous: Message?
+  private var pieces: [Int: CALayer] = [:]
+  private var flights: [CALayer] = []
+  private var images: [String: UIImage] = [:]
+  private var side: CGFloat = 0
+  private var resetToken = ""
+  private var animating = false
+  private var selected: Int?
+
+  override init(frame: CGRect) {
+    super.init(frame: frame)
+    isUserInteractionEnabled = false
+    isOpaque = false
+    backgroundColor = .clear
+  }
+  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+  func clear() {
+    for piece in pieces.values { piece.removeFromSuperlayer() }
+    for flight in flights { flight.removeFromSuperlayer() }
+    pieces = [:]
+    flights = []
+    previous = nil
   }
 
-  private func pieceImage(_ piece: String) -> some View {
-    let prefix = Square.color(of: piece) == .white ? "w" : "b"
-    return Image("chess-\(prefix)\(piece.lowercased())")
-      .resizable().scaledToFit().frame(width: side / 8, height: side / 8)
-  }
-  private func center(_ index: Int) -> CGPoint {
-    let displayed = Square.displayIndex(index, for: snapshot.playerColor)
-    return CGPoint(
-      x: (CGFloat(displayed % 8) + 0.5) * side / 8,
-      y: (CGFloat(displayed / 8) + 0.5) * side / 8)
-  }
-  private func reset(clearCaptures: Bool = true) {
-    animationTask?.cancel()
-    animationID = UUID()
-    var transaction = Transaction()
-    transaction.disablesAnimations = true
-    withTransaction(transaction) {
-      transition = nil
-      progress = 0
-      if clearCaptures { captures = [] }
+  func update(
+    _ snapshot: Message, side: CGFloat, selectedSquare: Int?,
+    animateChanges: Bool, resetToken: String
+  ) {
+    let old = previous
+    let reset = self.side != side || self.resetToken != resetToken
+      || animating != animateChanges || old?.gameId != snapshot.gameId
+      || old?.generation != snapshot.generation || old?.playerColor != snapshot.playerColor
+    let changed = old?.board != snapshot.board
+    let transition = !reset && animateChanges
+      ? old.flatMap { BoardTransition.presentationBetween($0, snapshot) } : nil
+    self.side = side
+    self.resetToken = resetToken
+    animating = animateChanges
+
+    CATransaction.begin()
+    CATransaction.setDisableActions(true)
+    defer { CATransaction.commit() }
+    if reset || (changed && transition == nil) { clear() }
+    flights.removeAll { flight in
+      if flight.animation(forKey: "capture") == nil {
+        flight.removeFromSuperlayer()
+        return true
+      }
+      return false
     }
+    if let transition {
+      let reversing = (snapshot.revision ?? 0) < (old?.revision ?? 0)
+      if reversing {
+        for flight in flights { flight.removeFromSuperlayer() }
+        flights = []
+      }
+      let opponentCapture = transition.capturedSquare != nil
+        && snapshot.playerColor != nil && old?.turn != snapshot.playerColor
+      let duration = opponentCapture ? 0.35 : 0.18
+      if let square = transition.capturedSquare, let victim = pieces.removeValue(forKey: square) {
+        launch(
+          victim, square: square, attacker: transition.moves.first!.from,
+          color: snapshot.playerColor, delay: duration,
+          duration: opponentCapture ? 1.75 : 1.25)
+      }
+      // Remove sources together, so castling can reuse both existing layers.
+      let moving = transition.moves.map { ($0, pieces.removeValue(forKey: $0.from)) }
+      for (move, existing) in moving {
+        let piece = existing ?? makePiece(move.piece)
+        let start = piece.presentation()?.position ?? center(move.from, color: snapshot.playerColor)
+        let target = center(move.to, color: snapshot.playerColor)
+        piece.removeAnimation(forKey: "move")
+        piece.position = target
+        piece.zPosition = 1
+        let motion = CABasicAnimation(keyPath: "position")
+        motion.fromValue = NSValue(cgPoint: start)
+        motion.toValue = NSValue(cgPoint: target)
+        motion.duration = duration
+        motion.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        piece.add(motion, forKey: "move")
+        pieces[move.to] = piece
+        // The pawn travels first; its promoted artwork appears at arrival.
+        if move.piece != move.resultPiece {
+          let artwork = CABasicAnimation(keyPath: "contents")
+          artwork.fromValue = image(move.piece).cgImage
+          artwork.toValue = image(move.piece).cgImage
+          artwork.duration = duration
+          piece.add(artwork, forKey: "promotion")
+        }
+      }
+    }
+    if let board = snapshot.board {
+      for square in 0..<min(64, board.count) {
+        guard let code = board[square] else {
+          pieces.removeValue(forKey: square)?.removeFromSuperlayer()
+          continue
+        }
+        let piece = pieces[square] ?? makePiece(code)
+        pieces[square] = piece
+        piece.contents = image(code).cgImage
+        piece.bounds = CGRect(x: 0, y: 0, width: side / 8, height: side / 8)
+        piece.position = center(square, color: snapshot.playerColor)
+        let isSelected = selectedSquare == square
+        if selected != selectedSquare || reset || changed {
+          let from = piece.presentation()?.transform ?? piece.transform
+          piece.transform = CATransform3DMakeScale(isSelected ? 1.08 : 1, isSelected ? 1.08 : 1, 1)
+          if animateChanges && !reset && (selected == square || isSelected) {
+            let selection = CABasicAnimation(keyPath: "transform")
+            selection.fromValue = NSValue(caTransform3D: from)
+            selection.toValue = NSValue(caTransform3D: piece.transform)
+            selection.duration = 0.15
+            selection.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            piece.add(selection, forKey: "selection")
+          }
+          piece.shadowColor = UIColor.black.cgColor
+          piece.shadowOpacity = isSelected ? 0.4 : 0
+          piece.shadowRadius = side / 100
+          piece.shadowOffset = CGSize(width: 0, height: side / 160)
+        }
+        piece.zPosition = isSelected || piece.animation(forKey: "move") != nil ? 1 : 0
+      }
+    }
+    selected = selectedSquare
     previous = snapshot
   }
-  private func update() {
-    let old = previous
-    // Metadata-only revisions must not interrupt a piece already in flight.
-    if old?.board == snapshot.board, old?.gameId == snapshot.gameId,
-      old?.generation == snapshot.generation, old?.playerColor == snapshot.playerColor
-    {
-      previous = snapshot
-      return
+
+  private func image(_ code: String) -> UIImage {
+    if let image = images[code] { return image }
+    let prefix = Square.color(of: code) == .white ? "w" : "b"
+    let image = UIImage(named: "chess-\(prefix)\(code.lowercased())") ?? UIImage()
+    images[code] = image
+    return image
+  }
+  private func makePiece(_ code: String) -> CALayer {
+    let piece = CALayer()
+    piece.contents = image(code).cgImage
+    piece.contentsGravity = .resizeAspect
+    piece.contentsScale = traitCollection.displayScale
+    piece.bounds = CGRect(x: 0, y: 0, width: side / 8, height: side / 8)
+    layer.addSublayer(piece)
+    return piece
+  }
+  private func center(_ square: Int, color: PieceColor?) -> CGPoint {
+    let index = Square.displayIndex(square, for: color)
+    return CGPoint(x: (CGFloat(index % 8) + 0.5) * side / 8,
+                   y: (CGFloat(index / 8) + 0.5) * side / 8)
+  }
+  private func launch(
+    _ victim: CALayer, square: Int, attacker: Int, color: PieceColor?,
+    delay: TimeInterval, duration: TimeInterval
+  ) {
+    let origin = center(square, color: color)
+    let victimFile = Square.displayIndex(square, for: color) % 8
+    let attackerFile = Square.displayIndex(attacker, for: color) % 8
+    let direction: CGFloat = attackerFile == victimFile
+      ? (victimFile < 4 ? -1 : 1) : (attackerFile < victimFile ? 1 : -1)
+    victim.removeAllAnimations()
+    victim.transform = CATransform3DIdentity
+    victim.shadowOpacity = 0
+    victim.zPosition = 10
+    let motion = CAKeyframeAnimation(keyPath: "position")
+    let scale = CAKeyframeAnimation(keyPath: "transform.scale")
+    let steps = 120
+    motion.values = (0...steps).map { step in
+      let t = CGFloat(step) / CGFloat(steps)
+      return NSValue(cgPoint: CGPoint(
+        x: origin.x + direction * side * 0.65 * t,
+        y: origin.y + side * (-1.4 * t + 4 * t * t)))
     }
-    let move = animateChanges && !reduceMotion
-      ? old.flatMap { BoardTransition.presentationBetween($0, snapshot) } : nil
-    let reversing = (snapshot.revision ?? 0) < (old?.revision ?? 0)
-    // Consecutive moves may overlap in flight; resets and ambiguous jumps clear them.
-    reset(clearCaptures: move == nil || reversing)
-    guard let move else { return }
-    transition = move
-    let opponentCapture = move.capturedSquare != nil && snapshot.playerColor != nil
-      && old?.turn != snapshot.playerColor
-    let moveDuration = opponentCapture ? 0.35 : 0.18
-    if let square = move.capturedSquare, let piece = old?.board?[square] {
-      let displayed = Square.displayIndex(square, for: snapshot.playerColor)
-      let victimFile = displayed % 8
-      let attackerFile = move.moves.first.map {
-        Square.displayIndex($0.from, for: snapshot.playerColor) % 8
-      } ?? victimFile
-      // Push away from the attacker's visible side, including on a flipped board.
-      // Vertical approaches have no horizontal side; use the nearest edge.
-      let direction: CGFloat = attackerFile == victimFile
-        ? (victimFile < 4 ? -1 : 1) : (attackerFile < victimFile ? 1 : -1)
-      captures.append(
-        CaptureFlight(
-          piece: piece, square: square, direction: direction,
-          launch: Date().addingTimeInterval(moveDuration),
-          duration: opponentCapture ? 1.75 : 1.25))
+    scale.values = (0...steps).map { step in
+      let t = CGFloat(step) / CGFloat(steps)
+      return 1 + 0.2 * sin(min(t * 4, 1) * .pi)
     }
-    let identifier = animationID
-    animationTask = Task { @MainActor in
-      // Give the starting position a rendering pass before setting its target.
-      try? await Task.sleep(for: .milliseconds(16))
-      guard !Task.isCancelled, animationID == identifier else { return }
-      withAnimation(.easeInOut(duration: moveDuration)) { progress = 1 }
-      try? await Task.sleep(for: .seconds(moveDuration))
-      guard !Task.isCancelled, animationID == identifier else { return }
-      transition = nil
-    }
+    let spin = CABasicAnimation(keyPath: "transform.rotation.z")
+    spin.fromValue = 0
+    spin.toValue = direction * 6 * .pi
+    for animation in [motion, scale, spin] { animation.duration = duration }
+    let flight = CAAnimationGroup()
+    flight.animations = [motion, scale, spin]
+    flight.beginTime = CACurrentMediaTime() + delay
+    flight.duration = duration
+    flight.fillMode = .backwards
+    flight.delegate = RemoveCapturedLayer(victim)
+    victim.position = CGPoint(x: origin.x + direction * side * 0.65, y: origin.y + side * 2.6)
+    victim.add(flight, forKey: "capture")
+    flights.append(victim)
+  }
+}
+
+@MainActor private final class RemoveCapturedLayer: NSObject, CAAnimationDelegate {
+  private let layer: CALayer
+  init(_ layer: CALayer) { self.layer = layer }
+  nonisolated func animationDidStop(_ anim: CAAnimation, finished flag: Bool) {
+    Task { @MainActor in layer.removeFromSuperlayer() }
   }
 }

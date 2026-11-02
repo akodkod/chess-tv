@@ -74,8 +74,27 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
       XCTAssertNotNil(request.value(forHTTPHeaderField: "Authorization"))
       throw URLError(.notConnectedToInternet)
     }
+    var auth = Message(type: "authenticated")
+    auth.role = "tv"
+    auth.pairingId = "pair"
+    session.receive(auth)
+    var context = Message(type: "session")
+    let snapshot = try ProtocolTests.fixture()
+    context.generation = snapshot.generation
+    context.gameId = snapshot.gameId
+    context.peerConnected = true
+    session.receive(context)
+    session.receive(snapshot)
+    var status = Message(type: "status")
+    status.generation = snapshot.generation
+    status.gameId = snapshot.gameId
+    status.available = true
+    session.receive(status)
+    session.submit(from: 60, to: 59)
+    XCTAssertNotNil(session.pending)
     session.unpair()
     try await waitFor { !session.busy }
+    XCTAssertEqual(session.statusText, session.notice)
     XCTAssertNotNil(store.value)
     XCTAssertNotNil(session.credential)
     XCTAssertTrue(session.notice.contains("Unpair incomplete"))

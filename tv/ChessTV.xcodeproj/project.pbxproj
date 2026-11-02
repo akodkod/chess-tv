@@ -33,6 +33,10 @@
 		FA4E10C2D736FB8351DB86A9 /* ChessTV/Models/Board.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0195AA0022FE3D58E30BFB /* ChessTV/Models/Board.swift */; };
 		FEECC001122334455667788B /* ChessTV/Sounds/game-win.wav in Resources */ = {isa = PBXBuildFile; fileRef = FEECC001122334455667788C /* ChessTV/Sounds/game-win.wav */; };
 		FEECC001122334455667788D /* ChessTV/Sounds/game-lose.wav in Resources */ = {isa = PBXBuildFile; fileRef = FEECC001122334455667788E /* ChessTV/Sounds/game-lose.wav */; };
+		9ADBA76B107ADBD4F59FE853 /* ChessTV/Sounds/capture-boing.wav in Resources */ = {isa = PBXBuildFile; fileRef = AE919C61BF6E82A0E8AEAAC5 /* ChessTV/Sounds/capture-boing.wav */; };
+		0DBECB25C2B0D4EF12BFCE16 /* ChessTV/Sounds/capture-yoink.wav in Resources */ = {isa = PBXBuildFile; fileRef = 90E9197F1DBB4A0443D957EB /* ChessTV/Sounds/capture-yoink.wav */; };
+		07BBA88DEB2A287AD494FDA3 /* ChessTV/Sounds/capture-pop.wav in Resources */ = {isa = PBXBuildFile; fileRef = 6CCE21BF2CBDF1765988BD94 /* ChessTV/Sounds/capture-pop.wav */; };
+		BF13B03A267A40A09611FB01 /* ChessTV/Sounds/capture-bonk.wav in Resources */ = {isa = PBXBuildFile; fileRef = BF13B03A267A40A09611FB02 /* ChessTV/Sounds/capture-bonk.wav */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -76,6 +80,10 @@
 		FA91495BEBB0F98CA6ADA28C /* ChessTV/Views/PieceBoardOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Views/PieceBoardOverlay.swift; sourceTree = SOURCE_ROOT; };
 		FEECC001122334455667788C /* ChessTV/Sounds/game-win.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ChessTV/Sounds/game-win.wav; sourceTree = SOURCE_ROOT; };
 		FEECC001122334455667788E /* ChessTV/Sounds/game-lose.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ChessTV/Sounds/game-lose.wav; sourceTree = SOURCE_ROOT; };
+		AE919C61BF6E82A0E8AEAAC5 /* ChessTV/Sounds/capture-boing.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "ChessTV/Sounds/capture-boing.wav"; sourceTree = SOURCE_ROOT; };
+		90E9197F1DBB4A0443D957EB /* ChessTV/Sounds/capture-yoink.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "ChessTV/Sounds/capture-yoink.wav"; sourceTree = SOURCE_ROOT; };
+		6CCE21BF2CBDF1765988BD94 /* ChessTV/Sounds/capture-pop.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "ChessTV/Sounds/capture-pop.wav"; sourceTree = SOURCE_ROOT; };
+		BF13B03A267A40A09611FB02 /* ChessTV/Sounds/capture-bonk.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "ChessTV/Sounds/capture-bonk.wav"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,6 +108,10 @@
 			isa = PBXGroup;
 			children = (
 				7E88A65EA62B3E09276A41F2 /* ChessTV/Sounds/capture.mp3 */,
+				AE919C61BF6E82A0E8AEAAC5 /* ChessTV/Sounds/capture-boing.wav */,
+				90E9197F1DBB4A0443D957EB /* ChessTV/Sounds/capture-yoink.wav */,
+				6CCE21BF2CBDF1765988BD94 /* ChessTV/Sounds/capture-pop.wav */,
+				BF13B03A267A40A09611FB02 /* ChessTV/Sounds/capture-bonk.wav */,
 				FEECC001122334455667788C /* ChessTV/Sounds/game-win.wav */,
 				FEECC001122334455667788E /* ChessTV/Sounds/game-lose.wav */,
 				FEECC001122334455667788A /* ChessTV/Sounds/move-check.mp3 */,
@@ -211,6 +223,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				8E7DA00E28D6EC70D27A3DC9 /* ChessTV/Sounds/capture.mp3 in Resources */,
+				9ADBA76B107ADBD4F59FE853 /* ChessTV/Sounds/capture-boing.wav in Resources */,
+				0DBECB25C2B0D4EF12BFCE16 /* ChessTV/Sounds/capture-yoink.wav in Resources */,
+				07BBA88DEB2A287AD494FDA3 /* ChessTV/Sounds/capture-pop.wav in Resources */,
+				BF13B03A267A40A09611FB01 /* ChessTV/Sounds/capture-bonk.wav in Resources */,
 				FEECC001122334455667788B /* ChessTV/Sounds/game-win.wav in Resources */,
 				FEECC001122334455667788D /* ChessTV/Sounds/game-lose.wav in Resources */,
 				FEECC0011223344556677889 /* ChessTV/Sounds/move-check.mp3 in Resources */,

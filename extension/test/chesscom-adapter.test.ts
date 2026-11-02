@@ -158,7 +158,7 @@ it("changes game identity after a restart and rejects a command from the old gam
   chess.reset()
   render()
   const changed = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
-  expect(changed.error).toMatch(/^Game changed/)
+  expect(changed.error?.code).toBe("game_changed")
   expect(changed.gameId).not.toBe(s.gameId)
   const old = await adapter.handle(command(s))
   expect(old.messages).toContainEqual(
@@ -418,7 +418,7 @@ it("blocks snapshots and moves when player identity disappears", async () => {
   const click = vi.fn()
   board.addEventListener("click", click)
   const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
-  expect(reply.error).toContain("Cannot detect")
+  expect(reply.error?.message).toContain("Cannot detect")
   expect(reply.messages).toEqual([])
   const moved = await adapter.handle(command(snapshot))
   expect(moved.messages).toContainEqual(
@@ -568,7 +568,7 @@ it("still rejects navigation to a different completed game", async () => {
   const before = await sync(adapter)
   dom.reconfigure({ url: "https://www.chess.com/game/computer/999999" })
   const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
-  expect(reply.error).toContain("Game changed")
+  expect(reply.error?.code).toBe("game_changed")
   expect(reply.gameId).not.toBe(before.gameId)
 })
 

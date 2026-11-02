@@ -688,12 +688,18 @@ final class MemoryCredentials: CredentialStoring {
     session.receive(message)
     XCTAssertEqual(session.snapshot?.revision, 1)
   }
-  func testOutcomeRejectionAndResultNeverOptimisticallyMovePieces() throws {
+  func testMovePreviewIsImmediateAndRejectionRestoresConfirmedBoard() throws {
     try ready()
     let original = session.snapshot?.board
     session.submit(from: 60, to: 52)
     XCTAssertEqual(session.snapshot?.board, original)
+    XCTAssertNil(session.displayedSnapshot?.board?[60])
+    XCTAssertEqual(session.displayedSnapshot?.board?[52], "K")
+    XCTAssertFalse(session.canMove)
+    XCTAssertFalse(session.canGoBack, "Preview must not enter confirmed history")
+    XCTAssertTrue(sounds.played.isEmpty)
     outcome("rejected")
+    XCTAssertEqual(session.displayedSnapshot?.board, original)
     XCTAssertNil(session.pending)
     XCTAssertNotNil(session.moveNotice)
     var ended = try ProtocolTests.fixture()
@@ -702,6 +708,63 @@ final class MemoryCredentials: CredentialStoring {
     session.receive(ended)
     available()
     XCTAssertFalse(session.canMove)
+  }
+  func testConfirmationPreservesPreviewWithoutReplayingTransition() throws {
+    try ready()
+    let original = try XCTUnwrap(session.snapshot)
+    session.submit(from: 60, to: 52)
+    let preview = try XCTUnwrap(session.displayedSnapshot)
+    XCTAssertNotNil(BoardTransition.between(original, preview))
+    session.receive(original)
+    XCTAssertEqual(session.displayedSnapshot, preview, "Clock refresh must not roll back the move")
+    outcome("observed-complete")
+    XCTAssertEqual(session.displayedSnapshot, preview, "Outcome precedes the confirming snapshot")
+    session.receive(preview)
+    XCTAssertEqual(session.displayedSnapshot, preview)
+    XCTAssertNil(BoardTransition.presentationBetween(preview, session.displayedSnapshot!))
+    XCTAssertTrue(session.canGoBack)
+    XCTAssertEqual(sounds.played, [.move])
+    session.previousMove()
+    XCTAssertEqual(session.displayedSnapshot?.board, original.board)
+  }
+  func testPreviewAcceptsFastOpponentReplyAndDifferentAuthoritativePosition() throws {
+    for fastReply in [false, true] {
+      try ready()
+      let original = try XCTUnwrap(session.snapshot)
+      session.submit(from: 60, to: 52)
+      var confirmed = fastReply ? try XCTUnwrap(session.displayedSnapshot) : original
+      confirmed.revision = 3
+      if fastReply {
+        confirmed.board?[0] = nil
+        confirmed.board?[8] = "r"
+        confirmed.turn = .white
+      }
+      session.receive(confirmed)
+      XCTAssertEqual(session.displayedSnapshot, confirmed)
+      outcome("observed-complete")
+      XCTAssertEqual(session.displayedSnapshot, confirmed)
+    }
+  }
+  private func assertPreviewClears(_ interrupt: () -> Void) throws {
+    try ready()
+    let original = session.snapshot
+    session.submit(from: 60, to: 52)
+    XCTAssertNotEqual(session.displayedSnapshot?.board, original?.board)
+    interrupt()
+    XCTAssertEqual(session.displayedSnapshot, original)
+    XCTAssertFalse(session.canMove)
+  }
+  func testPreviewClearsOnUncertainty() throws {
+    try assertPreviewClears { outcome("uncertain") }
+  }
+  func testPreviewClearsOnTimeout() throws {
+    try assertPreviewClears { time += 5; session.tick() }
+  }
+  func testPreviewClearsOnDisconnect() throws {
+    try assertPreviewClears { session.closed(code: 1006, reason: "Offline") }
+  }
+  func testPreviewClearsOnSessionChange() throws {
+    try assertPreviewClears { state(generation: "new-generation") }
   }
   func testPromotionsRequireExplicitChoice() throws {
     try ready()

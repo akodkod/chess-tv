@@ -11,6 +11,7 @@ import Observation
   private(set) var generation: String?
   private(set) var gameId: String?
   private(set) var snapshot: Message?
+  private var movePreview: Message?
   private var positions: [Message] = []
   private(set) var reviewIndex: Int?
   private(set) var clockReading: ClockReading?
@@ -30,7 +31,10 @@ import Observation
   private(set) var presentationEpoch = 0
   private var fresh = false {
     didSet {
-      if !fresh { presentationEpoch += 1 }
+      if !fresh {
+        movePreview = nil
+        presentationEpoch += 1
+      }
     }
   }
   private var started = false
@@ -65,10 +69,11 @@ import Observation
     if !enabled { sounds.stop() }
   }
   var displayedSnapshot: Message? {
-    reviewIndex.map { positions[$0] } ?? snapshot
+    reviewIndex.map { positions[$0] } ?? movePreview ?? snapshot
   }
   var isReviewing: Bool { reviewIndex != nil }
   var displayedOpponentMove: BoardTransition.Movement? {
+    if !isReviewing && movePreview != nil { return nil }
     let index = reviewIndex ?? (positions.count - 1)
     guard fresh, index > 0,
       let player = positions[index].playerColor,
@@ -434,6 +439,11 @@ import Observation
       // advanced the board while preserving the same game and generation.
       if !fresh { presentationEpoch += 1 }
       recordPosition(message)
+      // Repeated pre-move snapshots (including clock refreshes) must not undo
+      // the preview. Any newer position wins, including a quick opponent reply.
+      if message.board != snapshot?.board || message.revision != snapshot?.revision {
+        movePreview = nil
+      }
       snapshot = message
       fresh = true
       snapshotAt = now
@@ -452,8 +462,10 @@ import Observation
     case "outcome":
       guard message.commandId == pending?.commandId, !pendingInterrupted else { return }
       if message.outcome == "uncertain" {
+        movePreview = nil
         moveNotice = message.reason
       } else {
+        if message.outcome == "rejected" { movePreview = nil }
         pending = nil
         pendingAt = nil
         checkingMove = false
@@ -502,6 +514,7 @@ import Observation
     pendingInterrupted = false
     sawDetachAfterPending = false
     moveNotice = nil
+    movePreview = BoardTransition.preview(snapshot, from: from, to: to, promotion: promotion)
     send(move)
   }
   func requestSnapshot() {
@@ -531,10 +544,12 @@ import Observation
       connect()
     }
     if let pendingAt, pending != nil, !checkingMove, now - pendingAt >= 5 {
+      movePreview = nil
       checkingMove = true
       requestSnapshot()
     }
     if fresh, snapshotAt.map({ now - $0 > 5 }) == true || statusAt.map({ now - $0 > 5 }) == true {
+      movePreview = nil
       available = false
       freezeClocks()
       setNotice("Game observation is stale. Waiting for fresh state.", warning: true)

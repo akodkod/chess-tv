@@ -2,6 +2,39 @@ import Foundation
 
 /// A visual explanation of one observed board change, never a source of game rules.
 struct BoardTransition: Equatable {
+  /// Presentation only. Legality comes from the extension's advertised moves.
+  static func preview(_ position: Message, from: Int, to: Int, promotion: String?) -> Message? {
+    guard var board = position.board, board.count == 64,
+      (0..<64).contains(from), (0..<64).contains(to),
+      let piece = board[from], let color = Square.color(of: piece),
+      color == position.turn, color == position.playerColor,
+      position.legalMoves?.contains(LegalMove(from: Square.name(from), to: Square.name(to))) == true,
+      let revision = position.revision, revision < Int64.max
+    else { return nil }
+    let promotes = Square.promotion(piece: piece, destination: to)
+    guard promotes ? ["q", "r", "b", "n"].contains(promotion ?? "") : promotion == nil else {
+      return nil
+    }
+    if piece.lowercased() == "p", from % 8 != to % 8, board[to] == nil {
+      board[from / 8 * 8 + to % 8] = nil
+    }
+    if piece.lowercased() == "k", abs(to % 8 - from % 8) == 2 {
+      let rookFrom = from / 8 * 8 + (to > from ? 7 : 0)
+      let rookTo = to > from ? to - 1 : to + 1
+      board[rookTo] = board[rookFrom]
+      board[rookFrom] = nil
+    }
+    board[from] = nil
+    board[to] = promotion.map { color == .white ? $0.uppercased() : $0 } ?? piece
+    var preview = position
+    preview.board = board
+    preview.turn = color == .white ? .black : .white
+    preview.revision = revision + 1
+    preview.legalMoves = []
+    preview.checkSquare = nil
+    return between(position, preview) == nil ? nil : preview
+  }
+
   enum Kind: Equatable { case move, capture, castle, promotion }
   struct Movement: Equatable {
     let piece: String

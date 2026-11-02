@@ -29,6 +29,48 @@ final class BoardTransitionTests: XCTestCase {
     XCTAssertEqual(BoardTransition.between(old, capture)?.kind, .capture)
     XCTAssertEqual(BoardTransition.between(old, capture)?.capturedSquare, Square.index("d3"))
   }
+  func testLegalMovePreviewsIncludeSpecialMovesForBothColors() throws {
+    for color in [PieceColor.white, .black] {
+      let white = color == .white
+      let home = white ? "1" : "8"
+      let pawnRank = white ? "7" : "2"
+      let promotionRank = white ? "8" : "1"
+      let scenarios: [([String: String], String, String, String?, [String: String])] = [
+        (["e2": "P"], "e2", "e4", nil, ["e4": "P"]),
+        (["e" + home: "K", "h" + home: "R"], "e" + home, "g" + home, nil,
+         ["g" + home: "K", "f" + home: "R"]),
+        (["e" + home: "K", "a" + home: "R"], "e" + home, "c" + home, nil,
+         ["c" + home: "K", "d" + home: "R"]),
+        ([white ? "e5" : "e4": "P", white ? "d5" : "d4": "p"],
+         white ? "e5" : "e4", white ? "d6" : "d3", nil, [white ? "d6" : "d3": "P"]),
+      ] + ["q", "r", "b", "n"].flatMap { promotion in
+        [false, true].map { capture in
+          let from = "a" + pawnRank
+          let to = (capture ? "b" : "a") + promotionRank
+          var pieces = [from: "P"]
+          if capture { pieces[to] = "r" }
+          return (pieces, from, to, Optional(promotion), [to: promotion.uppercased()])
+        }
+      }
+      for (pieces, from, to, promotion, expected) in scenarios {
+        // The simple pawn scenario is white-only; others use color-specific ranks.
+        if !white && from == "e2" { continue }
+        func colored(_ pieces: [String: String]) -> [String: String] {
+          pieces.mapValues { white ? $0 : ($0 == $0.uppercased() ? $0.lowercased() : $0.uppercased()) }
+        }
+        var before = position(colored(pieces), turn: color)
+        before.playerColor = color
+        before.legalMoves = [LegalMove(from: from, to: to)]
+        let preview = try XCTUnwrap(BoardTransition.preview(
+          before, from: Square.index(from)!, to: Square.index(to)!, promotion: promotion))
+        XCTAssertEqual(preview.board, position(colored(expected)).board)
+        XCTAssertNotNil(BoardTransition.between(before, preview))
+        before.legalMoves = []
+        XCTAssertNil(BoardTransition.preview(
+          before, from: Square.index(from)!, to: Square.index(to)!, promotion: promotion))
+      }
+    }
+  }
   func testHistoryReversesCapturesCastlesAndPromotions() throws {
     let pairs: [(Message, Message)] = [
       (position(["e2": "P", "d3": "p"]),

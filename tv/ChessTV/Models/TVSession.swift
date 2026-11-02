@@ -68,6 +68,17 @@ import Observation
     reviewIndex.map { positions[$0] } ?? snapshot
   }
   var isReviewing: Bool { reviewIndex != nil }
+  var displayedOpponentMove: BoardTransition.Movement? {
+    let index = reviewIndex ?? (positions.count - 1)
+    guard fresh, index > 0,
+      let player = positions[index].playerColor,
+      let transition = BoardTransition.between(positions[index - 1], positions[index]),
+      let move = transition.moves.first,
+      Square.color(of: move.piece) != player
+    else { return nil }
+    // Castling transitions put the king first; highlight the move's two squares.
+    return move
+  }
   var movesBehindLive: Int { reviewIndex.map { positions.count - 1 - $0 } ?? 0 }
   var canGoBack: Bool { (reviewIndex ?? (positions.count - 1)) > 0 }
   var canGoForward: Bool { reviewIndex != nil }
@@ -404,13 +415,20 @@ import Observation
         closed(code: 1002, reason: "Position changed without a new revision. Reconnect the game.")
         return
       }
-      // Only live, observed single-move transitions produce a cue. Reconnects,
-      // duplicate snapshots, and missed positions establish a silent baseline.
-      if soundsEnabled, fresh, !isReviewing,
-        let previous = snapshot, let transition = BoardTransition.between(previous, message)
+      // Reconnects and initial snapshots establish a silent baseline. Results
+      // take priority over move/check cues, including endings without a move.
+      if soundsEnabled, fresh, !isReviewing, let previous = snapshot,
+        previous.gameId == message.gameId, previous.generation == message.generation,
+        previous.playerColor == message.playerColor
       {
-        sounds.play(
-          message.checkSquare != nil ? .check : transition.capturedSquare == nil ? .move : .capture)
+        if previous.result == nil, let result = message.result, result != .draw,
+          let player = message.playerColor
+        {
+          sounds.play((result == .whiteWon) == (player == .white) ? .win : .lose)
+        } else if let transition = BoardTransition.between(previous, message) {
+          sounds.play(
+            message.checkSquare != nil ? .check : transition.capturedSquare == nil ? .move : .capture)
+        }
       }
       // Reset presentation on the arriving baseline too: a reconnect may have
       // advanced the board while preserving the same game and generation.

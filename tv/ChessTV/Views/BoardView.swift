@@ -1,10 +1,26 @@
 import SwiftUI
 
+enum BoardHighlightColor: String, CaseIterable {
+  case yellow, green, blue, purple, orange
+
+  func tint(lightSquare: Bool) -> Color {
+    switch self {
+    case .yellow: lightSquare ? Color(red: 0.72, green: 0.52, blue: 0.06) : .yellow
+    case .green: lightSquare ? Color(red: 0.12, green: 0.55, blue: 0.22) : .green
+    case .blue: lightSquare ? Color(red: 0.08, green: 0.38, blue: 0.85) : .cyan
+    case .purple: lightSquare ? Color(red: 0.52, green: 0.20, blue: 0.75) : .purple
+    case .orange: lightSquare ? Color(red: 0.85, green: 0.35, blue: 0.04) : .orange
+    }
+  }
+}
+
 struct BoardView: View {
   let session: TVSession
   let snapshot: Message
   var showSquareLabels = true
   var edgeSquareLabelsOnly = true
+  var lastMoveColor = BoardHighlightColor.yellow
+  var selectedSquareColor = BoardHighlightColor.yellow
   var onSettings: () -> Void
   var onConnection: () -> Void
   @State private var source: Int?
@@ -41,15 +57,17 @@ struct BoardView: View {
               Text("\(session.movesBehindLive) \(session.movesBehindLive == 1 ? "move" : "moves") ago")
                 .font(.title2.weight(.semibold))
             } else if let result = snapshot.result {
-              VStack(alignment: .leading, spacing: 8) {
-                Text(result.title(for: snapshot.playerColor)).font(.title2.weight(.semibold))
+              VStack(alignment: .leading, spacing: 4) {
+                Text(result.title(for: snapshot.playerColor))
                 Text(result.detail(reason: snapshot.resultReason, player: snapshot.playerColor))
-                  .font(.title3)
+                  .foregroundStyle(.secondary)
               }
+              .font(.title2.weight(.semibold))
+              .lineSpacing(2)
             } else {
               Text(snapshot.turn.map { "\($0.rawValue.capitalized)\nto move" } ?? "Turn\nunknown")
                 .font(.title2.weight(.semibold))
-                .lineSpacing(4)
+                .lineSpacing(2)
             }
           }
           .fixedSize(horizontal: false, vertical: true)
@@ -105,17 +123,21 @@ struct BoardView: View {
   }
   private var statusMessages: some View {
     VStack(alignment: .leading, spacing: 16) {
-      if snapshot.result == nil,
-        let checked = snapshot.checkSquare.flatMap(Square.index),
-        let color = Square.color(of: snapshot.board?[checked])
-      {
-        Text("\(color.rawValue.capitalized) in check").font(.headline)
+      Group {
+        if snapshot.result == nil,
+          let checked = snapshot.checkSquare.flatMap(Square.index),
+          let color = Square.color(of: snapshot.board?[checked])
+        {
+          Text("\(color.rawValue.capitalized) in check").font(.callout)
+        }
+        if let warning = session.gameplayWarning.flatMap(messageText) { Text(warning).font(.callout) }
+        if let notice = session.moveNotice.flatMap(messageText) { Text(notice).font(.callout) }
+        if !session.isReviewing && session.clocksStale && snapshot.result == nil {
+          Label("Clocks paused", systemImage: "pause.circle").font(.caption)
+        }
       }
-      if let warning = session.gameplayWarning.flatMap(messageText) { Text(warning).font(.callout) }
-      if let notice = session.moveNotice.flatMap(messageText) { Text(notice).font(.callout) }
-      if !session.isReviewing && session.clocksStale && snapshot.result == nil {
-        Label("Clocks paused", systemImage: "pause.circle").font(.caption)
-      }
+      .fontWeight(.regular)
+      .foregroundStyle(.secondary)
       if session.needsReconnect { Button("Reconnect relay") { session.reconnect() } }
     }
     .fixedSize(horizontal: false, vertical: true)
@@ -167,15 +189,17 @@ struct BoardView: View {
   }
   private func grid(side: CGFloat) -> some View {
     let order = Square.order(for: snapshot.playerColor)
+    let opponentMove = session.displayedOpponentMove
     return VStack(spacing: 0) {
       ForEach(0..<8) { row in
         HStack(spacing: 0) {
           ForEach(Array(order[(row * 8)..<(row * 8 + 8)]), id: \.self) { index in
-            square(index, size: side / 8)
+            square(index, size: side / 8, opponentMove: opponentMove)
           }
         }
       }
     }.frame(width: side, height: side)
+      .background { BoardFocusRegion() }
       .background { Image("chess-walnut").resizable().frame(width: side, height: side) }
       .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
       .overlay {
@@ -186,10 +210,13 @@ struct BoardView: View {
           resetToken: String(session.presentationEpoch))
       }
   }
-  private func square(_ index: Int, size: CGFloat) -> some View {
+  private func square(
+    _ index: Int, size: CGFloat, opponentMove: BoardTransition.Movement?
+  ) -> some View {
     let piece = snapshot.board?[index]
     let selected = source == index
     let checked = snapshot.checkSquare == Square.name(index)
+    let lastMove = opponentMove?.from == index || opponentMove?.to == index
     let destination =
       session.canMove
       && source.map { from in
@@ -199,13 +226,17 @@ struct BoardView: View {
       } == true
     let isFocused = focused == index
     let light = (index / 8 + index % 8).isMultiple(of: 2)
-    let highlightColor = light ? Color(red: 0.72, green: 0.52, blue: 0.06) : Color.yellow
+    let highlightColor = selectedSquareColor.tint(lightSquare: light)
     let highlightOpacity = contrast == .increased
       ? (light ? 0.55 : 0.52) : 0.40
     return Button {
       select(index)
     } label: {
       ZStack(alignment: .topLeading) {
+        if lastMove {
+          Rectangle().fill(
+            lastMoveColor.tint(lightSquare: light).opacity(contrast == .increased ? 0.42 : 0.26))
+        }
         if checked {
           Rectangle().fill(Color.red.opacity(contrast == .increased ? 0.85 : 0.65))
         }
@@ -226,6 +257,8 @@ struct BoardView: View {
       [
         selected ? "Selected" : nil, destination ? "Legal destination" : nil,
         checked ? "In check" : nil,
+        opponentMove?.from == index ? "Opponent's last move, starting square" : nil,
+        opponentMove?.to == index ? "Opponent's last move, ending square" : nil,
       ]
       .compactMap { $0 }.joined(separator: ", ")
     )

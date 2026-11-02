@@ -113,6 +113,73 @@ final class MemoryCredentials: CredentialStoring {
     XCTAssertTrue(session.canMove)
     XCTAssertEqual(sounds.played, [.move])
   }
+  func testOpponentMoveHighlightFollowsHistoryAndClearsOnReplyAndReconnect() throws {
+    state()
+    let initial = try soundPosition()
+    session.receive(initial)
+    XCTAssertNil(session.displayedOpponentMove)
+    let ownMove = pawnMove(initial)
+    session.receive(ownMove)
+    XCTAssertNil(session.displayedOpponentMove)
+    var opponent = ownMove
+    opponent.revision! += 1
+    opponent.board![4] = nil
+    opponent.board![3] = "k"
+    opponent.turn = .white
+    session.receive(opponent)
+    XCTAssertEqual(session.displayedOpponentMove?.from, 4)
+    XCTAssertEqual(session.displayedOpponentMove?.to, 3)
+    session.receive(opponent)
+    XCTAssertEqual(session.displayedOpponentMove?.to, 3)
+    var reply = opponent
+    reply.revision! += 1
+    reply.board![36] = nil
+    reply.board![28] = "P"
+    reply.turn = .black
+    session.receive(reply)
+    XCTAssertNil(session.displayedOpponentMove)
+    session.previousMove()
+    XCTAssertEqual(session.displayedOpponentMove?.to, 3)
+    session.previousMove()
+    XCTAssertNil(session.displayedOpponentMove)
+    session.nextMove()
+    XCTAssertEqual(session.displayedOpponentMove?.to, 3)
+    state()
+    XCTAssertNil(session.displayedOpponentMove)
+    session.receive(opponent)
+    XCTAssertNil(session.displayedOpponentMove)
+  }
+  func testOpponentHighlightsSpecialMovesAndBothOrientations() throws {
+    let cases: [(PieceColor, [Int: String], [Int: String], Int, Int)] = [
+      (.white, [4: "k", 7: "r"], [6: "k", 5: "r"], 4, 6),
+      (.black, [60: "K", 56: "R"], [58: "K", 59: "R"], 60, 58),
+      (.white, [48: "p"], [56: "q"], 48, 56),
+      (.black, [28: "P", 27: "p"], [19: "P"], 28, 19),
+      (.white, [27: "p", 36: "N"], [36: "p"], 27, 36),
+    ]
+    for (player, before, after, from, to) in cases {
+      state()
+      var initial = try soundPosition()
+      initial.playerColor = player
+      initial.turn = player == .white ? .black : .white
+      initial.board = Array(repeating: nil, count: 64)
+      for (square, piece) in before { initial.board![square] = piece }
+      session.receive(initial)
+      var next = initial
+      next.revision! += 1
+      next.turn = player
+      next.board = Array(repeating: nil, count: 64)
+      for (square, piece) in after { next.board![square] = piece }
+      session.receive(next)
+      XCTAssertEqual(session.displayedOpponentMove?.from, from)
+      XCTAssertEqual(session.displayedOpponentMove?.to, to)
+      var gap = next
+      gap.revision! += 1
+      gap.board = Array(repeating: nil, count: 64)
+      session.receive(gap)
+      XCTAssertNil(session.displayedOpponentMove)
+    }
+  }
   func testReviewResetsOnResynchronizationAndPositionGaps() throws {
     state()
     let initial = try soundPosition()
@@ -223,6 +290,70 @@ final class MemoryCredentials: CredentialStoring {
       session.receive(checked)
       XCTAssertEqual(sounds.played.count, count + 1)
       session.setSoundsEnabled(true)
+    }
+  }
+  func testResultSoundsForBothColorsWithoutBoardMoveAndOnlyOnce() throws {
+    for player in [PieceColor.white, .black] {
+      for result in [GameResult.whiteWon, .blackWon] {
+        state()
+        var initial = try soundPosition()
+        initial.playerColor = player
+        session.receive(initial)
+        let count = sounds.played.count
+        var ended = initial
+        ended.revision! += 1
+        ended.result = result
+        ended.resultReason = .timeout
+        session.receive(ended)
+        session.receive(ended)
+        let expected: BoardSound = (result == .whiteWon) == (player == .white) ? .win : .lose
+        XCTAssertEqual(Array(sounds.played.dropFirst(count)), [expected])
+        state()
+        session.receive(ended)
+        XCTAssertEqual(sounds.played.count, count + 1)
+      }
+    }
+  }
+  func testResultSoundOverridesCheckAndHonorsMuteAndReview() throws {
+    for mode in ["live", "muted", "review"] {
+      state()
+      let initial = try soundPosition()
+      session.receive(initial)
+      let moved = pawnMove(initial)
+      session.receive(moved)
+      if mode == "muted" { session.setSoundsEnabled(false) }
+      if mode == "review" { session.previousMove() }
+      let count = sounds.played.count
+      var ended = moved
+      ended.revision! += 1
+      ended.board![4] = nil
+      ended.board![12] = "k"
+      ended.turn = .white
+      ended.checkSquare = "e1"
+      ended.result = .blackWon
+      ended.resultReason = .checkmate
+      session.receive(ended)
+      let expected: [BoardSound] = mode == "live" ? [.lose] : []
+      XCTAssertEqual(Array(sounds.played.dropFirst(count)), expected)
+      session.setSoundsEnabled(true)
+    }
+  }
+  func testDrawDoesNotPlayWinOrLossSound() throws {
+    state()
+    let initial = try soundPosition()
+    session.receive(initial)
+    var ended = initial
+    ended.revision! += 1
+    ended.result = .draw
+    session.receive(ended)
+    XCTAssertTrue(sounds.played.isEmpty)
+  }
+  func testAllSoundAssetsDecode() throws {
+    for sound in BoardSound.allCases {
+      let url = try XCTUnwrap(Bundle.main.url(
+        forResource: sound.rawValue, withExtension: sound.fileExtension))
+      let player = try AVAudioPlayer(contentsOf: url)
+      XCTAssertGreaterThan(player.duration, 0)
     }
   }
   func testGameplayHidesRoutineStatusButPreservesWarnings() throws {
@@ -336,7 +467,8 @@ final class MemoryCredentials: CredentialStoring {
     let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.first as? UIWindowScene)
     let previousWindow = scene.keyWindow
     let window = UIWindow(windowScene: scene)
-    window.rootViewController = UIHostingController(rootView: ContentView(session: session))
+    let host = BoardFocusHostingController(rootView: ContentView(session: session))
+    window.rootViewController = host
     window.makeKeyAndVisible()
     defer {
       window.isHidden = true
@@ -345,6 +477,7 @@ final class MemoryCredentials: CredentialStoring {
     try await Task.sleep(for: .milliseconds(300))
     let system = try XCTUnwrap(UIFocusSystem.focusSystem(for: window))
     let connection = try XCTUnwrap(system.focusedItem)
+    XCTAssertFalse(host.isBoardSquare(connection))
     state()
     var snapshot = try ProtocolTests.fixture()
     snapshot.playerColor = color
@@ -353,6 +486,7 @@ final class MemoryCredentials: CredentialStoring {
     available()
     try await Task.sleep(for: .milliseconds(500))
     let square = try XCTUnwrap(system.focusedItem)
+    XCTAssertTrue(host.isBoardSquare(square), "Board focus must select silent feedback")
     XCTAssertFalse(square === connection, "The arriving board must take focus from Connection")
     var candidates: [ObjectIdentifier: any UIFocusItem] = [:]
     var visited: Set<ObjectIdentifier> = []

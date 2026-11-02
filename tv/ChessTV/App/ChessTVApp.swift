@@ -11,7 +11,7 @@ private struct AppRoot: View {
   var body: some View {
     Group {
       if let session {
-        ContentView(session: session)
+        QuietBoardHost(session: session)
       } else {
         VStack(spacing: 24) {
           Text("Chess TV").font(.largeTitle)
@@ -30,3 +30,56 @@ private struct AppRoot: View {
     .onChange(of: scenePhase) { _, phase in session?.setActive(phase == .active) }
   }
 }
+
+private struct QuietBoardHost: UIViewControllerRepresentable {
+  let session: TVSession
+
+  func makeUIViewController(context: Context) -> BoardFocusHostingController<ContentView> {
+    BoardFocusHostingController(rootView: ContentView(session: session))
+  }
+
+  func updateUIViewController(_ controller: BoardFocusHostingController<ContentView>, context: Context) {
+    controller.rootView = ContentView(session: session)
+  }
+}
+
+final class BoardFocusHostingController<Content: View>: UIHostingController<Content> {
+  func isBoardSquare(_ item: (any UIFocusItem)?) -> Bool {
+    guard let item else { return false }
+    var environment: (any UIFocusEnvironment)? = item
+    while let current = environment {
+      if let container = current.focusItemContainer {
+        let frame = container.coordinateSpace.convert(item.frame, to: view)
+        return boardRegions(in: view).contains { region in
+          region.convert(region.bounds, to: view).contains(CGPoint(x: frame.midX, y: frame.midY))
+        }
+      }
+      environment = current.parentFocusEnvironment
+    }
+    return false
+  }
+
+  private func boardRegions(in view: UIView) -> [BoardFocusRegionView] {
+    if let region = view as? BoardFocusRegionView { return [region] }
+    return view.subviews.flatMap { boardRegions(in: $0) }
+  }
+
+  override func soundIdentifierForFocusUpdate(in context: UIFocusUpdateContext) -> UIFocusSoundIdentifier? {
+    if isBoardSquare(context.nextFocusedItem) { return UIFocusSoundIdentifier.none }
+    return super.soundIdentifierForFocusUpdate(in: context)
+  }
+}
+
+
+// A public UIKit coordinate-space marker scopes sound suppression to the grid.
+// SwiftUI focus items are not necessarily UIViews.
+struct BoardFocusRegion: UIViewRepresentable {
+  func makeUIView(context: Context) -> BoardFocusRegionView {
+    let view = BoardFocusRegionView()
+    view.isUserInteractionEnabled = false
+    return view
+  }
+  func updateUIView(_ view: BoardFocusRegionView, context: Context) {}
+}
+
+final class BoardFocusRegionView: UIView {}

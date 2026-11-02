@@ -31,6 +31,8 @@
 		C440817894CE08A4F6C515B9 /* ChessTV/Views/PieceBoardOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA91495BEBB0F98CA6ADA28C /* ChessTV/Views/PieceBoardOverlay.swift */; };
 		F05377166A12C08533D1DDE3 /* ChessTV/Services/CredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583FF0087FD7BC26A2A6DC87 /* ChessTV/Services/CredentialStore.swift */; };
 		FA4E10C2D736FB8351DB86A9 /* ChessTV/Models/Board.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0195AA0022FE3D58E30BFB /* ChessTV/Models/Board.swift */; };
+		FEECC001122334455667788B /* ChessTV/Sounds/game-win.wav in Resources */ = {isa = PBXBuildFile; fileRef = FEECC001122334455667788C /* ChessTV/Sounds/game-win.wav */; };
+		FEECC001122334455667788D /* ChessTV/Sounds/game-lose.wav in Resources */ = {isa = PBXBuildFile; fileRef = FEECC001122334455667788E /* ChessTV/Sounds/game-lose.wav */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,6 +74,8 @@
 		E76C4D45F52B102B73B854FC /* ChessTVTests/BoardTransitionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTVTests/BoardTransitionTests.swift; sourceTree = SOURCE_ROOT; };
 		F219C0274590DA45E4BEF1EA /* ChessTVTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = ChessTVTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA91495BEBB0F98CA6ADA28C /* ChessTV/Views/PieceBoardOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessTV/Views/PieceBoardOverlay.swift; sourceTree = SOURCE_ROOT; };
+		FEECC001122334455667788C /* ChessTV/Sounds/game-win.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ChessTV/Sounds/game-win.wav; sourceTree = SOURCE_ROOT; };
+		FEECC001122334455667788E /* ChessTV/Sounds/game-lose.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ChessTV/Sounds/game-lose.wav; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,6 +100,8 @@
 			isa = PBXGroup;
 			children = (
 				7E88A65EA62B3E09276A41F2 /* ChessTV/Sounds/capture.mp3 */,
+				FEECC001122334455667788C /* ChessTV/Sounds/game-win.wav */,
+				FEECC001122334455667788E /* ChessTV/Sounds/game-lose.wav */,
 				FEECC001122334455667788A /* ChessTV/Sounds/move-check.mp3 */,
 				BCAB68134A164EA983F823D1 /* ChessTV/Sounds/move-self.mp3 */,
 				E76C4D45F52B102B73B854FC /* ChessTVTests/BoardTransitionTests.swift */,
@@ -205,6 +211,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				8E7DA00E28D6EC70D27A3DC9 /* ChessTV/Sounds/capture.mp3 in Resources */,
+				FEECC001122334455667788B /* ChessTV/Sounds/game-win.wav in Resources */,
+				FEECC001122334455667788D /* ChessTV/Sounds/game-lose.wav in Resources */,
 				FEECC0011223344556677889 /* ChessTV/Sounds/move-check.mp3 in Resources */,
 				81C8D57ABCAB08AF05B37812 /* ChessTV/Sounds/move-self.mp3 in Resources */,
 				2E03FC9C8D896B37E45626A1 /* ChessTV/Assets.xcassets in Resources */,
@@ -276,6 +284,7 @@
 				DEVELOPMENT_TEAM = Z5Z34R777D;
 				ENABLE_TESTABILITY = NO;
 				GENERATE_INFOPLIST_FILE = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				PRODUCT_BUNDLE_IDENTIFIER = com.chesstv.app;
 				PRODUCT_NAME = ChessTV;
 				SDKROOT = appletvos;
@@ -352,6 +361,7 @@
 				DEVELOPMENT_TEAM = Z5Z34R777D;
 				ENABLE_TESTABILITY = YES;
 				GENERATE_INFOPLIST_FILE = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				PRODUCT_BUNDLE_IDENTIFIER = com.chesstv.app;
 				PRODUCT_NAME = ChessTV;
 				SDKROOT = appletvos;

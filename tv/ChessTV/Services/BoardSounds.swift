@@ -1,9 +1,15 @@
 import AVFoundation
 
-enum BoardSound: String {
+enum BoardSound: String, CaseIterable {
   case move = "move-self"
   case capture
   case check = "move-check"
+  case win = "game-win"
+  case lose = "game-lose"
+
+  var fileExtension: String {
+    self == .win || self == .lose ? "wav" : "mp3"
+  }
 }
 
 @MainActor protocol BoardSoundPlaying {
@@ -16,8 +22,8 @@ enum BoardSound: String {
   private var players: [String: AVAudioPlayer] = [:]
 
   init(bundle: Bundle = .main) {
-    for sound in [BoardSound.move, .capture, .check] {
-      guard let url = bundle.url(forResource: sound.rawValue, withExtension: "mp3"),
+    for sound in BoardSound.allCases {
+      guard let url = bundle.url(forResource: sound.rawValue, withExtension: sound.fileExtension),
         let player = try? AVAudioPlayer(contentsOf: url)
       else { continue }
       player.prepareToPlay()

@@ -5,6 +5,8 @@ struct ContentView: View {
   @AppStorage("showSquareLabels") private var showSquareLabels = true
   @AppStorage("edgeSquareLabelsOnly") private var edgeSquareLabelsOnly = true
   @AppStorage("soundsEnabled") private var soundsEnabled = true
+  @AppStorage("lastMoveColor") private var lastMoveColor = BoardHighlightColor.yellow
+  @AppStorage("selectedSquareColor") private var selectedSquareColor = BoardHighlightColor.yellow
   @State private var showConnection = false
   @State private var showSettings = false
   var body: some View {
@@ -17,6 +19,7 @@ struct ContentView: View {
             BoardView(
               session: session, snapshot: snapshot, showSquareLabels: showSquareLabels,
               edgeSquareLabelsOnly: edgeSquareLabelsOnly,
+              lastMoveColor: lastMoveColor, selectedSquareColor: selectedSquareColor,
               onSettings: { showSettings = true }, onConnection: { showConnection = true })
           } else {
             HStack(spacing: 24) {
@@ -38,7 +41,8 @@ struct ContentView: View {
     .sheet(isPresented: $showSettings) {
       BoardSettingsView(
         showSquareLabels: $showSquareLabels, edgeSquareLabelsOnly: $edgeSquareLabelsOnly,
-        soundsEnabled: $soundsEnabled)
+        soundsEnabled: $soundsEnabled,
+        lastMoveColor: $lastMoveColor, selectedSquareColor: $selectedSquareColor)
     }
     .sheet(isPresented: $showConnection) {
       VStack(spacing: 30) {
@@ -61,6 +65,8 @@ private struct BoardSettingsView: View {
   @Binding var showSquareLabels: Bool
   @Binding var edgeSquareLabelsOnly: Bool
   @Binding var soundsEnabled: Bool
+  @Binding var lastMoveColor: BoardHighlightColor
+  @Binding var selectedSquareColor: BoardHighlightColor
   @Environment(\.dismiss) private var dismiss
 
   var body: some View {
@@ -74,9 +80,25 @@ private struct BoardSettingsView: View {
         .multilineTextAlignment(.center)
         .fixedSize(horizontal: false, vertical: true)
       Toggle("Game sounds", isOn: $soundsEnabled)
+      highlightPicker("Last move color", selection: $lastMoveColor)
+      highlightPicker("Selected square color", selection: $selectedSquareColor)
       Button("Done") { dismiss() }
     }
     .frame(maxWidth: 700)
     .padding(80)
+  }
+
+  private func highlightPicker(
+    _ title: String, selection: Binding<BoardHighlightColor>
+  ) -> some View {
+    Picker(title, selection: selection) {
+      ForEach(BoardHighlightColor.allCases, id: \.self) { color in
+        HStack(spacing: 12) {
+          Circle().fill(color.tint(lightSquare: false)).frame(width: 24, height: 24)
+            .accessibilityHidden(true)
+          Text(color.rawValue.capitalized)
+        }.tag(color)
+      }
+    }
   }
 }

@@ -33,6 +33,7 @@ final class MemoryCredentials: CredentialStoring {
   func disconnect() {}
 }
 @MainActor final class FakeBoardSounds: BoardSoundPlaying {
+  var volume: Float = 1
   var played: [BoardSound] = []
   var stops = 0
   func play(_ sound: BoardSound) { played.append(sound) }

@@ -5,6 +5,7 @@ struct ContentView: View {
   @AppStorage("showSquareLabels") private var showSquareLabels = true
   @AppStorage("edgeSquareLabelsOnly") private var edgeSquareLabelsOnly = true
   @AppStorage("soundsEnabled") private var soundsEnabled = true
+  @AppStorage("soundVolume") private var soundVolume = 1.0
   @AppStorage("captureSound") private var captureSound = CaptureSound.classic
   @AppStorage("lastMoveColor") private var lastMoveColor = BoardHighlightColor.yellow
   @AppStorage("selectedSquareColor") private var selectedSquareColor = BoardHighlightColor.yellow
@@ -42,7 +43,7 @@ struct ContentView: View {
     .sheet(isPresented: $showSettings) {
       BoardSettingsView(
         showSquareLabels: $showSquareLabels, edgeSquareLabelsOnly: $edgeSquareLabelsOnly,
-        soundsEnabled: $soundsEnabled, captureSound: $captureSound,
+        soundsEnabled: $soundsEnabled, soundVolume: $soundVolume, captureSound: $captureSound,
         previewCaptureSound: session.previewCaptureSound,
         lastMoveColor: $lastMoveColor, selectedSquareColor: $selectedSquareColor)
     }
@@ -60,6 +61,7 @@ struct ContentView: View {
     }
     .onChange(of: session.credential) { _, value in if value == nil { showConnection = false } }
     .onChange(of: soundsEnabled, initial: true) { _, value in session.setSoundsEnabled(value) }
+    .onChange(of: soundVolume, initial: true) { _, value in session.setSoundVolume(value) }
     .onChange(of: captureSound, initial: true) { _, value in session.setCaptureSound(value) }
   }
 }
@@ -68,6 +70,7 @@ private struct BoardSettingsView: View {
   @Binding var showSquareLabels: Bool
   @Binding var edgeSquareLabelsOnly: Bool
   @Binding var soundsEnabled: Bool
+  @Binding var soundVolume: Double
   @Binding var captureSound: CaptureSound
   var previewCaptureSound: () -> Void
   @Binding var lastMoveColor: BoardHighlightColor
@@ -86,6 +89,12 @@ private struct BoardSettingsView: View {
           .multilineTextAlignment(.center)
           .fixedSize(horizontal: false, vertical: true)
         Toggle("Game sounds", isOn: $soundsEnabled)
+        Picker("Sound level", selection: $soundVolume) {
+          ForEach(0...10, id: \.self) { level in
+            Text("\(level * 10)%").tag(Double(level) / 10)
+          }
+        }
+        .disabled(!soundsEnabled)
         Picker("Capture sound", selection: $captureSound) {
           ForEach(CaptureSound.allCases, id: \.self) { sound in
             Text(sound.title).tag(sound)

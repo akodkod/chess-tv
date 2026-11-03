@@ -91,6 +91,9 @@ import Observation
   func setCaptureSound(_ sound: CaptureSound) {
     captureSound = sound
   }
+  func setSoundVolume(_ volume: Double) {
+    sounds.volume = Float(min(max(volume, 0), 1))
+  }
   func previewCaptureSound() {
     if soundsEnabled { sounds.play(captureSound.sound) }
   }

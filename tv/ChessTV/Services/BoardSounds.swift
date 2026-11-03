@@ -44,7 +44,8 @@ enum CaptureSound: String, CaseIterable {
   }
 }
 
-@MainActor protocol BoardSoundPlaying {
+@MainActor protocol BoardSoundPlaying: AnyObject {
+  var volume: Float { get set }
   func play(_ sound: BoardSound)
   func stop()
 }
@@ -52,6 +53,11 @@ enum CaptureSound: String, CaseIterable {
 /// Short, local clips: playback never depends on the relay or a browser request.
 @MainActor final class BoardSounds: BoardSoundPlaying {
   private var players: [String: AVAudioPlayer] = [:]
+  var volume: Float = 1 {
+    didSet {
+      for player in players.values { player.volume = volume }
+    }
+  }
 
   init(bundle: Bundle = .main) {
     for sound in BoardSound.allCases {
@@ -66,6 +72,7 @@ enum CaptureSound: String, CaseIterable {
   func play(_ sound: BoardSound) {
     guard let player = players[sound.rawValue] else { return }
     stop()
+    player.volume = volume
     player.currentTime = 0
     player.play()
   }

@@ -252,7 +252,7 @@ it("reads figurine notation without depending on the selected piece font", () =>
 it.each(["q", "r", "b", "n"] as const)(
   "selects %s promotion and confirms the chosen piece",
   async (promotion) => {
-    const { adapter, doc, board, chess, render } = fixture([
+    const { doc, board, chess, render } = fixture([
       "a4",
       "h5",
       "a5",
@@ -262,6 +262,8 @@ it.each(["q", "r", "b", "n"] as const)(
       "axb7",
       "hxg2",
     ])
+    Object.defineProperty(doc, "hidden", { get: () => true })
+    const adapter = new ChessComAdapter(doc, { allowBackground: true })
     const s = await sync(adapter)
     const request = command(s, "b7", "a8")
     let clicks = 0
@@ -730,3 +732,34 @@ it.each([Color.White, Color.Black] as const)(
     expect(fallback.bottomColor).toBe(Color.White)
   },
 )
+
+it.each([false, true])("hidden-page input requires host opt-in (%s)", async (allowBackground) => {
+  const { doc, board, chess, render } = fixture()
+  Object.defineProperty(doc, "hidden", { configurable: true, get: () => true })
+  const adapter = new ChessComAdapter(doc, { allowBackground })
+  // Reconnecting must preserve the host policy.
+  await adapter.handle({ kind: "stop" })
+  const snapshot = await sync(adapter)
+  const status = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
+  expect(status.messages).toContainEqual(
+    expect.objectContaining({ type: MessageKind.Status, available: allowBackground }),
+  )
+  let clicks = 0
+  board.addEventListener("click", () => {
+    if (++clicks === 2) {
+      chess.move("e4")
+      chess.move("e5")
+      render()
+    }
+  })
+  const request = command(snapshot)
+  const reply = await adapter.handle(request)
+  expect(reply.messages).toContainEqual(
+    expect.objectContaining({
+      type: MessageKind.Outcome,
+      outcome: allowBackground ? MoveOutcome.ObservedComplete : MoveOutcome.Rejected,
+    }),
+  )
+  await adapter.handle(request)
+  expect(clicks).toBe(allowBackground ? 2 : 0)
+})

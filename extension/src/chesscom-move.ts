@@ -18,7 +18,7 @@ type BotReply = { message: string; outcome: MoveOutcome.ObservedComplete | MoveO
 export function position(doc: Document) {
   const turn = readChessComTurn(doc)
   if (turn.state === "unknown") throw new Error(turn.reason)
-  if (turn.state !== "latest") throw new Error("Return to the latest recorded move in Chrome.")
+  if (turn.state !== "latest") throw new Error("Return to the latest recorded move on Chess.com.")
   const { board, list, online } = gameLayout(doc)!
   const pieces = new Map<string, { code: string; element: HTMLElement }>()
   for (const element of board.querySelectorAll<HTMLElement>(".piece")) {
@@ -131,7 +131,9 @@ function clickAt(target: Element, p: { x: number; y: number }) {
   }
 }
 
-export function createMoveController() {
+export type MoveControllerOptions = { allowBackground?: boolean }
+
+export function createMoveController(options: MoveControllerOptions = {}) {
   const instance = crypto.randomUUID()
   let pending = false
   let uncertain = false
@@ -140,8 +142,8 @@ export function createMoveController() {
 
   async function submit(move: PageMoveRequest): Promise<BotReply> {
     if (pending || uncertain)
-      throw new Error("A move is unresolved. Inspect Chrome; do not resend it.")
-    if (document.hidden) throw new Error("Keep the game tab visible.")
+      throw new Error("A move is unresolved. Inspect the game; do not resend it.")
+    if (!options.allowBackground && document.hidden) throw new Error("Keep the game tab visible.")
     const before = position(document)
     if (token(before) !== move.token) throw new Error("Position changed. Inspect again.")
     if (before.turn.nextColorInLatestPosition !== move.color)
@@ -194,7 +196,7 @@ export function createMoveController() {
             const choice = before.board.querySelector<HTMLElement>(
               `.promotion-window--visible .promotion-piece.${move.color[0]}${move.promotion}`,
             )
-            if (choice && !document.hidden) {
+            if (choice && (options.allowBackground || !document.hidden)) {
               const r = choice.getBoundingClientRect()
               const target = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
               if (r.width > 0 && target && choice.contains(target)) {
@@ -218,20 +220,20 @@ export function createMoveController() {
       const timeout = setTimeout(
         () =>
           finish(
-            "Move unconfirmed. Inspect Chrome. It will not be resent; reload the page only after resolving it.",
+            "Move unconfirmed. Inspect the game. It will not be resent; reload the page only after resolving it.",
             true,
           ),
         5000,
       )
       try {
         for (const p of points) {
-          if (document.hidden) throw new Error("Tab hidden")
+          if (!options.allowBackground && document.hidden) throw new Error("Tab hidden")
           const target = document.elementFromPoint(p.x, p.y)
           if (!target || !before.board.contains(target)) throw new Error("Board obscured")
           clickAt(target, p)
         }
       } catch {
-        finish("Interaction interrupted. Inspect Chrome; the move will not be retried.", true)
+        finish("Interaction interrupted. Inspect the game; the move will not be retried.", true)
       }
     })
   }

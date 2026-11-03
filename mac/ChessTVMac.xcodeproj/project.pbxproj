@@ -1,0 +1,457 @@
+// !$*UTF8*$!
+{
+"archiveVersion" = 1;
+"classes" = {
+};
+"objectVersion" = 56;
+"objects" = {
+"787445FFEFE8C16D4B577B4B" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "ChessTVMac/App/ChessTVMacApp.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"B96B01558AC5F533749F8A51" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "ChessTVMac/Models/AdapterReply.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"57DC4B91CA01EB90D0A29114" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "ChessTVMac/Models/MacSession.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"56C36786134937C257A29477" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "ChessTVMac/Services/ChessBrowser.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"32D27D5FD59C2E98697595A2" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "ChessTVMac/Services/MacPairingAPI.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"CA9A4C4A55EC521A55FCC253" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "ChessTVMac/Services/MacStore.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"69E1F1D94CEA0453C5E146A7" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "ChessTVMac/Views/ContentView.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"1DCB3D01D4703182D1DE9F08" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "ChessTVMac/Views/PairingSheet.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"7E5FAEAA2E2E1818DE1E1571" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "../tv/ChessTV/Models/Protocol.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"3A23C024884CDE5BA59048E1" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "../tv/ChessTV/Models/Board.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"A248624FA59572214D412922" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "../tv/ChessTV/Services/RelaySocket.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"3165AB13014F34964B585DA8" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "../tv/ChessTV/Services/CredentialStore.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"04C497D779FEA19C45182B65" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "../tv/ChessTV/Services/RelayConfiguration.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"D647FE474B8B7E3FEB5A793A" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "../tv/ChessTV/Services/PairingAPI.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"2DAB4BAEC7DCCDCBF076745D" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "ChessTVMacTests/MacRelayIntegrationTests.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"28FC2F3966CADD28CE23AD2C" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "ChessTVMacTests/MacSessionTests.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"1E7AA4594399A267061051D3" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "ChessTVMacTests/ProtocolCorpusTests.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"BD21CF7278FC3117A753E8A0" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "ChessTVMacTests/WebKitBridgeTests.swift";
+"sourceTree" = "SOURCE_ROOT";
+};
+"A8C23443C72CA55B5E6B4B22" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "text";
+"path" = ".generated/adapter.js";
+"sourceTree" = "SOURCE_ROOT";
+};
+"A689F32A9AD1B6CE8DE9BA0A" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "text";
+"path" = "../protocol/fixtures/messages.json";
+"sourceTree" = "SOURCE_ROOT";
+};
+"AB00F3F5B3D88A9047B58299" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "text";
+"path" = "../protocol/fixtures/snapshot.json";
+"sourceTree" = "SOURCE_ROOT";
+};
+"7D1043473D55BFA90E8530D3" = {
+"isa" = "PBXFileReference";
+"explicitFileType" = "wrapper.application";
+"path" = "ChessTVMac.app";
+"sourceTree" = "BUILT_PRODUCTS_DIR";
+};
+"B7480EC88B7F22D0A4757273" = {
+"isa" = "PBXFileReference";
+"explicitFileType" = "wrapper.cfbundle";
+"path" = "ChessTVMacTests.xctest";
+"sourceTree" = "BUILT_PRODUCTS_DIR";
+};
+"64292B1C2B2E13EAD8788FC8" = {
+"isa" = "PBXGroup";
+"children" = ("787445FFEFE8C16D4B577B4B","B96B01558AC5F533749F8A51","57DC4B91CA01EB90D0A29114","56C36786134937C257A29477","32D27D5FD59C2E98697595A2","CA9A4C4A55EC521A55FCC253","69E1F1D94CEA0453C5E146A7","1DCB3D01D4703182D1DE9F08","7E5FAEAA2E2E1818DE1E1571","3A23C024884CDE5BA59048E1","A248624FA59572214D412922","3165AB13014F34964B585DA8","04C497D779FEA19C45182B65","D647FE474B8B7E3FEB5A793A","2DAB4BAEC7DCCDCBF076745D","28FC2F3966CADD28CE23AD2C","1E7AA4594399A267061051D3","BD21CF7278FC3117A753E8A0","A8C23443C72CA55B5E6B4B22","A689F32A9AD1B6CE8DE9BA0A","AB00F3F5B3D88A9047B58299","FBDC4F23F93125BBEEAE800C");
+"sourceTree" = "<group>";
+};
+"FBDC4F23F93125BBEEAE800C" = {
+"isa" = "PBXGroup";
+"name" = "Products";
+"children" = ("7D1043473D55BFA90E8530D3","B7480EC88B7F22D0A4757273");
+"sourceTree" = "<group>";
+};
+"89E1FD6268CC0F221A2BE178" = {
+"isa" = "XCBuildConfiguration";
+"name" = "Debug";
+"buildSettings" = {
+"SDKROOT" = "macosx";
+"MACOSX_DEPLOYMENT_TARGET" = "14.0";
+"SWIFT_VERSION" = "5.0";
+"CODE_SIGN_STYLE" = "Automatic";
+"CODE_SIGN_IDENTITY" = "-";
+"ENABLE_USER_SCRIPT_SANDBOXING" = "NO";
+"CLANG_ENABLE_MODULES" = "YES";
+"ENABLE_TESTABILITY" = "YES";
+"SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
+"SWIFT_ACTIVE_COMPILATION_CONDITIONS" = "DEBUG";
+"DEBUG_INFORMATION_FORMAT" = "dwarf";
+};
+};
+"E6DE6C99132752C914FEF632" = {
+"isa" = "XCBuildConfiguration";
+"name" = "Release";
+"buildSettings" = {
+"SDKROOT" = "macosx";
+"MACOSX_DEPLOYMENT_TARGET" = "14.0";
+"SWIFT_VERSION" = "5.0";
+"CODE_SIGN_STYLE" = "Automatic";
+"CODE_SIGN_IDENTITY" = "-";
+"ENABLE_USER_SCRIPT_SANDBOXING" = "NO";
+"CLANG_ENABLE_MODULES" = "YES";
+"ENABLE_TESTABILITY" = "YES";
+"SWIFT_OPTIMIZATION_LEVEL" = "-O";
+"SWIFT_ACTIVE_COMPILATION_CONDITIONS" = "";
+"DEBUG_INFORMATION_FORMAT" = "dwarf";
+};
+};
+"862894B703A6DEDF96A9DD6C" = {
+"isa" = "XCConfigurationList";
+"buildConfigurations" = ("89E1FD6268CC0F221A2BE178","E6DE6C99132752C914FEF632");
+"defaultConfigurationIsVisible" = 0;
+"defaultConfigurationName" = "Release";
+};
+"4E2C21641676DFA51539313F" = {
+"isa" = "XCBuildConfiguration";
+"name" = "Debug";
+"buildSettings" = {
+"PRODUCT_NAME" = "$(TARGET_NAME)";
+"PRODUCT_MODULE_NAME" = "ChessTV";
+"PRODUCT_BUNDLE_IDENTIFIER" = "com.chesstv.mac";
+"GENERATE_INFOPLIST_FILE" = "YES";
+"INFOPLIST_KEY_CFBundleDisplayName" = "Chess TV";
+"INFOPLIST_KEY_LSApplicationCategoryType" = "public.app-category.games";
+"INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking" = "YES";
+"LD_RUNPATH_SEARCH_PATHS" = ("$(inherited)","@executable_path/../Frameworks");
+"SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
+"SWIFT_ACTIVE_COMPILATION_CONDITIONS" = "DEBUG";
+"DEBUG_INFORMATION_FORMAT" = "dwarf";
+};
+};
+"7ABF3ED9FED2D1D371A90EC9" = {
+"isa" = "XCBuildConfiguration";
+"name" = "Release";
+"buildSettings" = {
+"PRODUCT_NAME" = "$(TARGET_NAME)";
+"PRODUCT_MODULE_NAME" = "ChessTV";
+"PRODUCT_BUNDLE_IDENTIFIER" = "com.chesstv.mac";
+"GENERATE_INFOPLIST_FILE" = "YES";
+"INFOPLIST_KEY_CFBundleDisplayName" = "Chess TV";
+"INFOPLIST_KEY_LSApplicationCategoryType" = "public.app-category.games";
+"INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking" = "YES";
+"LD_RUNPATH_SEARCH_PATHS" = ("$(inherited)","@executable_path/../Frameworks");
+"SWIFT_OPTIMIZATION_LEVEL" = "-O";
+"SWIFT_ACTIVE_COMPILATION_CONDITIONS" = "";
+"DEBUG_INFORMATION_FORMAT" = "dwarf";
+};
+};
+"E68519D21C528610D352976C" = {
+"isa" = "XCConfigurationList";
+"buildConfigurations" = ("4E2C21641676DFA51539313F","7ABF3ED9FED2D1D371A90EC9");
+"defaultConfigurationIsVisible" = 0;
+"defaultConfigurationName" = "Release";
+};
+"3452AD12C5E4C5DC2C2E2C64" = {
+"isa" = "XCBuildConfiguration";
+"name" = "Debug";
+"buildSettings" = {
+"PRODUCT_NAME" = "$(TARGET_NAME)";
+"PRODUCT_BUNDLE_IDENTIFIER" = "com.chesstv.mac.tests";
+"GENERATE_INFOPLIST_FILE" = "YES";
+"TEST_HOST" = "$(BUILT_PRODUCTS_DIR)/ChessTVMac.app/Contents/MacOS/ChessTVMac";
+"BUNDLE_LOADER" = "$(TEST_HOST)";
+"LD_RUNPATH_SEARCH_PATHS" = ("$(inherited)","@loader_path/../Frameworks","@executable_path/../Frameworks");
+"SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
+"SWIFT_ACTIVE_COMPILATION_CONDITIONS" = "DEBUG";
+"DEBUG_INFORMATION_FORMAT" = "dwarf";
+};
+};
+"6E168DDD403DF794A9765824" = {
+"isa" = "XCBuildConfiguration";
+"name" = "Release";
+"buildSettings" = {
+"PRODUCT_NAME" = "$(TARGET_NAME)";
+"PRODUCT_BUNDLE_IDENTIFIER" = "com.chesstv.mac.tests";
+"GENERATE_INFOPLIST_FILE" = "YES";
+"TEST_HOST" = "$(BUILT_PRODUCTS_DIR)/ChessTVMac.app/Contents/MacOS/ChessTVMac";
+"BUNDLE_LOADER" = "$(TEST_HOST)";
+"LD_RUNPATH_SEARCH_PATHS" = ("$(inherited)","@loader_path/../Frameworks","@executable_path/../Frameworks");
+"SWIFT_OPTIMIZATION_LEVEL" = "-O";
+"SWIFT_ACTIVE_COMPILATION_CONDITIONS" = "";
+"DEBUG_INFORMATION_FORMAT" = "dwarf";
+};
+};
+"026DE07CB2D63198888E1823" = {
+"isa" = "XCConfigurationList";
+"buildConfigurations" = ("3452AD12C5E4C5DC2C2E2C64","6E168DDD403DF794A9765824");
+"defaultConfigurationIsVisible" = 0;
+"defaultConfigurationName" = "Release";
+};
+"02B3252DA2588D1748983AD3" = {
+"isa" = "PBXShellScriptBuildPhase";
+"buildActionMask" = 2147483647;
+"files" = ();
+"inputPaths" = ();
+"outputPaths" = ("$(SRCROOT)/.generated/adapter.js");
+"alwaysOutOfDate" = 1;
+"runOnlyForDeploymentPostprocessing" = 0;
+"shellPath" = "/bin/bash";
+"shellScript" = "set -euo pipefail\nexport PATH=\"/opt/homebrew/bin:$HOME/.bun/bin:$PATH\"\ncd \"$SRCROOT/../extension\"\nbun run --bun vp build --config vite.macos.config.ts\n";
+"name" = "Bundle game adapter";
+};
+"181B6FBCC44D73FFF6EB8066" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "787445FFEFE8C16D4B577B4B";
+};
+"5FE68A60B78E899B82B827B9" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "B96B01558AC5F533749F8A51";
+};
+"FDF515051489D379DB7A175F" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "57DC4B91CA01EB90D0A29114";
+};
+"DDDC50E345760B38DBBFF9D6" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "56C36786134937C257A29477";
+};
+"8C273F90CC896ABA81D84827" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "32D27D5FD59C2E98697595A2";
+};
+"496732600E83CCAD0F1D780F" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "CA9A4C4A55EC521A55FCC253";
+};
+"EA116F246B6F5D39EB0BA255" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "69E1F1D94CEA0453C5E146A7";
+};
+"71697E636D30197E2C789C3A" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "1DCB3D01D4703182D1DE9F08";
+};
+"C3756947A31B738ADDF90318" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "7E5FAEAA2E2E1818DE1E1571";
+};
+"CA4D234A26FFEEEE0DD705ED" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "3A23C024884CDE5BA59048E1";
+};
+"E3A12ADBFC31227AD287DF58" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "A248624FA59572214D412922";
+};
+"4346B346E6348204618E3010" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "3165AB13014F34964B585DA8";
+};
+"AA4B8B2B9BB7853E257ECF8F" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "04C497D779FEA19C45182B65";
+};
+"703E51E29886160A76089291" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "D647FE474B8B7E3FEB5A793A";
+};
+"BCE16DD0260827ECF338C787" = {
+"isa" = "PBXSourcesBuildPhase";
+"buildActionMask" = 2147483647;
+"files" = ("181B6FBCC44D73FFF6EB8066","5FE68A60B78E899B82B827B9","FDF515051489D379DB7A175F","DDDC50E345760B38DBBFF9D6","8C273F90CC896ABA81D84827","496732600E83CCAD0F1D780F","EA116F246B6F5D39EB0BA255","71697E636D30197E2C789C3A","C3756947A31B738ADDF90318","CA4D234A26FFEEEE0DD705ED","E3A12ADBFC31227AD287DF58","4346B346E6348204618E3010","AA4B8B2B9BB7853E257ECF8F","703E51E29886160A76089291");
+"runOnlyForDeploymentPostprocessing" = 0;
+};
+"348124E60AFD6DC8B360CCB2" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "A8C23443C72CA55B5E6B4B22";
+};
+"0189424A5A60FED329FA868E" = {
+"isa" = "PBXResourcesBuildPhase";
+"buildActionMask" = 2147483647;
+"files" = ("348124E60AFD6DC8B360CCB2");
+"runOnlyForDeploymentPostprocessing" = 0;
+};
+"7561BFB015D8F536760CB671" = {
+"isa" = "PBXFrameworksBuildPhase";
+"buildActionMask" = 2147483647;
+"files" = ();
+"runOnlyForDeploymentPostprocessing" = 0;
+};
+"4F6027D858B72CC70E5CC8E9" = {
+"isa" = "PBXNativeTarget";
+"name" = "ChessTVMac";
+"productName" = "ChessTVMac";
+"productReference" = "7D1043473D55BFA90E8530D3";
+"productType" = "com.apple.product-type.application";
+"buildConfigurationList" = "E68519D21C528610D352976C";
+"buildPhases" = ("02B3252DA2588D1748983AD3","BCE16DD0260827ECF338C787","0189424A5A60FED329FA868E","7561BFB015D8F536760CB671");
+"buildRules" = ();
+"dependencies" = ();
+};
+"D799BAE6088A90139B415FCC" = {
+"isa" = "PBXContainerItemProxy";
+"containerPortal" = "98F54143AB4E86B28C3AFEE0";
+"proxyType" = 1;
+"remoteGlobalIDString" = "4F6027D858B72CC70E5CC8E9";
+"remoteInfo" = "ChessTVMac";
+};
+"E9FAD0C6CD43534327C0AF90" = {
+"isa" = "PBXTargetDependency";
+"target" = "4F6027D858B72CC70E5CC8E9";
+"targetProxy" = "D799BAE6088A90139B415FCC";
+};
+"676B7ACC9F3AD7354BD2B082" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "2DAB4BAEC7DCCDCBF076745D";
+};
+"9404B58A337012E29A7D526E" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "28FC2F3966CADD28CE23AD2C";
+};
+"18C12249812EF23FF358DFA9" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "1E7AA4594399A267061051D3";
+};
+"C5DA11451F2150BE0EEDC3CF" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "BD21CF7278FC3117A753E8A0";
+};
+"9F3002A5D69B22D357A58AA9" = {
+"isa" = "PBXSourcesBuildPhase";
+"buildActionMask" = 2147483647;
+"files" = ("676B7ACC9F3AD7354BD2B082","9404B58A337012E29A7D526E","18C12249812EF23FF358DFA9","C5DA11451F2150BE0EEDC3CF");
+"runOnlyForDeploymentPostprocessing" = 0;
+};
+"FE44858385A62D261C958E86" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "A689F32A9AD1B6CE8DE9BA0A";
+};
+"3EB7A61045C3BE49D7CBBA08" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "AB00F3F5B3D88A9047B58299";
+};
+"C584AE92222380FB29B6223F" = {
+"isa" = "PBXResourcesBuildPhase";
+"buildActionMask" = 2147483647;
+"files" = ("FE44858385A62D261C958E86","3EB7A61045C3BE49D7CBBA08");
+"runOnlyForDeploymentPostprocessing" = 0;
+};
+"99C7943D90D870A50ADE9160" = {
+"isa" = "PBXFrameworksBuildPhase";
+"buildActionMask" = 2147483647;
+"files" = ();
+"runOnlyForDeploymentPostprocessing" = 0;
+};
+"0A06C5E2DA34E686D888A695" = {
+"isa" = "PBXNativeTarget";
+"name" = "ChessTVMacTests";
+"productName" = "ChessTVMacTests";
+"productReference" = "B7480EC88B7F22D0A4757273";
+"productType" = "com.apple.product-type.bundle.unit-test";
+"buildConfigurationList" = "026DE07CB2D63198888E1823";
+"buildPhases" = ("9F3002A5D69B22D357A58AA9","C584AE92222380FB29B6223F","99C7943D90D870A50ADE9160");
+"buildRules" = ();
+"dependencies" = ("E9FAD0C6CD43534327C0AF90");
+};
+"98F54143AB4E86B28C3AFEE0" = {
+"isa" = "PBXProject";
+"attributes" = {
+"LastUpgradeCheck" = "2700";
+};
+"buildConfigurationList" = "862894B703A6DEDF96A9DD6C";
+"compatibilityVersion" = "Xcode 14.0";
+"developmentRegion" = "en";
+"hasScannedForEncodings" = 0;
+"knownRegions" = ("en","Base");
+"mainGroup" = "64292B1C2B2E13EAD8788FC8";
+"productRefGroup" = "FBDC4F23F93125BBEEAE800C";
+"projectDirPath" = "";
+"projectRoot" = "";
+"targets" = ("4F6027D858B72CC70E5CC8E9","0A06C5E2DA34E686D888A695");
+};
+};
+"rootObject" = "98F54143AB4E86B28C3AFEE0";
+}

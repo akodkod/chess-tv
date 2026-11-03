@@ -8,7 +8,7 @@ import {
 } from "@chess-tv/protocol"
 
 import { readGame } from "./chesscom-game"
-import { createMoveController } from "./chesscom-move"
+import { createMoveController, type MoveControllerOptions } from "./chesscom-move"
 import { completedBotPath, liveBotPath } from "./chesscom-url"
 import { ContentErrorCode, contentAction, type ContentReply } from "./messages"
 
@@ -27,9 +27,14 @@ export class ChessComAdapter {
   private path = ""
   private finalResult: ReturnType<typeof readGame>["result"] = null
   private finalReason: ReturnType<typeof readGame>["resultReason"] = null
-  private controller = createMoveController()
+  private controller: ReturnType<typeof createMoveController>
   private outcomes = new Map<string, { request: string; result: Promise<ContentReply> }>()
-  constructor(private doc: Document = document) {}
+  constructor(
+    private doc: Document = document,
+    private options: MoveControllerOptions = {},
+  ) {
+    this.controller = createMoveController(options)
+  }
 
   private read() {
     const p = readGame(this.doc)
@@ -91,7 +96,7 @@ export class ChessComAdapter {
     const available =
       this.enabled &&
       this.color !== null &&
-      !this.doc.hidden &&
+      (this.options.allowBackground || !this.doc.hidden) &&
       !this.controller.unresolved &&
       !p.result &&
       p.playable &&
@@ -132,12 +137,14 @@ export class ChessComAdapter {
         reason: available
           ? null
           : this.controller.unresolved
-            ? "Move unresolved. Inspect Chrome and reconnect the game."
+            ? "Move unresolved. Inspect the game and reconnect the game."
             : this.color === null
               ? "Viewing game."
               : p.result
-                ? "Game finished. Start a new game in Chrome."
-                : "Keep the game visible and connected.",
+                ? "Game finished. Start a new game on Chess.com."
+                : this.options.allowBackground
+                  ? "Keep the game connected."
+                  : "Keep the game visible and connected.",
       },
     ])
   }
@@ -174,7 +181,7 @@ export class ChessComAdapter {
       if (
         !this.enabled ||
         !this.color ||
-        this.doc.hidden ||
+        (!this.options.allowBackground && this.doc.hidden) ||
         p.result ||
         !p.playable ||
         completedBotPath(this.path) ||
@@ -212,7 +219,7 @@ export class ChessComAdapter {
       if (action.kind === "stop") {
         this.enabled = false
         // Explicit reconnect acknowledges inspection; never reuse old command IDs.
-        this.controller = createMoveController()
+        this.controller = createMoveController(this.options)
         this.outcomes.clear()
         this.generation = ""
         return this.reply()

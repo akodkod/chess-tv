@@ -1,6 +1,14 @@
 import { randomUUID } from "node:crypto"
 
-import { MAX_BYTES, messageSchema, type Message, type Role } from "@chess-tv/protocol"
+import {
+  DeviceRole,
+  MessageKind,
+  VERSION,
+  MAX_BYTES,
+  messageSchema,
+  type Message,
+  type Role,
+} from "@chess-tv/protocol"
 import type { SQL } from "bun"
 import type { WSContext, WSEvents } from "hono/ws"
 
@@ -32,18 +40,20 @@ export function connections(sql: SQL, heartbeatMs = 20_000, timeoutMs = 60_000, 
   }
   function refresh(session: Session) {
     session.generation = randomUUID()
-    for (const role of ["tv", "extension"] as const)
+    for (const role of Object.values(DeviceRole))
       send(session[role], {
-        v: 2,
-        type: "session",
+        v: VERSION,
+        type: MessageKind.Session,
         generation: session.generation,
         gameId: session.gameId,
-        peerConnected: Boolean(session[role === "tv" ? "extension" : "tv"]),
+        peerConnected: Boolean(
+          session[role === DeviceRole.TV ? DeviceRole.Extension : DeviceRole.TV],
+        ),
       })
     if (session.tv && session.extension && session.gameId)
       send(session.extension, {
-        v: 2,
-        type: "snapshot-request",
+        v: VERSION,
+        type: MessageKind.SnapshotRequest,
         generation: session.generation,
         gameId: session.gameId,
       })
@@ -57,7 +67,7 @@ export function connections(sql: SQL, heartbeatMs = 20_000, timeoutMs = 60_000, 
     const session = sessions.get(client.pairingId)
     if (!session || session[client.role] !== client) return
     delete session[client.role]
-    if (client.role === "extension") session.gameId = null
+    if (client.role === DeviceRole.Extension) session.gameId = null
     if (!session.tv && !session.extension) sessions.delete(client.pairingId)
     else refresh(session)
   }
@@ -66,7 +76,7 @@ export function connections(sql: SQL, heartbeatMs = 20_000, timeoutMs = 60_000, 
     client.ws.close(code, reason)
   }
   const error = (client: Client, code: string, message: string) =>
-    send(client, { v: 2, type: "error", code, message })
+    send(client, { v: VERSION, type: MessageKind.Error, code, message })
   const timer = setInterval(
     () => {
       const now = Date.now()
@@ -83,7 +93,7 @@ export function connections(sql: SQL, heartbeatMs = 20_000, timeoutMs = 60_000, 
         if (now - client.lastPing < heartbeatMs) continue
         client.lastPing = now
         client.nonce ??= randomUUID()
-        send(client, { v: 2, type: "ping", nonce: client.nonce })
+        send(client, { v: VERSION, type: MessageKind.Ping, nonce: client.nonce })
       }
     },
     Math.min(heartbeatMs, authMs),
@@ -113,18 +123,23 @@ export function connections(sql: SQL, heartbeatMs = 20_000, timeoutMs = 60_000, 
     }
     const parsed = messageSchema.safeParse(json)
     if (!parsed.success) {
-      const incompatible = typeof json === "object" && json !== null && "v" in json && json.v !== 2
+      const incompatible =
+        typeof json === "object" && json !== null && "v" in json && json.v !== VERSION
       error(
         client,
         incompatible ? "incompatible_version" : "invalid_message",
-        incompatible ? "Use protocol version 2." : "Invalid message shape.",
+        incompatible ? "Use protocol version 3." : "Invalid message shape.",
       )
       close(client, 1008, "Invalid protocol")
       return
     }
     const msg = parsed.data
     if (!client.role) {
-      if (msg.type !== "authenticate" || client.authenticating || now >= client.deadline) {
+      if (
+        msg.type !== MessageKind.Authenticate ||
+        client.authenticating ||
+        now >= client.deadline
+      ) {
         close(client, 1008, "Authenticate first")
         return
       }
@@ -148,17 +163,17 @@ export function connections(sql: SQL, heartbeatMs = 20_000, timeoutMs = 60_000, 
       }
       const previous = session[device.role]
       session[device.role] = client
-      if (device.role === "extension") session.gameId = null
+      if (device.role === DeviceRole.Extension) session.gameId = null
       if (previous) close(previous, 4001, "Connection replaced")
-      send(client, { v: 2, type: "authenticated", ...device })
+      send(client, { v: VERSION, type: MessageKind.Authenticated, ...device })
       refresh(session)
       return
     }
-    if (msg.type === "ping") {
-      send(client, { v: 2, type: "pong", nonce: msg.nonce })
+    if (msg.type === MessageKind.Ping) {
+      send(client, { v: VERSION, type: MessageKind.Pong, nonce: msg.nonce })
       return
     }
-    if (msg.type === "pong") {
+    if (msg.type === MessageKind.Pong) {
       if (msg.nonce === client.nonce) {
         client.lastPong = now
         client.nonce = undefined
@@ -167,10 +182,10 @@ export function connections(sql: SQL, heartbeatMs = 20_000, timeoutMs = 60_000, 
     }
     const session = sessions.get(client.pairingId!)
     if (!session || session[client.role] !== client) return
-    const allowed =
-      client.role === "extension"
-        ? ["attachment", "status", "snapshot", "outcome"]
-        : ["move", "snapshot-request"]
+    const allowed: MessageKind[] =
+      client.role === DeviceRole.Extension
+        ? [MessageKind.Attachment, MessageKind.Status, MessageKind.Snapshot, MessageKind.Outcome]
+        : [MessageKind.Move, MessageKind.SnapshotRequest]
     if (!allowed.includes(msg.type)) {
       error(client, "wrong_role", "Message is not allowed for this endpoint.")
       return
@@ -179,7 +194,7 @@ export function connections(sql: SQL, heartbeatMs = 20_000, timeoutMs = 60_000, 
       error(client, "stale_session", "Wait for the current session and a fresh snapshot.")
       return
     }
-    if (msg.type === "attachment") {
+    if (msg.type === MessageKind.Attachment) {
       if (msg.gameId !== session.gameId) {
         session.gameId = msg.gameId
         refresh(session)
@@ -190,7 +205,7 @@ export function connections(sql: SQL, heartbeatMs = 20_000, timeoutMs = 60_000, 
       error(client, "not_attached", "Attach the game before routing messages.")
       return
     }
-    const peer = session[client.role === "tv" ? "extension" : "tv"]
+    const peer = session[client.role === DeviceRole.TV ? DeviceRole.Extension : DeviceRole.TV]
     if (!peer) {
       error(client, "peer_unavailable", "The other device is disconnected. Do not replay moves.")
       return

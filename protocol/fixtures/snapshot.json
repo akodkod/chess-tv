@@ -1,5 +1,5 @@
 {
-  "v": 2,
+  "v": 3,
   "type": "snapshot",
   "gameId": "game-1",
   "generation": "generation-1",
@@ -72,7 +72,9 @@
   ],
   "players": {
     "white": "White",
-    "black": "Black"
+    "black": "Black",
+    "whiteAvatar": null,
+    "blackAvatar": null
   },
   "playerColor": "white",
   "turn": "white",
@@ -110,5 +112,7 @@
       "to": "f2"
     }
   ],
-  "checkSquare": null
+  "checkSquare": null,
+  "bottomColor": "white",
+  "resultReason": null
 }

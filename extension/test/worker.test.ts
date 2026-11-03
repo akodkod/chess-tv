@@ -1,3 +1,4 @@
+import { Color, MessageKind, MoveOutcome, VERSION } from "@chess-tv/protocol"
 import { afterEach, beforeEach, expect, it, vi } from "vite-plus/test"
 
 const relay = vi.hoisted(() => ({ receive: (_message: unknown) => {}, send: vi.fn() }))
@@ -56,7 +57,12 @@ async function action(kind = "state") {
 async function start() {
   await import("../src/worker")
   await action()
-  relay.receive({ type: "session", generation: "generation", gameId: null, peerConnected: true })
+  relay.receive({
+    type: MessageKind.Session,
+    generation: "generation",
+    gameId: null,
+    peerConnected: true,
+  })
   await action()
   await vi.advanceTimersByTimeAsync(1000)
   await action()
@@ -118,7 +124,7 @@ it("attaches the foreground supported game without a popup action", async () => 
   await start()
   expect((await action()).gameId).toBe("game-one")
   expect(relay.send).toHaveBeenCalledWith(
-    expect.objectContaining({ type: "attachment", gameId: "game-one" }),
+    expect.objectContaining({ type: MessageKind.Attachment, gameId: "game-one" }),
   )
 })
 it("waits for Chrome focus and ignores unsupported pages", async () => {
@@ -136,7 +142,12 @@ it("waits for Chrome focus and ignores unsupported pages", async () => {
 it("dispatches moves from a visible attached tab while the TV simulator has focus", async () => {
   await start()
   focused = false
-  relay.receive({ type: "session", generation: "attached-generation", gameId, peerConnected: true })
+  relay.receive({
+    type: MessageKind.Session,
+    generation: "attached-generation",
+    gameId,
+    peerConnected: true,
+  })
   await action()
   await vi.advanceTimersByTimeAsync(1000)
   expect(chrome.tabs.sendMessage).toHaveBeenLastCalledWith(
@@ -145,8 +156,8 @@ it("dispatches moves from a visible attached tab while the TV simulator has focu
     { frameId: 0 },
   )
   const move = {
-    v: 2,
-    type: "move",
+    v: VERSION,
+    type: MessageKind.Move,
     gameId,
     generation: "attached-generation",
     revision: 1,
@@ -161,7 +172,7 @@ it("dispatches moves from a visible attached tab while the TV simulator has focu
 it.each(["inactive tab", "minimized window"])("blocks game moves for an %s", async (condition) => {
   await start()
   relay.receive({
-    type: "session",
+    type: MessageKind.Session,
     generation: "attached-generation",
     gameId,
     peerConnected: true,
@@ -177,8 +188,8 @@ it.each(["inactive tab", "minimized window"])("blocks game moves for an %s", asy
     { frameId: 0 },
   )
   const move = {
-    v: 2,
-    type: "move",
+    v: VERSION,
+    type: MessageKind.Move,
     gameId,
     generation: "attached-generation",
     revision: 1,
@@ -194,7 +205,11 @@ it.each(["inactive tab", "minimized window"])("blocks game moves for an %s", asy
     { frameId: 0 },
   )
   expect(relay.send).toHaveBeenCalledWith(
-    expect.objectContaining({ type: "outcome", commandId: "blocked-move", outcome: "rejected" }),
+    expect.objectContaining({
+      type: MessageKind.Outcome,
+      commandId: "blocked-move",
+      outcome: MoveOutcome.Rejected,
+    }),
   )
 })
 it("Disconnect persists a pause across worker restarts", async () => {
@@ -213,13 +228,18 @@ it("Disconnect persists a pause across worker restarts", async () => {
 })
 it("ends the old attachment before automatically attaching a changed game", async () => {
   await start()
-  relay.receive({ type: "session", generation: "attached-generation", gameId, peerConnected: true })
+  relay.receive({
+    type: MessageKind.Session,
+    generation: "attached-generation",
+    gameId,
+    peerConnected: true,
+  })
   await action()
   gameId = "game-two"
   await vi.advanceTimersByTimeAsync(1000)
   expect((await action()).gameId).toBeNull()
   relay.receive({
-    type: "session",
+    type: MessageKind.Session,
     generation: "detached-generation",
     gameId: null,
     peerConnected: true,
@@ -242,7 +262,7 @@ it("never clears interrupted move risk by automatically attaching a different ga
   expect((await action()).gameId).toBeNull()
   expect(local.autoConnect).toBe(false)
   expect(relay.send).not.toHaveBeenCalledWith(
-    expect.objectContaining({ type: "attachment", gameId: "game-one" }),
+    expect.objectContaining({ type: MessageKind.Attachment, gameId: "game-one" }),
   )
 })
 
@@ -255,21 +275,26 @@ it("reattaches the saved game after a worker restart without requiring Chrome fo
   await start()
   expect((await action()).gameId).toBe("game-one")
   expect(relay.send).toHaveBeenCalledWith(
-    expect.objectContaining({ type: "attachment", gameId: "game-one" }),
+    expect.objectContaining({ type: MessageKind.Attachment, gameId: "game-one" }),
   )
 })
 it("resumes observation automatically when the TV returns with a new generation", async () => {
   await start()
-  relay.receive({ type: "session", generation: "offline", gameId, peerConnected: false })
+  relay.receive({ type: MessageKind.Session, generation: "offline", gameId, peerConnected: false })
   await action()
   expect(chrome.tabs.sendMessage).toHaveBeenLastCalledWith(
     1,
     { kind: "sync", generation: "offline", enabled: false },
     { frameId: 0 },
   )
-  relay.receive({ type: "error", message: "The other device is disconnected." })
+  relay.receive({ type: MessageKind.Error, message: "The other device is disconnected." })
   await action()
-  relay.receive({ type: "session", generation: "reconnected", gameId, peerConnected: true })
+  relay.receive({
+    type: MessageKind.Session,
+    generation: "reconnected",
+    gameId,
+    peerConnected: true,
+  })
   const current = await action()
   expect(current.error).toBeNull()
   expect(current.peerConnected).toBe(true)
@@ -281,13 +306,13 @@ it("resumes observation automatically when the TV returns with a new generation"
 })
 
 it("defaults automatic attachment to detection instead of a stale saved color", async () => {
-  local.playerColor = "white"
+  local.playerColor = Color.White
   await start()
   expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(1, { kind: "inspect" }, { frameId: 0 })
 })
 
 it("ignores obsolete manual color preferences", async () => {
-  local.playerColorMode = "black"
+  local.playerColorMode = Color.Black
   await start()
   expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(1, { kind: "inspect" }, { frameId: 0 })
 })
@@ -295,7 +320,12 @@ it("ignores obsolete manual color preferences", async () => {
 it("attaches as soon as the relay session arrives, without waiting for a timer", async () => {
   await import("../src/worker")
   await action()
-  relay.receive({ type: "session", generation: "generation", gameId: null, peerConnected: true })
+  relay.receive({
+    type: MessageKind.Session,
+    generation: "generation",
+    gameId: null,
+    peerConnected: true,
+  })
   expect((await action()).gameId).toBe("game-one")
 })
 
@@ -319,7 +349,12 @@ it.each(["tab", "focus", "load"])("attaches immediately on %s activity", async (
 
 it("keeps synchronizing the attached game after its completed-game URL transition", async () => {
   await start()
-  relay.receive({ type: "session", generation: "attached-generation", gameId, peerConnected: true })
+  relay.receive({
+    type: MessageKind.Session,
+    generation: "attached-generation",
+    gameId,
+    peerConnected: true,
+  })
   await action()
   url = "https://www.chess.com/game/computer/2494028730"
   // Chrome event methods are replaced by receiver-independent test spies above.
@@ -366,7 +401,7 @@ it.each([
       error: { code, message },
     })
     relay.receive({
-      type: "session",
+      type: MessageKind.Session,
       generation: "attached-generation",
       gameId,
       peerConnected: true,

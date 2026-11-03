@@ -3,12 +3,37 @@ import XCTest
 @testable import ChessTV
 
 final class ProtocolTests: XCTestCase {
+  func testSharedMessageCorpus() throws {
+    let url = try XCTUnwrap(
+      Bundle(for: Self.self).url(forResource: "messages", withExtension: "json"))
+    let cases = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [[String: Any]])
+    var kinds = Set<Message.Kind>()
+    for entry in cases {
+      let name = try XCTUnwrap(entry["name"] as? String)
+      let object = try XCTUnwrap(entry["message"] as? [String: Any])
+      let data = try JSONSerialization.data(withJSONObject: object)
+      if entry["valid"] as? Bool == true {
+        let value = try Message.decode(data)
+        kinds.insert(value.kind)
+        let encoded = try value.encoded()
+        XCTAssertEqual(try Message.decode(encoded), value, name)
+        let roundTrip = try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? NSDictionary)
+        XCTAssertEqual(roundTrip, object as NSDictionary, name)
+      } else {
+        XCTAssertThrowsError(try Message.decode(data), name)
+      }
+    }
+    XCTAssertEqual(kinds, Set(Message.Kind.allCases))
+  }
+
   func testSpectatorOrientationAndDisplayText() throws {
     var snapshot = try Self.fixture()
     snapshot.playerColor = nil
     for color in [PieceColor.white, .black] {
       snapshot.bottomColor = color
-      let decoded = try Message.decode(snapshot.encoded())
+      guard case .snapshot(let decoded) = try Message.decode(Message.snapshot(snapshot).encoded())
+      else { return XCTFail("Expected snapshot") }
       XCTAssertEqual(decoded.boardOrientation, color)
       XCTAssertNil(decoded.playerColor)
       XCTAssertEqual(Square.order(for: decoded.boardOrientation).first, color == .black ? 63 : 0)
@@ -17,29 +42,33 @@ final class ProtocolTests: XCTestCase {
     XCTAssertEqual("Open Chess.com to watch.".displayText, "Open Chess.com to watch")
     XCTAssertEqual("Game changed. Connect again.".displayText, "Game changed. Connect again.")
   }
-  static func fixture() throws -> Message {
+  static func fixture() throws -> Snapshot {
     let url = Bundle(for: ProtocolTests.self).url(forResource: "snapshot", withExtension: "json")!
-    return try Message.decode(Data(contentsOf: url))
+    guard case .snapshot(let value) = try Message.decode(Data(contentsOf: url)) else {
+      throw ProtocolFailure("Expected snapshot fixture")
+    }
+    return value
   }
   func testSharedSnapshotRoundTripPreservesNulls() throws {
     let snapshot = try Self.fixture()
-    XCTAssertEqual(snapshot.board?.count, 64)
-    XCTAssertNil(snapshot.clocks?.black.remainingMs)
-    let data = try snapshot.encoded()
-    XCTAssertEqual(try Message.decode(data), snapshot)
+    XCTAssertEqual(snapshot.board.count, 64)
+    XCTAssertNil(snapshot.clocks.black.remainingMs)
+    let data = try Message.snapshot(snapshot).encoded()
+    XCTAssertEqual(try Message.decode(data), Message.snapshot(snapshot))
     let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
     XCTAssertTrue(object["result"] is NSNull)
   }
   func testOptionalAvatarRoundTripAndURLValidation() throws {
     var snapshot = try Self.fixture()
-    snapshot.players?.whiteAvatar = "https://images.chesscomfiles.com/avatar.png"
-    XCTAssertEqual(try Message.decode(snapshot.encoded()), snapshot)
+    snapshot.players.whiteAvatar = "https://images.chesscomfiles.com/avatar.png"
+    XCTAssertEqual(
+      try Message.decode(Message.snapshot(snapshot).encoded()), Message.snapshot(snapshot))
     for value in [
       "http://example.com/avatar.png", "file:///avatar.png",
       "https://user:password@example.com/a.png",
     ] {
-      snapshot.players?.whiteAvatar = value
-      XCTAssertThrowsError(try snapshot.encoded())
+      snapshot.players.whiteAvatar = value
+      XCTAssertThrowsError(try Message.snapshot(snapshot).encoded())
     }
   }
   func testResultReasonsAndPlayerPerspective() throws {
@@ -47,7 +76,8 @@ final class ProtocolTests: XCTestCase {
     snapshot.result = .whiteWon
     for reason in GameResultReason.allCases {
       snapshot.resultReason = reason
-      XCTAssertEqual(try Message.decode(snapshot.encoded()), snapshot)
+      XCTAssertEqual(
+        try Message.decode(Message.snapshot(snapshot).encoded()), Message.snapshot(snapshot))
     }
     XCTAssertEqual(GameResult.whiteWon.title(for: .white), "You won")
     XCTAssertEqual(GameResult.blackWon.title(for: .black), "You won")
@@ -62,7 +92,7 @@ final class ProtocolTests: XCTestCase {
   }
 
   func testRejectsMalformedAndIncompatibleMessages() throws {
-    let valid = try Self.fixture().encoded()
+    let valid = try Message.snapshot(Self.fixture()).encoded()
     let object = try XCTUnwrap(JSONSerialization.jsonObject(with: valid) as? [String: Any])
     for (key, value) in [
       ("v", 1 as Any), ("v", true as Any), ("board", [] as Any), ("revision", -1 as Any),
@@ -85,7 +115,7 @@ final class ProtocolTests: XCTestCase {
     XCTAssertThrowsError(try Message.decode(Data(repeating: 32, count: 65_537)))
   }
   func testRequiredMoveAndCheckMetadata() throws {
-    let valid = try Self.fixture().encoded()
+    let valid = try Message.snapshot(Self.fixture()).encoded()
     let object = try XCTUnwrap(JSONSerialization.jsonObject(with: valid) as? [String: Any])
     for key in ["legalMoves", "checkSquare"] {
       var missing = object
@@ -103,28 +133,24 @@ final class ProtocolTests: XCTestCase {
     }
     var checked = try Self.fixture()
     checked.checkSquare = "e1"
-    XCTAssertEqual(try Message.decode(checked.encoded()), checked)
+    XCTAssertEqual(
+      try Message.decode(Message.snapshot(checked).encoded()), Message.snapshot(checked))
   }
   func testMoveEncodingAndAllPromotions() throws {
-    for promotion in ["q", "r", "b", "n"] {
-      var move = Message(type: "move")
-      move.gameId = "game"
-      move.generation = "generation"
-      move.revision = 1
-      move.commandId = "command"
-      move.from = "a7"
-      move.to = "a8"
-      move.promotion = promotion
-      XCTAssertEqual(try Message.decode(move.encoded()), move)
+    for promotion in Promotion.allCases {
+      let move = MoveRequest(
+        context: GameContext(gameId: "game", generation: "generation"), revision: 1,
+        commandId: "command", from: "a7", to: "a8", promotion: promotion)
+      XCTAssertEqual(try Message.decode(Message.move(move).encoded()), Message.move(move))
       var invalid = try XCTUnwrap(
-        JSONSerialization.jsonObject(with: move.encoded()) as? [String: Any])
+        JSONSerialization.jsonObject(with: Message.move(move).encoded()) as? [String: Any])
       invalid["promotion"] = NSNull()
       XCTAssertThrowsError(try Message.decode(JSONSerialization.data(withJSONObject: invalid)))
     }
-    var request = Message(type: "snapshot-request")
-    request.gameId = "game"
-    request.generation = "generation"
-    XCTAssertEqual(try Message.decode(request.encoded()), request)
+    let request = SnapshotRequest(context: GameContext(gameId: "game", generation: "generation"))
+    XCTAssertEqual(
+      try Message.decode(Message.snapshotRequest(request).encoded()),
+      Message.snapshotRequest(request))
   }
   func testCoordinatesAndOrientation() {
     for index in 0..<64 { XCTAssertEqual(Square.index(Square.name(index)), index) }
@@ -140,9 +166,9 @@ final class ProtocolTests: XCTestCase {
     }
     XCTAssertNil(Square.index("a9"))
     XCTAssertNil(Square.index("z1"))
-    XCTAssertTrue(Square.promotion(piece: "P", destination: 0))
-    XCTAssertTrue(Square.promotion(piece: "p", destination: 63))
-    XCTAssertFalse(Square.promotion(piece: "R", destination: 0))
+    XCTAssertTrue(Square.promotion(piece: .whitePawn, destination: 0))
+    XCTAssertTrue(Square.promotion(piece: .blackPawn, destination: 63))
+    XCTAssertFalse(Square.promotion(piece: .whiteRook, destination: 0))
   }
   func testMonotonicClocksFreezeAndRemainUnknown() {
     var reading = ClockReading(
@@ -172,4 +198,13 @@ final class ProtocolTests: XCTestCase {
       try RelayConfiguration("https://example.com").socketURL.absoluteString,
       "wss://example.com/v1/ws")
   }
+}
+
+@MainActor extension TVSession {
+  func receive(_ payload: Snapshot) { receive(.snapshot(payload)) }
+  func receive(_ payload: Authenticated) { receive(.authenticated(payload)) }
+  func receive(_ payload: SessionState) { receive(.session(payload)) }
+  func receive(_ payload: GameStatus) { receive(.status(payload)) }
+  func receive(_ payload: CommandOutcome) { receive(.outcome(payload)) }
+  func receive(_ payload: RelayError) { receive(.error(payload)) }
 }

@@ -79,12 +79,12 @@ Creation is limited to 5 attempts per peer IP per minute, claims to 10. There ar
 Connect to `/v1/ws` and send within five seconds:
 
 ```json
-{ "v": 2, "type": "authenticate", "credential": "<64 hex characters>" }
+{ "v": 3, "type": "authenticate", "credential": "<64 hex characters>" }
 ```
 
 Wait for `authenticated` (`role`, `pairingId`) and `session` (`generation`, nullable `gameId`, `peerConnected`). The server derives the role from the credential. A replacement connection closes the previous connection with 4001; revocation closes both with 4003. Every client must disable move submission on a new generation until it obtains authoritative fresh state.
 
-All messages use `v: 2` and `type`. Snapshot messages require `legalMoves` (source/destination pairs) and `checkSquare` (square name or null). Snapshots also accept optional nullable `resultReason`: `checkmate`, `stalemate`, `timeout`, `resignation`, `insufficient-material`, `repetition`, `fifty-move-rule`, or `agreement`. Deploy this schema before clients that send the new field. Update all components together; v1 is unsupported. The `/v1` HTTP and WebSocket endpoint paths are unchanged. The definitive strict schemas and TypeScript union are in `protocol/src/index.ts`; JSON fixtures are in `protocol/fixtures` for future Swift tests. Extra fields and incompatible versions are rejected. All messages are text JSON, at most 64 KiB, at most 60 messages per connection per second. Oversized frames may terminate without a WebSocket close frame.
+All messages use `v: 3` and `type`. Snapshots require `legalMoves`, nullable `checkSquare`, `bottomColor`, nullable `resultReason`, and both nullable avatar fields inside `players`. Unknown values are explicit JSON nulls; only move `promotion` is omitted when inapplicable. Update the TV, extension, and relay together; older protocol versions are rejected, with no compatibility layer. Pairing credentials and the `/v1` HTTP/WebSocket endpoint paths are unchanged. Named strict Zod schemas, inferred payload types, and string enums live in `protocol/src/index.ts`; Swift uses matching associated-value messages and typed payloads. Both runtimes consume the valid/invalid cases in `protocol/fixtures/messages.json`. Extra fields and incompatible versions are rejected. Messages are text JSON, at most 64 KiB, at most 60 messages per connection per second. Oversized frames may terminate without a WebSocket close frame.
 
 | Type               | Direction               | Fields besides `v` and `type`                                                                     |
 | ------------------ | ----------------------- | ------------------------------------------------------------------------------------------------- |

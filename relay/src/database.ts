@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto"
 import { mkdir } from "node:fs/promises"
 import { dirname } from "node:path"
 
-import type { Role } from "@chess-tv/protocol"
+import { DeviceRole, type Role } from "@chess-tv/protocol"
 import { SQL } from "bun"
 export const secret = () => randomBytes(32).toString("hex")
 export const hash = (value: string) => createHash("sha256").update(value).digest("hex")
@@ -21,5 +21,7 @@ export async function authenticate(
   const rows =
     await sql`SELECT id, tv_hash FROM pairings WHERE tv_hash = ${digest} OR extension_hash = ${digest}`
   const row = rows[0] as { id: string; tv_hash: string } | undefined
-  return row ? { pairingId: row.id, role: row.tv_hash === digest ? "tv" : "extension" } : null
+  return row
+    ? { pairingId: row.id, role: row.tv_hash === digest ? DeviceRole.TV : DeviceRole.Extension }
+    : null
 }

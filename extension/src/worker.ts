@@ -1,4 +1,4 @@
-import type { Message } from "@chess-tv/protocol"
+import { MessageKind, MoveOutcome, VERSION, type Message } from "@chess-tv/protocol"
 import { z } from "zod"
 
 import { allowedGameURL as supported } from "./chesscom-url"
@@ -117,7 +117,7 @@ function connect() {
 function sendAttachment(gameId: string | null) {
   if (generation && link?.authenticated) {
     phase = gameId === null ? "detaching" : "attaching"
-    link.send({ v: 2, type: "attachment", generation, gameId })
+    link.send({ v: VERSION, type: MessageKind.Attachment, generation, gameId })
   }
 }
 async function processReply(reply: ContentReply) {
@@ -150,19 +150,23 @@ async function processReply(reply: ContentReply) {
       message.generation !== generation ||
       !("gameId" in message) ||
       message.gameId !== attached ||
-      !["snapshot", "status", "outcome"].includes(message.type)
+      !(
+        message.type === MessageKind.Snapshot ||
+        message.type === MessageKind.Status ||
+        message.type === MessageKind.Outcome
+      )
     )
       continue
     if (
-      message.type === "outcome" &&
-      message.outcome !== "uncertain" &&
+      message.type === MessageKind.Outcome &&
+      message.outcome !== MoveOutcome.Uncertain &&
       message.commandId === binding.commandId
     ) {
       binding.risk = false
       binding.commandId = null
       await saveBinding()
     }
-    if (message.type === "status") {
+    if (message.type === MessageKind.Status) {
       available = message.available && peerConnected && !binding.locked
       status = binding.locked
         ? "An interrupted move needs inspection. Reconnect the game."
@@ -176,7 +180,14 @@ async function processReply(reply: ContentReply) {
 function reportUnavailable(reason: string) {
   available = false
   if (generation && attached && peerConnected)
-    link?.send({ v: 2, type: "status", gameId: attached, generation, available: false, reason })
+    link?.send({
+      v: VERSION,
+      type: MessageKind.Status,
+      gameId: attached,
+      generation,
+      available: false,
+      reason,
+    })
 }
 async function synchronize() {
   if (!binding || !generation || !link?.authenticated || phase !== "idle") return
@@ -208,7 +219,7 @@ async function synchronize() {
   }
 }
 async function receive(message: Message) {
-  if (message.type === "session") {
+  if (message.type === MessageKind.Session) {
     available = false
     generation = message.generation
     attached = message.gameId
@@ -218,9 +229,9 @@ async function receive(message: Message) {
     if (!peerConnected) status = "Waiting for the TV to reconnect…"
     await synchronize()
     await autoAttach()
-  } else if (message.type === "snapshot-request") {
+  } else if (message.type === MessageKind.SnapshotRequest) {
     if (message.generation === generation && message.gameId === attached) await synchronize()
-  } else if (message.type === "move") {
+  } else if (message.type === MessageKind.Move) {
     if (
       message.generation !== generation ||
       message.gameId !== attached ||
@@ -258,12 +269,12 @@ async function receive(message: Message) {
           await saveBinding()
         }
         link?.send({
-          v: 2,
-          type: "outcome",
+          v: VERSION,
+          type: MessageKind.Outcome,
           gameId: message.gameId,
           generation: message.generation,
           commandId: message.commandId,
-          outcome: "rejected",
+          outcome: MoveOutcome.Rejected,
           reason: "Move was not submitted: connection or page unavailable.",
         })
         return
@@ -274,7 +285,7 @@ async function receive(message: Message) {
       await saveBinding()
       reportUnavailable("Move interrupted. Inspect Chrome and reconnect the game.")
     }
-  } else if (message.type === "error") {
+  } else if (message.type === MessageKind.Error) {
     error = message.message
     reportUnavailable(message.message)
   }

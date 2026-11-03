@@ -1,4 +1,13 @@
-import { messageSchema, type Message } from "@chess-tv/protocol"
+import {
+  Color,
+  GameResult,
+  GameResultReason,
+  MessageKind,
+  MoveOutcome,
+  VERSION,
+  messageSchema,
+  type Snapshot,
+} from "@chess-tv/protocol"
 import { Chess } from "chess.js"
 import { JSDOM } from "jsdom"
 import { afterEach, expect, it, vi } from "vite-plus/test"
@@ -6,7 +15,7 @@ import { afterEach, expect, it, vi } from "vite-plus/test"
 import { ChessComAdapter } from "../src/chesscom-adapter"
 import { readGame } from "../src/chesscom-game"
 
-function fixture(moves: string[] = [], color = "white") {
+function fixture(moves: string[] = [], color = Color.White) {
   const dom = new JSDOM(
     '<wc-chess-board id="board-play-computer"></wc-chess-board><wc-simple-move-list board-id="board-play-computer"></wc-simple-move-list>',
     { pretendToBeVisual: true, url: "https://www.chess.com/play/computer/Zach-BOT" },
@@ -17,8 +26,8 @@ function fixture(moves: string[] = [], color = "white") {
     "beforeend",
     `
     <a data-user-activity-key="profile" href="https://www.chess.com/member/human">Human</a>
-    <div class="player-row-component player-row-top"><div data-test-element="user-tagline-username">${color === "black" ? "Human" : "Zach"}</div></div>
-    <div class="player-row-component"><div data-test-element="user-tagline-username">${color === "white" ? "Human" : "Zach"}</div></div>
+    <div class="player-row-component player-row-top"><div data-test-element="user-tagline-username">${color === Color.Black ? "Human" : "Zach"}</div></div>
+    <div class="player-row-component"><div data-test-element="user-tagline-username">${color === Color.White ? "Human" : "Zach"}</div></div>
   `,
   )
   const chess = new Chess()
@@ -37,7 +46,7 @@ function fixture(moves: string[] = [], color = "white") {
     doc.querySelector("wc-simple-move-list")!.innerHTML = history
       .map(
         (san, i) =>
-          `<div class="main-line-row" data-whole-move-number="${Math.floor(i / 2) + 1}"><div class="main-line-ply ${i % 2 ? "black" : "white"}-move" data-node="0-${i}"><span class="node-highlight-content ${i === history.length - 1 ? "selected" : ""}">${san}</span></div></div>`,
+          `<div class="main-line-row" data-whole-move-number="${Math.floor(i / 2) + 1}"><div class="main-line-ply ${i % 2 ? Color.Black : Color.White}-move" data-node="0-${i}"><span class="node-highlight-content ${i === history.length - 1 ? "selected" : ""}">${san}</span></div></div>`,
       )
       .join("")
     for (const p of board.querySelectorAll<HTMLElement>(".piece")) {
@@ -70,14 +79,14 @@ async function sync(adapter: ChessComAdapter) {
   const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
   expect(reply.error).toBeNull()
   reply.messages.forEach((m) => expect(messageSchema.safeParse(m).success).toBe(true))
-  return reply.messages.find((m) => m.type === "snapshot") as Extract<Message, { type: "snapshot" }>
+  return reply.messages.find((m) => m.type === MessageKind.Snapshot)!
 }
-function command(snapshot: Extract<Message, { type: "snapshot" }>, from = "e2", to = "e4") {
+function command(snapshot: Snapshot, from = "e2", to = "e4") {
   return {
     kind: "move",
     move: {
-      v: 2,
-      type: "move",
+      v: VERSION,
+      type: MessageKind.Move,
       gameId: snapshot.gameId,
       generation: snapshot.generation,
       revision: snapshot.revision,
@@ -88,10 +97,10 @@ function command(snapshot: Extract<Message, { type: "snapshot" }>, from = "e2", 
   }
 }
 it("publishes a complete initial position with detected player color", async () => {
-  const { adapter } = fixture([], "black")
+  const { adapter } = fixture([], Color.Black)
   const s = await sync(adapter)
-  expect(s.playerColor).toBe("black")
-  expect(s.turn).toBe("white")
+  expect(s.playerColor).toBe(Color.Black)
+  expect(s.turn).toBe(Color.White)
   expect(s.board.filter(Boolean)).toHaveLength(32)
   expect(s.board[60]).toBe("K")
 })
@@ -108,8 +117,8 @@ it("rejects illegal and stale moves before dispatch without locking later input"
   const illegal = await adapter.handle(command(s, "e2", "e5"))
   expect(illegal.messages).toContainEqual(
     expect.objectContaining({
-      type: "outcome",
-      outcome: "rejected",
+      type: MessageKind.Outcome,
+      outcome: MoveOutcome.Rejected,
       reason: "This move is not legal",
     }),
   )
@@ -119,14 +128,14 @@ it("rejects illegal and stale moves before dispatch without locking later input"
   const stale = await adapter.handle(command(s))
   expect(stale.messages).toContainEqual(
     expect.objectContaining({
-      type: "outcome",
-      outcome: "rejected",
+      type: MessageKind.Outcome,
+      outcome: MoveOutcome.Rejected,
       reason: expect.stringContaining("changed"),
     }),
   )
   expect(click).not.toHaveBeenCalled()
   expect(stale.messages).toContainEqual(
-    expect.objectContaining({ type: "status", available: true }),
+    expect.objectContaining({ type: MessageKind.Status, available: true }),
   )
 })
 it("dispatches a TV move, confirms board/history evidence and deduplicates it", async () => {
@@ -144,10 +153,10 @@ it("dispatches a TV move, confirms board/history evidence and deduplicates it", 
   })
   const reply = await adapter.handle(request)
   expect(reply.messages).toContainEqual(
-    expect.objectContaining({ type: "outcome", outcome: "observed-complete" }),
+    expect.objectContaining({ type: MessageKind.Outcome, outcome: MoveOutcome.ObservedComplete }),
   )
   expect((await adapter.handle(request)).messages).toContainEqual(
-    expect.objectContaining({ type: "outcome", outcome: "observed-complete" }),
+    expect.objectContaining({ type: MessageKind.Outcome, outcome: MoveOutcome.ObservedComplete }),
   )
   expect(clicks).toBe(2)
   expect(chess.history()).toEqual(["e4", "e5"])
@@ -162,7 +171,7 @@ it("changes game identity after a restart and rejects a command from the old gam
   expect(changed.gameId).not.toBe(s.gameId)
   const old = await adapter.handle(command(s))
   expect(old.messages).toContainEqual(
-    expect.objectContaining({ type: "outcome", outcome: "rejected" }),
+    expect.objectContaining({ type: MessageKind.Outcome, outcome: MoveOutcome.Rejected }),
   )
 })
 it("reconstructs castling and en passant and recognizes checkmate", () => {
@@ -171,7 +180,7 @@ it("reconstructs castling and en passant and recognizes checkmate", () => {
   f = fixture(["e4", "a6", "e5", "d5", "exd6"])
   expect(readGame(f.doc).pieces.has("d5")).toBe(false)
   f = fixture(["f3", "e5", "g4", "Qh4#"])
-  expect(readGame(f.doc).result).toBe("black-won")
+  expect(readGame(f.doc).result).toBe(GameResult.BlackWon)
 })
 
 it("publishes Chess.com's recorded result and disables moves after resignation", async () => {
@@ -183,10 +192,10 @@ it("publishes Chess.com's recorded result and disables moves after resignation",
       '<div class="result-row"><span class="game-result">0-1 <div class="move-info-icon"></div></span></div>',
     )
   const s = await sync(adapter)
-  expect(s.result).toBe("black-won")
+  expect(s.result).toBe(GameResult.BlackWon)
   const reply = await adapter.handle(command(s))
   expect(reply.messages).toContainEqual(
-    expect.objectContaining({ type: "outcome", outcome: "rejected" }),
+    expect.objectContaining({ type: MessageKind.Outcome, outcome: MoveOutcome.Rejected }),
   )
 })
 
@@ -203,7 +212,7 @@ it("confirms a capture even when the bot immediately recaptures the moved piece"
   })
   const reply = await adapter.handle(command(s, "e4", "d5"))
   expect(reply.messages).toContainEqual(
-    expect.objectContaining({ type: "outcome", outcome: "observed-complete" }),
+    expect.objectContaining({ type: MessageKind.Outcome, outcome: MoveOutcome.ObservedComplete }),
   )
 })
 
@@ -222,8 +231,8 @@ it("returns fresh snapshots when acknowledging an old duplicate command", async 
   chess.move("e5")
   render()
   const reply = await adapter.handle(request)
-  const current = reply.messages.find((m) => m.type === "snapshot")!
-  expect(current.type === "snapshot" && current.turn).toBe("white")
+  const current = reply.messages.find((m) => m.type === MessageKind.Snapshot)!
+  expect(current.type === MessageKind.Snapshot && current.turn).toBe(Color.White)
   expect(clicks).toBe(2)
 })
 
@@ -274,7 +283,7 @@ it.each(["q", "r", "b", "n"] as const)(
     })
     const reply = await adapter.handle({ ...request, move: { ...request.move, promotion } })
     expect(reply.messages).toContainEqual(
-      expect.objectContaining({ type: "outcome", outcome: "observed-complete" }),
+      expect.objectContaining({ type: MessageKind.Outcome, outcome: MoveOutcome.ObservedComplete }),
     )
     expect(chess.get("a8")?.type).toBe(promotion)
   },
@@ -292,16 +301,16 @@ it("never resends an unconfirmed move and requires explicit recovery", async () 
     await vi.advanceTimersByTimeAsync(5000)
     const reply = await pending
     expect(reply.messages).toContainEqual(
-      expect.objectContaining({ type: "outcome", outcome: "uncertain" }),
+      expect.objectContaining({ type: MessageKind.Outcome, outcome: MoveOutcome.Uncertain }),
     )
     await adapter.handle(request)
     expect(click).toHaveBeenCalledTimes(2)
     const next = await adapter.handle(command(s, "d2", "d4"))
     expect(next.messages).toContainEqual(
-      expect.objectContaining({ type: "outcome", outcome: "rejected" }),
+      expect.objectContaining({ type: MessageKind.Outcome, outcome: MoveOutcome.Rejected }),
     )
     expect(next.messages).toContainEqual(
-      expect.objectContaining({ type: "status", available: false }),
+      expect.objectContaining({ type: MessageKind.Status, available: false }),
     )
     expect(click).toHaveBeenCalledTimes(2)
   } finally {
@@ -333,10 +342,7 @@ it.each([false, true])(
     expect(s.clocks.black).toEqual({ remainingMs: 600000, running: false })
     for (const c of doc.querySelectorAll(".move-time-content")) c.textContent = "0:09.8"
     const next = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
-    const updated = next.messages.find((m) => m.type === "snapshot") as Extract<
-      Message,
-      { type: "snapshot" }
-    >
+    const updated = next.messages.find((m) => m.type === MessageKind.Snapshot)!
     expect(updated.revision).toBe(s.revision)
     expect(updated.clocks.white.remainingMs).toBe(9800)
   },
@@ -369,14 +375,14 @@ it("excludes pinned moves and identifies checks and checkmate for either king", 
   const mate = await sync(fixture(["f3", "e5", "g4", "Qh4#"]).adapter)
   expect(mate.checkSquare).toBe("e1")
   expect(mate.legalMoves).toEqual([])
-  expect(mate.result).toBe("black-won")
+  expect(mate.result).toBe(GameResult.BlackWon)
 })
 
 it.each([
-  ["white", false],
-  ["white", true],
-  ["black", false],
-  ["black", true],
+  [Color.White, false],
+  [Color.White, true],
+  [Color.Black, false],
+  [Color.Black, true],
 ] as const)(
   "detects %s with flipped=%s from the signed-in player's row",
   async (color, flipped) => {
@@ -385,7 +391,7 @@ it.each([
     doc
       .querySelectorAll('.player-row-component, a[data-user-activity-key="profile"]')
       .forEach((node) => node.remove())
-    const humanTop = (color === "white") === flipped
+    const humanTop = (color === Color.White) === flipped
     doc.body.insertAdjacentHTML(
       "beforeend",
       `
@@ -398,7 +404,7 @@ it.each([
     const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
     expect(reply.error).toBeNull()
     expect(reply.messages).toContainEqual(
-      expect.objectContaining({ type: "snapshot", playerColor: color }),
+      expect.objectContaining({ type: MessageKind.Snapshot, playerColor: color }),
     )
     // Flipping the view moves the player rows too; it must not change our playing color.
     board.classList.toggle("flipped")
@@ -406,7 +412,7 @@ it.each([
       row.classList.toggle("player-row-top")
     const next = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
     expect(next.messages).toContainEqual(
-      expect.objectContaining({ type: "snapshot", playerColor: color }),
+      expect.objectContaining({ type: MessageKind.Snapshot, playerColor: color }),
     )
   },
 )
@@ -423,8 +429,8 @@ it("blocks snapshots and moves when player identity disappears", async () => {
   const moved = await adapter.handle(command(snapshot))
   expect(moved.messages).toContainEqual(
     expect.objectContaining({
-      type: "outcome",
-      outcome: "rejected",
+      type: MessageKind.Outcome,
+      outcome: MoveOutcome.Rejected,
       reason: expect.stringContaining("Cannot detect"),
     }),
   )
@@ -479,7 +485,7 @@ const finalGameMoves = [
 it.each(["/play/computer", "/play/computer/Zach-BOT"])(
   "publishes the final capture and result when %s becomes a finished-game URL",
   async (path) => {
-    const { dom, doc, chess, render, adapter } = fixture(finalGameMoves.slice(0, -1), "black")
+    const { dom, doc, chess, render, adapter } = fixture(finalGameMoves.slice(0, -1), Color.Black)
     dom.reconfigure({ url: `https://www.chess.com${path}` })
     const before = await sync(adapter)
     chess.move("Qxe7#")
@@ -494,17 +500,17 @@ it.each(["/play/computer", "/play/computer/Zach-BOT"])(
     expect(reply.gameId).toBe(before.gameId)
     expect(reply.messages).toContainEqual(
       expect.objectContaining({
-        type: "snapshot",
-        result: "white-won",
-        resultReason: "checkmate",
+        type: MessageKind.Snapshot,
+        result: GameResult.WhiteWon,
+        resultReason: GameResultReason.Checkmate,
         revision: before.revision + 1,
-        playerColor: "black",
+        playerColor: Color.Black,
         legalMoves: [],
       }),
     )
-    const final = reply.messages.find((m) => m.type === "snapshot")!
-    expect(final.type === "snapshot" && final.board[12]).toBe("Q")
-    expect(final.type === "snapshot" && final.board[26]).toBeNull()
+    const final = reply.messages.find((m) => m.type === MessageKind.Snapshot)!
+    expect(final.type === MessageKind.Snapshot && final.board[12]).toBe("Q")
+    expect(final.type === MessageKind.Snapshot && final.board[26]).toBeNull()
   },
 )
 
@@ -514,7 +520,11 @@ it("reports stalemate as a draw with its reason", async () => {
       "e3 a5 Qh5 Ra6 Qxa5 h5 Qxc7 Rah6 h4 f6 Qxd7+ Kf7 Qxb7 Qd3 Qxb8 Qh7 Qxc8 Kg6 Qe6".split(" "),
     ).adapter,
   )
-  expect(s).toMatchObject({ result: "draw", resultReason: "stalemate", legalMoves: [] })
+  expect(s).toMatchObject({
+    result: GameResult.Draw,
+    resultReason: GameResultReason.Stalemate,
+    legalMoves: [],
+  })
 })
 
 it.each(["1-0", "0-1"])("reports timeout only after a recorded %s result", async (score) => {
@@ -525,16 +535,16 @@ it.each(["1-0", "0-1"])("reports timeout only after a recorded %s result", async
   )
   const live = await sync(adapter)
   expect(live.result).toBeNull()
-  expect(live.resultReason).toBeUndefined()
+  expect(live.resultReason).toBeNull()
   doc
     .querySelector("wc-simple-move-list")!
     .insertAdjacentHTML("beforeend", `<div class="game-result">${score}</div>`)
   const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
   expect(reply.messages).toContainEqual(
     expect.objectContaining({
-      type: "snapshot",
-      result: score === "1-0" ? "white-won" : "black-won",
-      resultReason: "timeout",
+      type: MessageKind.Snapshot,
+      result: score === "1-0" ? GameResult.WhiteWon : GameResult.BlackWon,
+      resultReason: GameResultReason.Timeout,
       legalMoves: [],
     }),
   )
@@ -553,9 +563,9 @@ it("publishes late result reasons in a new revision without changing the final b
   const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
   expect(reply.messages).toContainEqual(
     expect.objectContaining({
-      type: "snapshot",
-      result: "black-won",
-      resultReason: "resignation",
+      type: MessageKind.Snapshot,
+      result: GameResult.BlackWon,
+      resultReason: GameResultReason.Resignation,
       revision: ended.revision + 1,
       board: ended.board,
     }),
@@ -586,22 +596,22 @@ it("retains the observed timeout reason after the game-over modal closes", async
   const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
   expect(reply.messages).toContainEqual(
     expect.objectContaining({
-      type: "snapshot",
-      resultReason: "timeout",
+      type: MessageKind.Snapshot,
+      resultReason: GameResultReason.Timeout,
       revision: ended.revision,
     }),
   )
 })
 
 // Live-game markup observed in Dia at /game/186358488264.
-function onlineFixture(moves = ["d4", "e5", "e4"], color = "black") {
+function onlineFixture(moves = ["d4", "e5", "e4"], color = Color.Black) {
   const f = fixture(moves, color)
   f.dom.reconfigure({ url: "https://www.chess.com/game/186358488264" })
   f.board.id = "board-single"
   f.doc.querySelector("wc-simple-move-list")!.setAttribute("board-id", "board-single")
   for (const row of f.doc.querySelectorAll(".player-row-component")) {
     const top = row.classList.contains("player-row-top")
-    const side = top ? "black" : "white"
+    const side = top ? Color.Black : Color.White
     row.className = `player-component player-${top ? "top" : "bottom"}`
     row.insertAdjacentHTML(
       "beforeend",
@@ -614,15 +624,15 @@ function onlineFixture(moves = ["d4", "e5", "e4"], color = "black") {
 it("publishes a rapid game's position, identity, clocks, and available TV input", async () => {
   const { adapter } = onlineFixture()
   const s = await sync(adapter)
-  expect(s.playerColor).toBe("black")
-  expect(s.turn).toBe("black")
+  expect(s.playerColor).toBe(Color.Black)
+  expect(s.turn).toBe(Color.Black)
   expect(s.players).toMatchObject({ black: "Human", white: "Zach" })
   expect(s.clocks.black).toEqual({ remainingMs: 821000, running: true })
   expect(s.clocks.white).toEqual({ remainingMs: 821000, running: false })
   expect(s.legalMoves).toContainEqual({ from: "d7", to: "d5" })
   const reply = await adapter.handle({ kind: "sync", generation: "generation", enabled: true })
   expect(reply.messages).toContainEqual(
-    expect.objectContaining({ type: "status", available: true }),
+    expect.objectContaining({ type: MessageKind.Status, available: true }),
   )
 })
 
@@ -640,7 +650,7 @@ it("dispatches a user-selected rapid move and confirms the recorded response", a
   const request = command(s, "d7", "d5")
   const reply = await adapter.handle(request)
   expect(reply.messages).toContainEqual(
-    expect.objectContaining({ type: "outcome", outcome: "observed-complete" }),
+    expect.objectContaining({ type: MessageKind.Outcome, outcome: MoveOutcome.ObservedComplete }),
   )
   await adapter.handle(request)
   expect(clicks).toBe(2)
@@ -665,7 +675,7 @@ it.each(["stopped clocks", "wrong turn", "missing identity", "history view"])(
     }
     const reply = await adapter.handle(command(s, "d7", "d5"))
     expect(reply.messages).toContainEqual(
-      expect.objectContaining({ type: "outcome", outcome: "rejected" }),
+      expect.objectContaining({ type: MessageKind.Outcome, outcome: MoveOutcome.Rejected }),
     )
     expect(click).not.toHaveBeenCalled()
   },
@@ -683,10 +693,14 @@ it.each([false, true])("streams a friend's game read-only (signed out=%s)", asyn
   expect(snapshot.players).toMatchObject({ black: "Human", white: "Zach" })
   const reply = await adapter.handle(command(snapshot, "d7", "d5"))
   expect(reply.messages).toContainEqual(
-    expect.objectContaining({ type: "outcome", outcome: "rejected" }),
+    expect.objectContaining({ type: MessageKind.Outcome, outcome: MoveOutcome.Rejected }),
   )
   expect(reply.messages).toContainEqual(
-    expect.objectContaining({ type: "status", available: false, reason: "Viewing game." }),
+    expect.objectContaining({
+      type: MessageKind.Status,
+      available: false,
+      reason: "Viewing game.",
+    }),
   )
   expect(click).not.toHaveBeenCalled()
   chess.move("d5")
@@ -697,13 +711,13 @@ it.each([false, true])("streams a friend's game read-only (signed out=%s)", asyn
   expect(next.playerColor).toBeNull()
 })
 
-it.each(["white", "black"] as const)(
+it.each([Color.White, Color.Black] as const)(
   "orients spectator games toward the followed %s player",
   async (color) => {
     const { adapter, doc, dom, board } = onlineFixture()
     doc.querySelector<HTMLAnchorElement>('a[data-user-activity-key="profile"]')!.href =
       "https://www.chess.com/member/viewer"
-    const username = color === "black" ? "HUMAN" : "ZACH"
+    const username = color === Color.Black ? "HUMAN" : "ZACH"
     dom.reconfigure({ url: `https://www.chess.com/game/186417811766?username=${username}` })
     const snapshot = await sync(adapter)
     expect(snapshot).toMatchObject({ playerColor: null, bottomColor: color })
@@ -713,6 +727,6 @@ it.each(["white", "black"] as const)(
     expect(click).not.toHaveBeenCalled()
     dom.reconfigure({ url: "https://www.chess.com/game/186417811766?username=unknown" })
     const fallback = await sync(adapter)
-    expect(fallback.bottomColor).toBe("white")
+    expect(fallback.bottomColor).toBe(Color.White)
   },
 )

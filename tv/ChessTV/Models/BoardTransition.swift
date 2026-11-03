@@ -3,29 +3,32 @@ import Foundation
 /// A visual explanation of one observed board change, never a source of game rules.
 struct BoardTransition: Equatable {
   /// Presentation only. Legality comes from the extension's advertised moves.
-  static func preview(_ position: Message, from: Int, to: Int, promotion: String?) -> Message? {
-    guard var board = position.board, board.count == 64,
+  static func preview(_ position: Snapshot, from: Int, to: Int, promotion: Promotion?) -> Snapshot?
+  {
+    var board = position.board
+    let revision = position.revision
+    guard board.count == 64,
       (0..<64).contains(from), (0..<64).contains(to),
       let piece = board[from], let color = Square.color(of: piece),
       color == position.turn, color == position.playerColor,
-      position.legalMoves?.contains(LegalMove(from: Square.name(from), to: Square.name(to))) == true,
-      let revision = position.revision, revision < Int64.max
+      position.legalMoves.contains(LegalMove(from: Square.name(from), to: Square.name(to))) == true,
+      revision < 9_007_199_254_740_991
     else { return nil }
     let promotes = Square.promotion(piece: piece, destination: to)
-    guard promotes ? ["q", "r", "b", "n"].contains(promotion ?? "") : promotion == nil else {
+    guard promotes ? promotion != nil : promotion == nil else {
       return nil
     }
-    if piece.lowercased() == "p", from % 8 != to % 8, board[to] == nil {
+    if piece.rawValue.lowercased() == "p", from % 8 != to % 8, board[to] == nil {
       board[from / 8 * 8 + to % 8] = nil
     }
-    if piece.lowercased() == "k", abs(to % 8 - from % 8) == 2 {
+    if piece.rawValue.lowercased() == "k", abs(to % 8 - from % 8) == 2 {
       let rookFrom = from / 8 * 8 + (to > from ? 7 : 0)
       let rookTo = to > from ? to - 1 : to + 1
       board[rookTo] = board[rookFrom]
       board[rookFrom] = nil
     }
     board[from] = nil
-    board[to] = promotion.map { color == .white ? $0.uppercased() : $0 } ?? piece
+    board[to] = promotion.map { $0.piece(for: color) } ?? piece
     var preview = position
     preview.board = board
     preview.turn = color == .white ? .black : .white
@@ -37,17 +40,17 @@ struct BoardTransition: Equatable {
 
   enum Kind: Equatable { case move, capture, castle, promotion }
   struct Movement: Equatable {
-    let piece: String
+    let piece: Piece
     let from: Int
     let to: Int
-    let resultPiece: String
+    let resultPiece: Piece
   }
   let moves: [Movement]
   let kind: Kind
   let capturedSquare: Int?
 
   /// History can play a confirmed move backward, including castling and promotion.
-  static func presentationBetween(_ previous: Message, _ next: Message) -> BoardTransition? {
+  static func presentationBetween(_ previous: Snapshot, _ next: Snapshot) -> BoardTransition? {
     if let forward = between(previous, next) { return forward }
     guard let forward = between(next, previous) else { return nil }
     return Self(
@@ -56,13 +59,15 @@ struct BoardTransition: Equatable {
       }, kind: forward.kind, capturedSquare: nil)
   }
 
-  static func between(_ previous: Message, _ next: Message) -> BoardTransition? {
-    guard let before = previous.board, let after = next.board,
+  static func between(_ previous: Snapshot, _ next: Snapshot) -> BoardTransition? {
+    let before = previous.board
+    let after = next.board
+    guard
       before.count == 64, after.count == 64, before != after,
-      previous.gameId != nil, previous.gameId == next.gameId,
-      previous.generation != nil, previous.generation == next.generation,
+      previous.gameId == next.gameId,
+      previous.generation == next.generation,
       previous.playerColor == next.playerColor,
-      let oldRevision = previous.revision, let revision = next.revision, revision > oldRevision,
+      next.revision > previous.revision,
       let color = previous.turn, next.turn != nil, next.turn != color
     else { return nil }
 
@@ -73,8 +78,8 @@ struct BoardTransition: Equatable {
       for move in movements { expected[move.to] = move.resultPiece }
       return expected == after
     }
-    let king = color == .white ? "K" : "k"
-    let rook = color == .white ? "R" : "r"
+    let king: Piece = color == .white ? .whiteKing : .blackKing
+    let rook: Piece = color == .white ? .whiteRook : .blackRook
     let home = color == .white ? 56 : 0
     for (kingTo, rookFrom, rookTo) in [(6, 7, 5), (2, 0, 3)] {
       let moves = [
@@ -98,18 +103,18 @@ struct BoardTransition: Equatable {
         else { continue }
         let dx = to % 8 - from % 8
         let dy = to / 8 - from / 8
-        let pawn = piece.lowercased() == "p"
+        let pawn = piece.rawValue.lowercased() == "p"
         let direction = color == .white ? -1 : 1
         let promotes = pawn && to / 8 == (color == .white ? 0 : 7)
         if promotes {
-          guard ["q", "r", "b", "n"].contains(resultPiece.lowercased()) else { continue }
+          guard ["q", "r", "b", "n"].contains(resultPiece.rawValue.lowercased()) else { continue }
         } else if resultPiece != piece {
           continue
         }
 
         var captured = before[to] == nil ? nil : to
         let valid: Bool
-        switch piece.lowercased() {
+        switch piece.rawValue.lowercased() {
         case "p":
           if dx == 0 {
             valid =
@@ -124,7 +129,7 @@ struct BoardTransition: Equatable {
               let victim = to - direction * 8
               valid =
                 from / 8 == (color == .white ? 3 : 4)
-                && before[victim] == (color == .white ? "p" : "P")
+                && before[victim] == (color == .white ? .blackPawn : .whitePawn)
               captured = victim
             }
           } else {
@@ -136,9 +141,9 @@ struct BoardTransition: Equatable {
           let diagonal = abs(dx) == abs(dy)
           let straight = dx == 0 || dy == 0
           let shape =
-            piece.lowercased() == "b"
+            piece.rawValue.lowercased() == "b"
             ? diagonal
-            : piece.lowercased() == "r" ? straight : diagonal || straight
+            : piece.rawValue.lowercased() == "r" ? straight : diagonal || straight
           if shape {
             let step = (dy == 0 ? 0 : dy > 0 ? 8 : -8) + (dx == 0 ? 0 : dx > 0 ? 1 : -1)
             var square = from + step

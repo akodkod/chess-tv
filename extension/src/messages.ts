@@ -1,10 +1,5 @@
-import { messageSchema, type Message } from "@chess-tv/protocol"
+import { messageSchema, moveSchema } from "@chess-tv/protocol"
 import { z } from "zod"
-export type Move = Extract<Message, { type: "move" }>
-export const moveSchema = z.custom<Move>((v) => {
-  const p = messageSchema.safeParse(v)
-  return p.success && p.data.type === "move"
-})
 export const popupAction = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("state") }),
   z.strictObject({ kind: z.literal("pair"), code: z.string().regex(/^\d{6}$/) }),

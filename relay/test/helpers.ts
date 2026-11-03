@@ -4,7 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import type { Message } from "@chess-tv/protocol"
+import { MessageKind, parseMessage, VERSION, type Message } from "@chess-tv/protocol"
 
 export class Client {
   ws: WebSocket
@@ -17,8 +17,9 @@ export class Client {
       this.ws.addEventListener("close", (e) => resolve(e.code)),
     )
     this.ws.addEventListener("message", (e) => {
-      const msg = JSON.parse(String(e.data)) as Message
-      if (heartbeat && msg.type === "ping") this.send({ v: 2, type: "pong", nonce: msg.nonce })
+      const msg = parseMessage(JSON.parse(String(e.data)))
+      if (heartbeat && msg.type === MessageKind.Ping)
+        this.send({ v: VERSION, type: MessageKind.Pong, nonce: msg.nonce })
       else {
         this.messages.push(msg)
         for (const waiter of this.waiters) waiter()
@@ -136,7 +137,7 @@ export async function harness(env: Record<string, string> = {}) {
       const client = new Client(url.replace("http:", "ws:") + "/v1/ws", heartbeat)
       clients.push(client)
       await client.open()
-      if (token) client.send({ v: 2, type: "authenticate", credential: token })
+      if (token) client.send({ v: VERSION, type: MessageKind.Authenticate, credential: token })
       return client
     },
     async dispose() {

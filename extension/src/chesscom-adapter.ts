@@ -1,13 +1,19 @@
-import type { Message } from "@chess-tv/protocol"
+import {
+  type MoveRequest,
+  Color,
+  MessageKind,
+  MoveOutcome,
+  VERSION,
+  type Message,
+} from "@chess-tv/protocol"
 
 import { readGame } from "./chesscom-game"
 import { createMoveController } from "./chesscom-move"
 import { completedBotPath, liveBotPath } from "./chesscom-url"
-import { ContentErrorCode, contentAction, type ContentReply, type Move } from "./messages"
+import { ContentErrorCode, contentAction, type ContentReply } from "./messages"
 
 class GameChangedError extends Error {}
 
-type Color = "white" | "black"
 export class ChessComAdapter {
   readonly instance = crypto.randomUUID()
   private gameId = crypto.randomUUID()
@@ -77,7 +83,11 @@ export class ChessComAdapter {
   }
   private sync(): ContentReply {
     const p = this.read()
-    const context = { v: 2 as const, gameId: this.gameId, generation: this.generation }
+    const context = {
+      v: VERSION as typeof VERSION,
+      gameId: this.gameId,
+      generation: this.generation,
+    }
     const available =
       this.enabled &&
       this.color !== null &&
@@ -89,16 +99,16 @@ export class ChessComAdapter {
     return this.reply([
       {
         ...context,
-        type: "snapshot",
+        type: MessageKind.Snapshot,
         revision: this.revision,
         board: p.boardCells,
         players: p.players,
         playerColor: this.color,
         bottomColor: p.bottomColor,
-        turn: p.chess.turn() === "w" ? "white" : "black",
+        turn: p.chess.turn() === "w" ? Color.White : Color.Black,
         clocks: p.clocks,
         result: p.result,
-        ...(p.resultReason ? { resultReason: p.resultReason } : {}),
+        resultReason: p.resultReason,
         legalMoves: p.result
           ? []
           : [
@@ -117,7 +127,7 @@ export class ChessComAdapter {
       },
       {
         ...context,
-        type: "status",
+        type: MessageKind.Status,
         available,
         reason: available
           ? null
@@ -131,14 +141,14 @@ export class ChessComAdapter {
       },
     ])
   }
-  private async move(move: Move): Promise<ContentReply> {
+  private async move(move: MoveRequest): Promise<ContentReply> {
     const outcome = (
-      value: "rejected" | "uncertain" | "observed-complete",
+      value: MoveOutcome.Rejected | MoveOutcome.Uncertain | MoveOutcome.ObservedComplete,
       reason: string,
     ): ContentReply => {
       const message: Message = {
-        v: 2,
-        type: "outcome",
+        v: VERSION as typeof VERSION,
+        type: MessageKind.Outcome,
         gameId: move.gameId,
         generation: move.generation,
         commandId: move.commandId,
@@ -171,7 +181,7 @@ export class ChessComAdapter {
         this.controller.unresolved
       )
         throw new Error("Game is not available for a move.")
-      if ((p.chess.turn() === "w" ? "white" : "black") !== this.color)
+      if ((p.chess.turn() === "w" ? Color.White : Color.Black) !== this.color)
         throw new Error("Wait for your opponent's move.")
       // Validation only: the engine never chooses a move or updates TV state speculatively.
       const legal = p.chess
@@ -187,9 +197,9 @@ export class ChessComAdapter {
         color: this.color,
         ...(move.promotion ? { promotion: move.promotion } : {}),
       })
-      return outcome(reply.outcome ?? "uncertain", reply.message)
+      return outcome(reply.outcome ?? MoveOutcome.Uncertain, reply.message)
     } catch (e) {
-      return outcome("rejected", e instanceof Error ? e.message : "Move unavailable.")
+      return outcome(MoveOutcome.Rejected, e instanceof Error ? e.message : "Move unavailable.")
     }
   }
   async handle(raw: unknown): Promise<ContentReply> {
@@ -219,7 +229,7 @@ export class ChessComAdapter {
         if (known.request !== request)
           throw new Error("Command ID reused with different move data.")
         const cached = await known.result
-        const outcomes = cached.messages.filter((m) => m.type === "outcome")
+        const outcomes = cached.messages.filter((m) => m.type === MessageKind.Outcome)
         try {
           const fresh = this.sync()
           fresh.messages.unshift(...outcomes)

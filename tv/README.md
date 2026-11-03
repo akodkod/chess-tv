@@ -24,7 +24,7 @@ The extension synchronizes the actual board, turn, and result. It validates chos
 
 The playing side always appears at the bottom, including Black. Selecting a piece shows legal destinations: dots for empty squares and rings for captures. A king in check has a red square and a check warning. The last observed opponent move has a subtle yellow highlight on its starting and ending squares (the king’s squares for castling). It clears after your reply or resynchronization, and follows the displayed position during move review. During play, only warnings/errors and game results appear beside the board; routine instructions and pending-move indicators are hidden.
 
-Snapshots use protocol v2 with required legal-move and checked-king metadata from the extension’s chess engine. Update the TV, extension, and relay together; v1 is unsupported.
+Protocol v3 uses an associated-value `Message` enum and typed payloads. Views, previews, and history consume `Snapshot`; pending commands use `MoveRequest`. Snapshot orientation is required, and unknown result reasons and avatars are explicit nulls. Update the TV, extension, and relay together; older versions are unsupported. Pairing credentials remain valid.
 
 The board uses bundled Chess.com Neo-Wood pieces and the Walnut texture. Legal moves animate immediately for 180 ms, including castling, en passant, and promotions, while Chrome confirms the move. Confirmation preserves the displayed position without replaying the animation; a rejection, uncertainty, timeout, or disconnect restores the last confirmed board. Preview positions do not enter move history or enable another move. Incoming confirmed single moves use the same animation. Piece movement and capture flights use Core Animation layers, so interpolation runs in the compositor without per-frame SwiftUI updates. Confirmation and clock updates preserve in-flight layers. Opponent captures approach over 350 ms and send the captured piece into a slower 1.75-second flight; Reduce Motion disables animation. Initial loads, reconnects, and ambiguous position jumps update immediately.
 
@@ -44,7 +44,7 @@ xcodebuild -project tv/ChessTV.xcodeproj -scheme ChessTV \
   -derivedDataPath tv/.build test
 ```
 
-Tests cover the shared `../protocol/fixtures/snapshot.json`, strict protocol fields, orientation, promotions, clocks, session/revision checks, one pending command, timeout, suspension, replacement, pairing failures, real Keychain round trips, and offline revocation. The fixture is referenced directly by the Xcode test target.
+Tests cover the shared `../protocol/fixtures/snapshot.json` and valid/invalid `messages.json` corpus, strict protocol fields, orientation, promotions, clocks, session/revision checks, one pending command, timeout, suspension, replacement, pairing failures, real Keychain round trips, and offline revocation. Both fixture files are referenced directly by the Xcode test target.
 
 The opt-in **ChessTVIntegration** scheme adds a native end-to-end test against the real Bun relay with a simulated extension WebSocket peer. Run an isolated relay in one terminal, then the test in another:
 

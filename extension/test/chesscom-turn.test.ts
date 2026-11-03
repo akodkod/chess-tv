@@ -1,3 +1,4 @@
+import { Color } from "@chess-tv/protocol"
 import { JSDOM } from "jsdom"
 import { describe, expect, it } from "vite-plus/test"
 
@@ -7,7 +8,7 @@ import { readChessComTurn } from "../src/chesscom-turn"
 function page(selected: number | null = 1, notation = ["e4", "d5"]) {
   const rows = notation.map(
     (text, i) => `<div class="main-line-row" data-whole-move-number="${Math.floor(i / 2) + 1}">
-      <div data-node="0-${i}" class="node ${i % 2 ? "black" : "white"}-move main-line-ply">
+      <div data-node="0-${i}" class="node ${i % 2 ? Color.Black : Color.White}-move main-line-ply">
         <span class="node-highlight-content${selected === i ? " selected" : ""}">${text}</span>
       </div></div>`,
   )
@@ -22,8 +23,8 @@ describe("Chess.com bot turn evidence", () => {
       state: "latest",
       latestPly: 2,
       displayedPly: 2,
-      nextColorInLatestPosition: "white",
-      nextColorInDisplayedPosition: "white",
+      nextColorInLatestPosition: Color.White,
+      nextColorInDisplayedPosition: Color.White,
     })
   })
 
@@ -32,15 +33,15 @@ describe("Chess.com bot turn evidence", () => {
       state: "history",
       latestPly: 2,
       displayedPly: 1,
-      nextColorInLatestPosition: "white",
-      nextColorInDisplayedPosition: "black",
+      nextColorInLatestPosition: Color.White,
+      nextColorInDisplayedPosition: Color.Black,
     })
   })
 
   it("reports Black next while the history ends with White's move", () => {
     expect(readChessComTurn(page(0, ["e4"]))).toMatchObject({
       state: "latest",
-      nextColorInLatestPosition: "black",
+      nextColorInLatestPosition: Color.Black,
     })
   })
 

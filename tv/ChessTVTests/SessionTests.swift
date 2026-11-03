@@ -51,9 +51,7 @@ final class MemoryCredentials: CredentialStoring {
       configuration: try RelayConfiguration("https://example.com"), store: MemoryCredentials(),
       socket: socket, sounds: sounds, uptime: { [unowned self] in self.time })
     session.setActive(true)
-    var auth = Message(type: "authenticated")
-    auth.role = "tv"
-    auth.pairingId = "pair"
+    let auth = Authenticated(role: .tv, pairingId: "pair")
     session.receive(auth)
   }
   override func tearDown() async throws {
@@ -62,17 +60,12 @@ final class MemoryCredentials: CredentialStoring {
     socket = nil
   }
   func state(generation: String = "generation-1", game: String? = "game-1") {
-    var message = Message(type: "session")
-    message.generation = generation
-    message.gameId = game
-    message.peerConnected = true
+    let message = SessionState(generation: generation, gameId: game, peerConnected: true)
     session.receive(message)
   }
   func available(generation: String = "generation-1") {
-    var message = Message(type: "status")
-    message.generation = generation
-    message.gameId = "game-1"
-    message.available = true
+    let message = GameStatus(
+      context: GameContext(gameId: "game-1", generation: generation), available: true)
     session.receive(message)
   }
   func ready() throws {
@@ -107,7 +100,7 @@ final class MemoryCredentials: CredentialStoring {
     XCTAssertEqual(session.displayedSnapshot?.board, initial.board)
     session.nextMove()
     XCTAssertFalse(session.canMove)
-    XCTAssertTrue(socket.sent.filter { $0.type == "move" }.isEmpty)
+    XCTAssertTrue(socket.sent.filter { $0.kind == .move }.isEmpty)
   }
 
   func testMoveReviewKeepsLiveUpdatesAndPreventsSubmission() throws {
@@ -126,9 +119,9 @@ final class MemoryCredentials: CredentialStoring {
     session.submit(from: 52, to: 36)
     XCTAssertNil(session.pending)
     var reply = next
-    reply.revision! += 1
-    reply.board![4] = nil
-    reply.board![3] = "k"
+    reply.revision += 1
+    reply.board[4] = nil
+    reply.board[3] = .blackKing
     reply.turn = .white
     session.receive(reply)
     XCTAssertEqual(session.displayedSnapshot?.board, initial.board)
@@ -152,9 +145,9 @@ final class MemoryCredentials: CredentialStoring {
     session.receive(ownMove)
     XCTAssertNil(session.displayedOpponentMove)
     var opponent = ownMove
-    opponent.revision! += 1
-    opponent.board![4] = nil
-    opponent.board![3] = "k"
+    opponent.revision += 1
+    opponent.board[4] = nil
+    opponent.board[3] = .blackKing
     opponent.turn = .white
     session.receive(opponent)
     XCTAssertEqual(session.displayedOpponentMove?.from, 4)
@@ -162,9 +155,9 @@ final class MemoryCredentials: CredentialStoring {
     session.receive(opponent)
     XCTAssertEqual(session.displayedOpponentMove?.to, 3)
     var reply = opponent
-    reply.revision! += 1
-    reply.board![36] = nil
-    reply.board![28] = "P"
+    reply.revision += 1
+    reply.board[36] = nil
+    reply.board[28] = .whitePawn
     reply.turn = .black
     session.receive(reply)
     XCTAssertNil(session.displayedOpponentMove)
@@ -180,12 +173,12 @@ final class MemoryCredentials: CredentialStoring {
     XCTAssertNil(session.displayedOpponentMove)
   }
   func testOpponentHighlightsSpecialMovesAndBothOrientations() throws {
-    let cases: [(PieceColor, [Int: String], [Int: String], Int, Int)] = [
-      (.white, [4: "k", 7: "r"], [6: "k", 5: "r"], 4, 6),
-      (.black, [60: "K", 56: "R"], [58: "K", 59: "R"], 60, 58),
-      (.white, [48: "p"], [56: "q"], 48, 56),
-      (.black, [28: "P", 27: "p"], [19: "P"], 28, 19),
-      (.white, [27: "p", 36: "N"], [36: "p"], 27, 36),
+    let cases: [(PieceColor, [Int: Piece], [Int: Piece], Int, Int)] = [
+      (.white, [4: .blackKing, 7: .blackRook], [6: .blackKing, 5: .blackRook], 4, 6),
+      (.black, [60: .whiteKing, 56: .whiteRook], [58: .whiteKing, 59: .whiteRook], 60, 58),
+      (.white, [48: .blackPawn], [56: .blackQueen], 48, 56),
+      (.black, [28: .whitePawn, 27: .blackPawn], [19: .whitePawn], 28, 19),
+      (.white, [27: .blackPawn, 36: .whiteKnight], [36: .blackPawn], 27, 36),
     ]
     for (player, before, after, from, to) in cases {
       state()
@@ -193,18 +186,18 @@ final class MemoryCredentials: CredentialStoring {
       initial.playerColor = player
       initial.turn = player == .white ? .black : .white
       initial.board = Array(repeating: nil, count: 64)
-      for (square, piece) in before { initial.board![square] = piece }
+      for (square, piece) in before { initial.board[square] = piece }
       session.receive(initial)
       var next = initial
-      next.revision! += 1
+      next.revision += 1
       next.turn = player
       next.board = Array(repeating: nil, count: 64)
-      for (square, piece) in after { next.board![square] = piece }
+      for (square, piece) in after { next.board[square] = piece }
       session.receive(next)
       XCTAssertEqual(session.displayedOpponentMove?.from, from)
       XCTAssertEqual(session.displayedOpponentMove?.to, to)
       var gap = next
-      gap.revision! += 1
+      gap.revision += 1
       gap.board = Array(repeating: nil, count: 64)
       session.receive(gap)
       XCTAssertNil(session.displayedOpponentMove)
@@ -225,8 +218,8 @@ final class MemoryCredentials: CredentialStoring {
     session.receive(pawnMove(baseline))
     var skipped = baseline
     skipped.revision = 10
-    skipped.board![52] = nil
-    skipped.board![28] = "P"
+    skipped.board[52] = nil
+    skipped.board[28] = .whitePawn
     session.receive(skipped)
     XCTAssertFalse(session.canGoBack)
     XCTAssertEqual(session.displayedSnapshot?.board, skipped.board)
@@ -234,47 +227,43 @@ final class MemoryCredentials: CredentialStoring {
   func testFinalPositionAndResultArriveBeforeUnavailableStatus() throws {
     try ready()
     var final = try ProtocolTests.fixture()
-    final.revision = (final.revision ?? 0) + 1
-    final.board?[12] = "Q"
-    final.board?[26] = nil
+    final.revision = (final.revision) + 1
+    final.board[12] = .whiteQueen
+    final.board[26] = nil
     final.result = .whiteWon
     final.resultReason = .checkmate
     final.legalMoves = []
     session.receive(final)
-    var status = Message(type: "status")
-    status.gameId = final.gameId
-    status.generation = final.generation
-    status.available = false
-    status.reason = "Game finished"
+    let status = GameStatus(
+      context: GameContext(gameId: final.gameId, generation: final.generation), available: false,
+      reason: "Game finished")
     session.receive(status)
     XCTAssertEqual(session.snapshot, final)
     XCTAssertFalse(session.canMove)
     XCTAssertNil(session.gameplayWarning)
   }
 
-  func outcome(_ result: String, command: String? = nil) {
-    var message = Message(type: "outcome")
-    message.generation = "generation-1"
-    message.gameId = "game-1"
-    message.commandId = command ?? session.pending?.commandId
-    message.outcome = result
+  func outcome(_ result: MoveOutcome, command: String? = nil) {
+    let message = CommandOutcome(
+      context: GameContext(gameId: "game-1", generation: "generation-1"),
+      commandId: command ?? session.pending!.commandId, outcome: result)
     session.receive(message)
   }
-  private func soundPosition() throws -> Message {
+  private func soundPosition() throws -> Snapshot {
     var position = try ProtocolTests.fixture()
     position.board = Array(repeating: nil, count: 64)
-    position.board![60] = "K"
-    position.board![4] = "k"
-    position.board![52] = "P"
+    position.board[60] = .whiteKing
+    position.board[4] = .blackKing
+    position.board[52] = .whitePawn
     position.turn = .white
     position.result = nil
     return position
   }
-  private func pawnMove(_ initial: Message) -> Message {
+  private func pawnMove(_ initial: Snapshot) -> Snapshot {
     var next = initial
-    next.revision! += 1
-    next.board![52] = nil
-    next.board![36] = "P"
+    next.revision += 1
+    next.board[52] = nil
+    next.board[36] = .whitePawn
     next.turn = .black
     return next
   }
@@ -287,7 +276,7 @@ final class MemoryCredentials: CredentialStoring {
     session.receive(next)
     session.receive(next)
     var clockUpdate = next
-    clockUpdate.clocks?.white.remainingMs = 12_000
+    clockUpdate.clocks.white.remainingMs = 12_000
     session.receive(clockUpdate)
     XCTAssertEqual(sounds.played, [.move])
   }
@@ -296,17 +285,17 @@ final class MemoryCredentials: CredentialStoring {
     for capture in [false, true] {
       state()
       var initial = try soundPosition()
-      initial.board![52] = nil
-      initial.board![4] = nil
-      initial.board![0] = "k"
-      initial.board![57] = "R"
-      if capture { initial.board![1] = "n" }
+      initial.board[52] = nil
+      initial.board[4] = nil
+      initial.board[0] = .blackKing
+      initial.board[57] = .whiteRook
+      if capture { initial.board[1] = .blackKnight }
       session.receive(initial)
       let count = sounds.played.count
       var checked = initial
-      checked.revision! += 1
-      checked.board![57] = nil
-      checked.board![1] = "R"
+      checked.revision += 1
+      checked.board[57] = nil
+      checked.board[1] = .whiteRook
       checked.turn = .black
       checked.checkSquare = "a8"
       session.receive(checked)
@@ -332,7 +321,7 @@ final class MemoryCredentials: CredentialStoring {
         session.receive(initial)
         let count = sounds.played.count
         var ended = initial
-        ended.revision! += 1
+        ended.revision += 1
         ended.result = result
         ended.resultReason = .timeout
         session.receive(ended)
@@ -356,9 +345,9 @@ final class MemoryCredentials: CredentialStoring {
       if mode == "review" { session.previousMove() }
       let count = sounds.played.count
       var ended = moved
-      ended.revision! += 1
-      ended.board![4] = nil
-      ended.board![12] = "k"
+      ended.revision += 1
+      ended.board[4] = nil
+      ended.board[12] = .blackKing
       ended.turn = .white
       ended.checkSquare = "e1"
       ended.result = .blackWon
@@ -374,15 +363,16 @@ final class MemoryCredentials: CredentialStoring {
     let initial = try soundPosition()
     session.receive(initial)
     var ended = initial
-    ended.revision! += 1
+    ended.revision += 1
     ended.result = .draw
     session.receive(ended)
     XCTAssertTrue(sounds.played.isEmpty)
   }
   func testAllSoundAssetsDecode() throws {
     for sound in BoardSound.allCases {
-      let url = try XCTUnwrap(Bundle.main.url(
-        forResource: sound.rawValue, withExtension: sound.fileExtension))
+      let url = try XCTUnwrap(
+        Bundle.main.url(
+          forResource: sound.rawValue, withExtension: sound.fileExtension))
       let player = try AVAudioPlayer(contentsOf: url)
       XCTAssertGreaterThan(player.duration, 0)
       if CaptureSound.allCases.filter({ $0 != .classic }).contains(where: { $0.sound == sound }) {
@@ -400,7 +390,7 @@ final class MemoryCredentials: CredentialStoring {
     time += 6
     session.tick()
     XCTAssertTrue(session.gameplayWarning?.contains("Checking move") == true)
-    outcome("rejected")
+    outcome(.rejected)
     XCTAssertEqual(session.moveNotice, "Move rejected.")
     session.closed(code: 4001, reason: "Replaced")
     XCTAssertTrue(session.gameplayWarning?.contains("replaced") == true)
@@ -415,12 +405,12 @@ final class MemoryCredentials: CredentialStoring {
   func testCaptureSoundAndMute() throws {
     state()
     var initial = try soundPosition()
-    initial.board![43] = "p"
+    initial.board[43] = .blackPawn
     session.receive(initial)
     var next = initial
-    next.revision! += 1
-    next.board![52] = nil
-    next.board![43] = "P"
+    next.revision += 1
+    next.board[52] = nil
+    next.board[43] = .whitePawn
     next.turn = .black
     session.receive(next)
     XCTAssertEqual(sounds.played, [.capture])
@@ -436,7 +426,7 @@ final class MemoryCredentials: CredentialStoring {
     for option in CaptureSound.allCases {
       state()
       var initial = try soundPosition()
-      initial.board![43] = "p"
+      initial.board[43] = .blackPawn
       initial.legalMoves = [LegalMove(from: "e2", to: "d3")]
       session.receive(initial)
       available()
@@ -447,10 +437,11 @@ final class MemoryCredentials: CredentialStoring {
       XCTAssertEqual(Array(sounds.played.dropFirst(count)), [option.sound])
       count = sounds.played.count
       session.submit(from: 52, to: 43)
-      XCTAssertEqual(sounds.played.count, count, "Optimistic animation must not play a confirmed cue")
+      XCTAssertEqual(
+        sounds.played.count, count, "Optimistic animation must not play a confirmed cue")
       let next = try XCTUnwrap(session.displayedSnapshot)
       session.receive(next)
-      outcome("observed-complete")
+      outcome(.observedComplete)
       session.receive(next)
       XCTAssertEqual(Array(sounds.played.dropFirst(count)), [option.sound])
       session.setSoundsEnabled(false)
@@ -459,7 +450,8 @@ final class MemoryCredentials: CredentialStoring {
       state()
       session.receive(initial)
       session.receive(next)
-      XCTAssertEqual(sounds.played.count, count, "Mute includes previews and selected capture sounds")
+      XCTAssertEqual(
+        sounds.played.count, count, "Mute includes previews and selected capture sounds")
       session.setSoundsEnabled(true)
     }
   }
@@ -511,15 +503,15 @@ final class MemoryCredentials: CredentialStoring {
   func testAmbiguousMoveJumpAndOutcomesAreSilent() throws {
     state()
     var initial = try soundPosition()
-    initial.board![12] = "p"
+    initial.board[12] = .blackPawn
     session.receive(initial)
     var skipped = pawnMove(initial)
-    skipped.board![12] = nil
-    skipped.board![28] = "p"
+    skipped.board[12] = nil
+    skipped.board[28] = .blackPawn
     skipped.turn = .white
-    skipped.revision! += 1
+    skipped.revision += 1
     session.receive(skipped)
-    outcome("observed-complete", command: "unrelated")
+    outcome(.observedComplete, command: "unrelated")
     XCTAssertTrue(sounds.played.isEmpty)
   }
   func testWhiteBoardFocusAndSnapshotStability() async throws {
@@ -539,8 +531,10 @@ final class MemoryCredentials: CredentialStoring {
     let observer = NotificationCenter.default.addObserver(
       forName: UIFocusSystem.didUpdateNotification, object: nil, queue: .main
     ) { notification in
-      guard let context = notification.userInfo?[UIFocusSystem.focusUpdateContextUserInfoKey]
-        as? UIFocusUpdateContext else { return }
+      guard
+        let context = notification.userInfo?[UIFocusSystem.focusUpdateContextUserInfoKey]
+          as? UIFocusUpdateContext
+      else { return }
       MainActor.assumeIsolated {
         let sound = host.soundIdentifierForFocusUpdate(in: context)
         if host.isBoardSquare(context.nextFocusedItem) {
@@ -591,7 +585,7 @@ final class MemoryCredentials: CredentialStoring {
     XCTAssertEqual(
       candidates.count, 66, "Connection, Settings and all 64 squares must be focusable")
     XCTAssertNotNil(candidates[ObjectIdentifier(square)])
-    snapshot.revision! += 1
+    snapshot.revision += 1
     session.receive(snapshot)
     try await Task.sleep(for: .milliseconds(100))
     XCTAssertTrue(system.focusedItem === square, "Snapshots must preserve the focused square")
@@ -603,7 +597,7 @@ final class MemoryCredentials: CredentialStoring {
     attachment.lifetime = .keepAlways
     add(attachment)
     snapshot.playerColor = nil
-    snapshot.revision! += 1
+    snapshot.revision += 1
     session.receive(snapshot)
     try await Task.sleep(for: .milliseconds(300))
     candidates.removeAll()
@@ -621,14 +615,16 @@ final class MemoryCredentials: CredentialStoring {
     var position = try ProtocolTests.fixture()
     position.revision = 2
     position.board =
-      Array("rnbqkbnrpppppppp").map(String.init) + Array(repeating: nil, count: 32)
-      + Array("PPPPPPPPRNBQKBNR").map(String.init)
+      Array("rnbqkbnrpppppppp").map { Piece(rawValue: String($0)) }
+      + Array(repeating: nil, count: 32)
+      + Array("PPPPPPPPRNBQKBNR").map { Piece(rawValue: String($0)) }
     session.receive(position)
     for color in [PieceColor.white, .black] {
       position.playerColor = color
+      position.bottomColor = color
       position.turn = color
       position.checkSquare = color == .white ? "e1" : "e8"
-      position.revision! += 1
+      position.revision += 1
       session.receive(position)
       available()
       let view = ContentView(session: session)
@@ -668,7 +664,7 @@ final class MemoryCredentials: CredentialStoring {
     socket.failSend = false
     session.reconnect()
     XCTAssertNotNil(session.pending)
-    XCTAssertEqual(socket.sent.filter { $0.type == "move" }.count, 0)
+    XCTAssertEqual(socket.sent.filter { $0.kind == .move }.count, 0)
   }
   func testFreshSnapshotAndStatusRequiredInEitherOrder() throws {
     state()
@@ -697,24 +693,24 @@ final class MemoryCredentials: CredentialStoring {
     time += 5
     session.tick()
     XCTAssertTrue(session.checkingMove)
-    outcome("uncertain")
+    outcome(.uncertain)
     XCTAssertNotNil(session.pending)
-    outcome("observed-complete", command: "other")
+    outcome(.observedComplete, command: "other")
     XCTAssertNotNil(session.pending)
     var changed = try ProtocolTests.fixture()
     changed.revision = 2
-    changed.board?[60] = nil
-    changed.board?[52] = "K"
+    changed.board[60] = nil
+    changed.board[52] = .whiteKing
     session.receive(changed)
     XCTAssertNotNil(session.pending)
-    outcome("observed-complete")
+    outcome(.observedComplete)
     XCTAssertNil(session.pending)
     XCTAssertFalse(session.canMove)
     available()
     XCTAssertTrue(session.canMove)
     await Task.yield()
-    XCTAssertEqual(socket.sent.filter { $0.type == "move" }.count, 1)
-    XCTAssertGreaterThanOrEqual(socket.sent.filter { $0.type == "snapshot-request" }.count, 2)
+    XCTAssertEqual(socket.sent.filter { $0.kind == .move }.count, 1)
+    XCTAssertGreaterThanOrEqual(socket.sent.filter { $0.kind == .snapshotRequest }.count, 2)
   }
   func testInterruptedMoveNeedsDetachAndFreshAvailableSession() throws {
     try ready()
@@ -758,9 +754,7 @@ final class MemoryCredentials: CredentialStoring {
     try ready()
     await Task.yield()
     let count = socket.sent.count
-    var error = Message(type: "error")
-    error.code = "peer_unavailable"
-    error.message = "Extension offline"
+    let error = RelayError(code: "peer_unavailable", message: "Extension offline")
     session.receive(error)
     await Task.yield()
     XCTAssertEqual(socket.sent.count, count)
@@ -771,7 +765,7 @@ final class MemoryCredentials: CredentialStoring {
     try ready()
     var message = try ProtocolTests.fixture()
     message.revision = 0
-    message.board?[60] = nil
+    message.board[60] = nil
     session.receive(message)
     XCTAssertEqual(session.snapshot?.revision, 1)
     message.revision = 9
@@ -784,12 +778,12 @@ final class MemoryCredentials: CredentialStoring {
     let original = session.snapshot?.board
     session.submit(from: 60, to: 52)
     XCTAssertEqual(session.snapshot?.board, original)
-    XCTAssertNil(session.displayedSnapshot?.board?[60])
-    XCTAssertEqual(session.displayedSnapshot?.board?[52], "K")
+    XCTAssertNil(session.displayedSnapshot?.board[60])
+    XCTAssertEqual(session.displayedSnapshot?.board[52], .whiteKing)
     XCTAssertFalse(session.canMove)
     XCTAssertFalse(session.canGoBack, "Preview must not enter confirmed history")
     XCTAssertTrue(sounds.played.isEmpty)
-    outcome("rejected")
+    outcome(.rejected)
     XCTAssertEqual(session.displayedSnapshot?.board, original)
     XCTAssertNil(session.pending)
     XCTAssertNotNil(session.moveNotice)
@@ -808,7 +802,7 @@ final class MemoryCredentials: CredentialStoring {
     XCTAssertNotNil(BoardTransition.between(original, preview))
     session.receive(original)
     XCTAssertEqual(session.displayedSnapshot, preview, "Clock refresh must not roll back the move")
-    outcome("observed-complete")
+    outcome(.observedComplete)
     XCTAssertEqual(session.displayedSnapshot, preview, "Outcome precedes the confirming snapshot")
     session.receive(preview)
     XCTAssertEqual(session.displayedSnapshot, preview)
@@ -826,13 +820,13 @@ final class MemoryCredentials: CredentialStoring {
       var confirmed = fastReply ? try XCTUnwrap(session.displayedSnapshot) : original
       confirmed.revision = 3
       if fastReply {
-        confirmed.board?[0] = nil
-        confirmed.board?[8] = "r"
+        confirmed.board[0] = nil
+        confirmed.board[8] = .blackRook
         confirmed.turn = .white
       }
       session.receive(confirmed)
       XCTAssertEqual(session.displayedSnapshot, confirmed)
-      outcome("observed-complete")
+      outcome(.observedComplete)
       XCTAssertEqual(session.displayedSnapshot, confirmed)
     }
   }
@@ -846,10 +840,13 @@ final class MemoryCredentials: CredentialStoring {
     XCTAssertFalse(session.canMove)
   }
   func testPreviewClearsOnUncertainty() throws {
-    try assertPreviewClears { outcome("uncertain") }
+    try assertPreviewClears { outcome(.uncertain) }
   }
   func testPreviewClearsOnTimeout() throws {
-    try assertPreviewClears { time += 5; session.tick() }
+    try assertPreviewClears {
+      time += 5
+      session.tick()
+    }
   }
   func testPreviewClearsOnDisconnect() throws {
     try assertPreviewClears { session.closed(code: 1006, reason: "Offline") }
@@ -861,21 +858,19 @@ final class MemoryCredentials: CredentialStoring {
     try ready()
     var board = try ProtocolTests.fixture()
     board.revision = 2
-    board.board?[8] = "P"
+    board.board[8] = .whitePawn
     session.receive(board)
     session.submit(from: 8, to: 0)
     XCTAssertNil(session.pending)
-    session.submit(from: 8, to: 0, promotion: "n")
-    XCTAssertEqual(session.pending?.promotion, "n")
+    session.submit(from: 8, to: 0, promotion: .knight)
+    XCTAssertEqual(session.pending?.promotion, .knight)
   }
   func testObsoleteConnectionCallbackCannotMutateState() throws {
     try ready()
     let oldCallback = socket.onMessage
     session.reconnect()
-    var auth = Message(type: "authenticated")
-    auth.role = "tv"
-    auth.pairingId = "pair"
-    oldCallback?(auth)
+    let auth = Authenticated(role: .tv, pairingId: "pair")
+    oldCallback?(.authenticated(auth))
     XCTAssertFalse(session.authenticated)
   }
   func testTransientDisconnectsAutomaticallyReconnectWithFreshState() throws {
@@ -892,10 +887,8 @@ final class MemoryCredentials: CredentialStoring {
       time += 2
       session.tick()
       XCTAssertEqual(socket.connects, before + 1)
-      var auth = Message(type: "authenticated")
-      auth.role = "tv"
-      auth.pairingId = "pair"
-      socket.onMessage?(auth)
+      let auth = Authenticated(role: .tv, pairingId: "pair")
+      socket.onMessage?(.authenticated(auth))
       XCTAssertFalse(session.canMove)
       try ready()
       XCTAssertTrue(session.canMove)
@@ -938,9 +931,7 @@ final class MemoryCredentials: CredentialStoring {
   func testExtensionReconnectResynchronizesWithoutReconnectingTV() throws {
     try ready()
     let before = socket.connects
-    var offline = Message(type: "session")
-    offline.generation = "offline"
-    offline.peerConnected = false
+    let offline = SessionState(generation: "offline", peerConnected: false)
     session.receive(offline)
     XCTAssertFalse(session.canMove)
     XCTAssertTrue(session.statusText.contains("extension to reconnect"))
@@ -956,19 +947,17 @@ final class MemoryCredentials: CredentialStoring {
     try ready()
     session.submit(from: 60, to: 52)
     await Task.yield()
-    let moves = socket.sent.filter { $0.type == "move" }.count
+    let moves = socket.sent.filter { $0.kind == .move }.count
     let command = session.pending?.commandId
     session.closed(code: 1006, reason: "Offline")
     time += 2
     session.tick()
-    var auth = Message(type: "authenticated")
-    auth.role = "tv"
-    auth.pairingId = "pair"
-    socket.onMessage?(auth)
+    let auth = Authenticated(role: .tv, pairingId: "pair")
+    socket.onMessage?(.authenticated(auth))
     try ready()
     await Task.yield()
     XCTAssertEqual(session.pending?.commandId, command)
     XCTAssertFalse(session.canMove)
-    XCTAssertEqual(socket.sent.filter { $0.type == "move" }.count, moves)
+    XCTAssertEqual(socket.sent.filter { $0.kind == .move }.count, moves)
   }
 }

@@ -16,7 +16,7 @@ enum BoardHighlightColor: String, CaseIterable {
 
 struct BoardView: View {
   let session: TVSession
-  let snapshot: Message
+  let snapshot: Snapshot
   var showSquareLabels = true
   var edgeSquareLabelsOnly = true
   var lastMoveColor = BoardHighlightColor.yellow
@@ -53,11 +53,13 @@ struct BoardView: View {
           .font(.caption)
           .focusSection()
           Spacer(minLength: 24)
-          statusMessages
+          statusSnapshots
           Group {
             if session.isReviewing {
-              Text("\(session.movesBehindLive) \(session.movesBehindLive == 1 ? "move" : "moves") ago")
-                .font(.title2.weight(.semibold))
+              Text(
+                "\(session.movesBehindLive) \(session.movesBehindLive == 1 ? "move" : "moves") ago"
+              )
+              .font(.title2.weight(.semibold))
             } else if let result = snapshot.result {
               VStack(alignment: .leading, spacing: 4) {
                 Text(result.title(for: snapshot.playerColor))
@@ -108,8 +110,8 @@ struct BoardView: View {
       VStack(spacing: 32) {
         Text("Promote pawn").font(.title)
         HStack(spacing: 24) {
-          ForEach(["q", "r", "b", "n"], id: \.self) { piece in
-            Button(["q": "Queen", "r": "Rook", "b": "Bishop", "n": "Knight"][piece]!) {
+          ForEach(Promotion.allCases, id: \.self) { piece in
+            Button(piece.label) {
               if let from = promotionSource, let to = promotionTarget {
                 session.submit(from: from, to: to, promotion: piece)
               }
@@ -131,16 +133,18 @@ struct BoardView: View {
     }
     .onExitCommand(perform: source != nil && promotionTarget == nil ? { source = nil } : nil)
   }
-  private var statusMessages: some View {
+  private var statusSnapshots: some View {
     VStack(alignment: .leading, spacing: 16) {
       Group {
         if snapshot.result == nil,
           let checked = snapshot.checkSquare.flatMap(Square.index),
-          let color = Square.color(of: snapshot.board?[checked])
+          let color = Square.color(of: snapshot.board[checked])
         {
           Text("\(color.rawValue.capitalized) in check").font(.callout)
         }
-        if let warning = session.gameplayWarning.flatMap(messageText) { Text(warning).font(.callout) }
+        if let warning = session.gameplayWarning.flatMap(messageText) {
+          Text(warning).font(.callout)
+        }
         if let notice = session.moveNotice.flatMap(messageText) { Text(notice).font(.callout) }
         if !session.isReviewing && session.clocksStale && snapshot.result == nil {
           Label("Clocks paused", systemImage: "pause.circle").font(.caption)
@@ -165,7 +169,7 @@ struct BoardView: View {
   }
 
   private func playerLine(_ color: PieceColor) -> some View {
-    let avatar = color == .white ? snapshot.players?.whiteAvatar : snapshot.players?.blackAvatar
+    let avatar = color == .white ? snapshot.players.whiteAvatar : snapshot.players.blackAvatar
     return HStack(spacing: 12) {
       AsyncImage(url: avatar.flatMap(URL.init(string:))) { phase in
         if let image = phase.image {
@@ -179,12 +183,14 @@ struct BoardView: View {
       .clipShape(RoundedRectangle(cornerRadius: 8))
       .accessibilityHidden(true)
       Text(
-        (color == .white ? snapshot.players?.white : snapshot.players?.black)
+        (color == .white ? snapshot.players.white : snapshot.players.black)
           ?? "\(color.rawValue.capitalized) player"
       )
       .lineLimit(1).minimumScaleFactor(0.8)
       Spacer()
-      if !session.isReviewing, let remaining = session.clockReading?.remaining(color, now: session.now) {
+      if !session.isReviewing,
+        let remaining = session.clockReading?.remaining(color, now: session.now)
+      {
         Text(ClockReading.format(remaining))
           .monospacedDigit().font(.headline).frame(minWidth: 100, alignment: .trailing)
           .accessibilityLabel("\(color.rawValue.capitalized) clock")
@@ -218,21 +224,22 @@ struct BoardView: View {
   private func square(
     _ index: Int, size: CGFloat, opponentMove: BoardTransition.Movement?
   ) -> some View {
-    let piece = snapshot.board?[index]
+    let piece = snapshot.board[index]
     let selected = source == index
     let checked = snapshot.checkSquare == Square.name(index)
     let lastMove = opponentMove?.from == index || opponentMove?.to == index
     let destination =
       session.canMove
       && source.map { from in
-        snapshot.legalMoves?.contains {
+        snapshot.legalMoves.contains {
           $0.from == Square.name(from) && $0.to == Square.name(index)
         } == true
       } == true
     let isFocused = focused == index
     let light = (index / 8 + index % 8).isMultiple(of: 2)
     let highlightColor = selectedSquareColor.tint(lightSquare: light)
-    let highlightOpacity = contrast == .increased
+    let highlightOpacity =
+      contrast == .increased
       ? (light ? 0.55 : 0.52) : 0.40
     return Button {
       select(index)
@@ -295,7 +302,8 @@ struct BoardView: View {
     .allowsHitTesting(false)
   }
   private func select(_ index: Int) {
-    guard session.canMove, let board = snapshot.board else { return }
+    guard session.canMove else { return }
+    let board = snapshot.board
     if source == index {
       source = nil
       return
@@ -335,8 +343,9 @@ struct LegalMoveMarker: View {
   var body: some View {
     if capture {
       Circle().strokeBorder(
-        Color.black.opacity(lightSquare ? 0.24 : 0.30), lineWidth: size * 0.075)
-        .padding(size * 0.13)
+        Color.black.opacity(lightSquare ? 0.24 : 0.30), lineWidth: size * 0.075
+      )
+      .padding(size * 0.13)
     } else {
       Circle().fill(Color.black.opacity(0.25))
         .frame(width: size * 0.24, height: size * 0.24)

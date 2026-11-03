@@ -32,70 +32,65 @@ import XCTest
     func send(_ message: Message) async throws {
       try await extensionSocket.send(.string(String(decoding: message.encoded(), as: UTF8.self)))
     }
-    func next(_ type: String) async throws -> Message {
+    func next(_ type: Message.Kind) async throws -> Message {
       for _ in 0..<30 {
         let frame = try await extensionSocket.receive()
         guard case .string(let text) = frame else { continue }
         let message = try Message.decode(Data(text.utf8))
-        if message.type == "ping" {
-          var pong = Message(type: "pong")
-          pong.nonce = message.nonce
-          try await send(pong)
+        if case .ping(let ping) = message {
+          try await send(.pong(Heartbeat(nonce: ping.nonce)))
         }
-        if message.type == type { return message }
+        if message.kind == type { return message }
       }
       throw ProtocolFailure("Expected \(type)")
     }
-    var auth = Message(type: "authenticate")
-    auth.credential = ext.credential
-    try await send(auth)
-    _ = try await next("authenticated")
-    _ = try await next("session")
+    let auth = Authenticate(credential: try XCTUnwrap(ext.credential))
+    try await send(.authenticate(auth))
+    _ = try await next(.authenticated)
+    _ = try await next(.session)
     let store = MemoryCredentials()
     store.value = .init(pairingId: tv.pairingId!, credential: tv.credential!)
     let session = TVSession(configuration: config, store: store)
     session.setActive(true)
     defer { session.setActive(false) }
-    let connected = try await next("session")
-    var attachment = Message(type: "attachment")
-    attachment.generation = connected.generation
-    attachment.gameId = "game-1"
-    try await send(attachment)
-    let attached = try await next("session")
+    guard case .session(let connected) = try await next(.session) else {
+      return XCTFail("Expected session")
+    }
+    var attachment = Attachment(generation: connected.generation, gameId: "game-1")
+    try await send(.attachment(attachment))
+    guard case .session(let attached) = try await next(.session) else {
+      return XCTFail("Expected session")
+    }
     var snapshot = try ProtocolTests.fixture()
     snapshot.generation = attached.generation
-    var status = Message(type: "status")
-    status.generation = attached.generation
-    status.gameId = "game-1"
-    status.available = true
-    try await send(snapshot)
-    try await send(status)
+    var status = GameStatus(
+      context: GameContext(gameId: "game-1", generation: attached.generation), available: true)
+    try await send(.snapshot(snapshot))
+    try await send(.status(status))
     for _ in 0..<100 {
       if session.canMove { break }
       try await Task.sleep(for: .milliseconds(50))
     }
     XCTAssertTrue(session.canMove)
     session.submit(from: 60, to: 52)
-    let move = try await next("move")
+    guard case .move(let move) = try await next(.move) else { return XCTFail("Expected move") }
     XCTAssertEqual(move.from, "e1")
     XCTAssertEqual(move.to, "e2")
-    var outcome = Message(type: "outcome")
-    outcome.gameId = move.gameId
-    outcome.generation = move.generation
-    outcome.commandId = move.commandId
-    outcome.outcome = "observed-complete"
-    try await send(outcome)
+    let outcome = CommandOutcome(
+      context: GameContext(gameId: move.gameId, generation: move.generation),
+      commandId: move.commandId, outcome: .observedComplete)
+    try await send(.outcome(outcome))
     snapshot.revision = 2
-    snapshot.board?[60] = nil
-    snapshot.board?[52] = "K"
-    try await send(snapshot)
-    try await send(status)
+    snapshot.board[60] = nil
+    snapshot.board[52] = .whiteKing
+    try await send(.snapshot(snapshot))
+    try await send(.status(status))
     for _ in 0..<100 {
       if session.pending == nil && session.snapshot?.revision == 2 { break }
       try await Task.sleep(for: .milliseconds(50))
     }
     XCTAssertNil(session.pending)
-    XCTAssertEqual(session.snapshot?.board?[52], "K")
+    XCTAssertEqual(session.snapshot?.board[52], .whiteKing)
     for interruption in ["tv", "extension", "both"] {
       let previous = session.generation
       if interruption != "extension" {
@@ -110,27 +105,37 @@ import XCTest
         }
         extensionSocket = URLSession.shared.webSocketTask(with: config.socketURL)
         extensionSocket.resume()
-        try await send(auth)
-        _ = try await next("authenticated")
+        try await send(.authenticate(auth))
+        _ = try await next(.authenticated)
       }
-      var recovered = try await next("session")
-      while recovered.peerConnected != true { recovered = try await next("session") }
+      guard case .session(var recovered) = try await next(.session) else {
+        return XCTFail("Expected session")
+      }
+      while !recovered.peerConnected {
+        guard case .session(let value) = try await next(.session) else {
+          return XCTFail("Expected session")
+        }
+        recovered = value
+      }
       if recovered.gameId == nil {
         attachment.generation = recovered.generation
-        try await send(attachment)
-        recovered = try await next("session")
+        try await send(.attachment(attachment))
+        guard case .session(let value) = try await next(.session) else {
+          return XCTFail("Expected session")
+        }
+        recovered = value
       }
       snapshot.generation = recovered.generation
       status.generation = recovered.generation
-      try await send(snapshot)
-      try await send(status)
+      try await send(.snapshot(snapshot))
+      try await send(.status(status))
       for _ in 0..<100 {
         if session.canMove && session.generation != previous { break }
         try await Task.sleep(for: .milliseconds(50))
       }
       XCTAssertTrue(session.canMove, "Failed to recover after \(interruption) disconnected")
       XCTAssertNotEqual(session.generation, previous)
-      XCTAssertEqual(session.snapshot?.board?[52], "K")
+      XCTAssertEqual(session.snapshot?.board[52], .whiteKing)
     }
     session.unpair()
     for _ in 0..<100 {

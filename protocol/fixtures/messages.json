@@ -1,0 +1,10430 @@
+[
+  {
+    "name": "valid-0-authenticate",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "authenticate",
+      "credential": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  {
+    "name": "valid-1-authenticated",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "authenticated",
+      "role": "tv",
+      "pairingId": "pair"
+    }
+  },
+  {
+    "name": "valid-2-authenticated",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "authenticated",
+      "role": "extension",
+      "pairingId": "pair"
+    }
+  },
+  {
+    "name": "valid-3-ping",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "ping",
+      "nonce": "nonce"
+    }
+  },
+  {
+    "name": "valid-4-pong",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "pong",
+      "nonce": "nonce"
+    }
+  },
+  {
+    "name": "valid-5-attachment",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "attachment",
+      "generation": "generation-1",
+      "gameId": null
+    }
+  },
+  {
+    "name": "valid-6-attachment",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "attachment",
+      "gameId": "game-1",
+      "generation": "generation-1"
+    }
+  },
+  {
+    "name": "valid-7-session",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "session",
+      "generation": "generation-1",
+      "gameId": null,
+      "peerConnected": false
+    }
+  },
+  {
+    "name": "valid-8-session",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "session",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "peerConnected": true
+    }
+  },
+  {
+    "name": "valid-9-status",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "status",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "available": true,
+      "reason": null
+    }
+  },
+  {
+    "name": "valid-10-snapshot",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "valid-11-move",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "commandId": "command",
+      "from": "e2",
+      "to": "e4"
+    }
+  },
+  {
+    "name": "valid-12-snapshot-request",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "snapshot-request",
+      "gameId": "game-1",
+      "generation": "generation-1"
+    }
+  },
+  {
+    "name": "valid-13-error",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "error",
+      "code": "peer_unavailable",
+      "message": "Peer disconnected"
+    }
+  },
+  {
+    "name": "valid-14-move",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "commandId": "promotion-q",
+      "from": "a7",
+      "to": "a8",
+      "promotion": "q"
+    }
+  },
+  {
+    "name": "valid-15-move",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "commandId": "promotion-r",
+      "from": "a7",
+      "to": "a8",
+      "promotion": "r"
+    }
+  },
+  {
+    "name": "valid-16-move",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "commandId": "promotion-b",
+      "from": "a7",
+      "to": "a8",
+      "promotion": "b"
+    }
+  },
+  {
+    "name": "valid-17-move",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "commandId": "promotion-n",
+      "from": "a7",
+      "to": "a8",
+      "promotion": "n"
+    }
+  },
+  {
+    "name": "valid-18-outcome",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "outcome",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "commandId": "command",
+      "outcome": "rejected",
+      "reason": null
+    }
+  },
+  {
+    "name": "valid-19-outcome",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "outcome",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "commandId": "command",
+      "outcome": "uncertain",
+      "reason": null
+    }
+  },
+  {
+    "name": "valid-20-outcome",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "outcome",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "commandId": "command",
+      "outcome": "observed-complete",
+      "reason": null
+    }
+  },
+  {
+    "name": "valid-21-snapshot",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": "https://example.com/avatar.png",
+        "blackAvatar": null
+      },
+      "playerColor": null,
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "black",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "valid-22-snapshot",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": "draw",
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": "checkmate"
+    }
+  },
+  {
+    "name": "valid-23-snapshot",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": "draw",
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": "stalemate"
+    }
+  },
+  {
+    "name": "valid-24-snapshot",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": "draw",
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": "timeout"
+    }
+  },
+  {
+    "name": "valid-25-snapshot",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": "draw",
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": "resignation"
+    }
+  },
+  {
+    "name": "valid-26-snapshot",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": "draw",
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": "insufficient-material"
+    }
+  },
+  {
+    "name": "valid-27-snapshot",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": "draw",
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": "repetition"
+    }
+  },
+  {
+    "name": "valid-28-snapshot",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": "draw",
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": "fifty-move-rule"
+    }
+  },
+  {
+    "name": "valid-29-snapshot",
+    "valid": true,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": "draw",
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": "agreement"
+    }
+  },
+  {
+    "name": "missing-authenticate-v",
+    "valid": false,
+    "message": {
+      "type": "authenticate",
+      "credential": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  {
+    "name": "missing-authenticate-type",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "credential": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  {
+    "name": "missing-authenticate-credential",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "authenticate"
+    }
+  },
+  {
+    "name": "extra-authenticate",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "authenticate",
+      "credential": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "unexpected": true
+    }
+  },
+  {
+    "name": "missing-authenticated-v",
+    "valid": false,
+    "message": {
+      "type": "authenticated",
+      "role": "tv",
+      "pairingId": "pair"
+    }
+  },
+  {
+    "name": "missing-authenticated-type",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "role": "tv",
+      "pairingId": "pair"
+    }
+  },
+  {
+    "name": "missing-authenticated-role",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "authenticated",
+      "pairingId": "pair"
+    }
+  },
+  {
+    "name": "missing-authenticated-pairingId",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "authenticated",
+      "role": "tv"
+    }
+  },
+  {
+    "name": "extra-authenticated",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "authenticated",
+      "role": "tv",
+      "pairingId": "pair",
+      "unexpected": true
+    }
+  },
+  {
+    "name": "missing-authenticated-v",
+    "valid": false,
+    "message": {
+      "type": "authenticated",
+      "role": "extension",
+      "pairingId": "pair"
+    }
+  },
+  {
+    "name": "missing-authenticated-type",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "role": "extension",
+      "pairingId": "pair"
+    }
+  },
+  {
+    "name": "missing-authenticated-role",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "authenticated",
+      "pairingId": "pair"
+    }
+  },
+  {
+    "name": "missing-authenticated-pairingId",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "authenticated",
+      "role": "extension"
+    }
+  },
+  {
+    "name": "extra-authenticated",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "authenticated",
+      "role": "extension",
+      "pairingId": "pair",
+      "unexpected": true
+    }
+  },
+  {
+    "name": "missing-ping-v",
+    "valid": false,
+    "message": {
+      "type": "ping",
+      "nonce": "nonce"
+    }
+  },
+  {
+    "name": "missing-ping-type",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "nonce": "nonce"
+    }
+  },
+  {
+    "name": "missing-ping-nonce",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "ping"
+    }
+  },
+  {
+    "name": "extra-ping",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "ping",
+      "nonce": "nonce",
+      "unexpected": true
+    }
+  },
+  {
+    "name": "missing-pong-v",
+    "valid": false,
+    "message": {
+      "type": "pong",
+      "nonce": "nonce"
+    }
+  },
+  {
+    "name": "missing-pong-type",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "nonce": "nonce"
+    }
+  },
+  {
+    "name": "missing-pong-nonce",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "pong"
+    }
+  },
+  {
+    "name": "extra-pong",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "pong",
+      "nonce": "nonce",
+      "unexpected": true
+    }
+  },
+  {
+    "name": "missing-attachment-v",
+    "valid": false,
+    "message": {
+      "type": "attachment",
+      "generation": "generation-1",
+      "gameId": null
+    }
+  },
+  {
+    "name": "missing-attachment-type",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "generation": "generation-1",
+      "gameId": null
+    }
+  },
+  {
+    "name": "missing-attachment-generation",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "attachment",
+      "gameId": null
+    }
+  },
+  {
+    "name": "missing-attachment-gameId",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "attachment",
+      "generation": "generation-1"
+    }
+  },
+  {
+    "name": "extra-attachment",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "attachment",
+      "generation": "generation-1",
+      "gameId": null,
+      "unexpected": true
+    }
+  },
+  {
+    "name": "missing-attachment-v",
+    "valid": false,
+    "message": {
+      "type": "attachment",
+      "gameId": "game-1",
+      "generation": "generation-1"
+    }
+  },
+  {
+    "name": "missing-attachment-type",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "gameId": "game-1",
+      "generation": "generation-1"
+    }
+  },
+  {
+    "name": "missing-attachment-gameId",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "attachment",
+      "generation": "generation-1"
+    }
+  },
+  {
+    "name": "missing-attachment-generation",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "attachment",
+      "gameId": "game-1"
+    }
+  },
+  {
+    "name": "extra-attachment",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "attachment",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "unexpected": true
+    }
+  },
+  {
+    "name": "missing-session-v",
+    "valid": false,
+    "message": {
+      "type": "session",
+      "generation": "generation-1",
+      "gameId": null,
+      "peerConnected": false
+    }
+  },
+  {
+    "name": "missing-session-type",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "generation": "generation-1",
+      "gameId": null,
+      "peerConnected": false
+    }
+  },
+  {
+    "name": "missing-session-generation",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "session",
+      "gameId": null,
+      "peerConnected": false
+    }
+  },
+  {
+    "name": "missing-session-gameId",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "session",
+      "generation": "generation-1",
+      "peerConnected": false
+    }
+  },
+  {
+    "name": "missing-session-peerConnected",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "session",
+      "generation": "generation-1",
+      "gameId": null
+    }
+  },
+  {
+    "name": "extra-session",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "session",
+      "generation": "generation-1",
+      "gameId": null,
+      "peerConnected": false,
+      "unexpected": true
+    }
+  },
+  {
+    "name": "missing-session-v",
+    "valid": false,
+    "message": {
+      "type": "session",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "peerConnected": true
+    }
+  },
+  {
+    "name": "missing-session-type",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "peerConnected": true
+    }
+  },
+  {
+    "name": "missing-session-gameId",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "session",
+      "generation": "generation-1",
+      "peerConnected": true
+    }
+  },
+  {
+    "name": "missing-session-generation",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "session",
+      "gameId": "game-1",
+      "peerConnected": true
+    }
+  },
+  {
+    "name": "missing-session-peerConnected",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "session",
+      "gameId": "game-1",
+      "generation": "generation-1"
+    }
+  },
+  {
+    "name": "extra-session",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "session",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "peerConnected": true,
+      "unexpected": true
+    }
+  },
+  {
+    "name": "missing-status-v",
+    "valid": false,
+    "message": {
+      "type": "status",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "available": true,
+      "reason": null
+    }
+  },
+  {
+    "name": "missing-status-type",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "available": true,
+      "reason": null
+    }
+  },
+  {
+    "name": "missing-status-gameId",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "status",
+      "generation": "generation-1",
+      "available": true,
+      "reason": null
+    }
+  },
+  {
+    "name": "missing-status-generation",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "status",
+      "gameId": "game-1",
+      "available": true,
+      "reason": null
+    }
+  },
+  {
+    "name": "missing-status-available",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "status",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "reason": null
+    }
+  },
+  {
+    "name": "missing-status-reason",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "status",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "available": true
+    }
+  },
+  {
+    "name": "extra-status",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "status",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "available": true,
+      "reason": null,
+      "unexpected": true
+    }
+  },
+  {
+    "name": "missing-snapshot-v",
+    "valid": false,
+    "message": {
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-snapshot-type",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-snapshot-gameId",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-snapshot-generation",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-snapshot-revision",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-snapshot-board",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-snapshot-players",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-snapshot-playerColor",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-snapshot-turn",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-snapshot-clocks",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-snapshot-result",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-snapshot-legalMoves",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-snapshot-checkSquare",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-snapshot-bottomColor",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-snapshot-resultReason",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white"
+    }
+  },
+  {
+    "name": "extra-snapshot",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null,
+      "unexpected": true
+    }
+  },
+  {
+    "name": "missing-move-v",
+    "valid": false,
+    "message": {
+      "type": "move",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "commandId": "command",
+      "from": "e2",
+      "to": "e4"
+    }
+  },
+  {
+    "name": "missing-move-type",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "commandId": "command",
+      "from": "e2",
+      "to": "e4"
+    }
+  },
+  {
+    "name": "missing-move-gameId",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "generation": "generation-1",
+      "revision": 1,
+      "commandId": "command",
+      "from": "e2",
+      "to": "e4"
+    }
+  },
+  {
+    "name": "missing-move-generation",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "gameId": "game-1",
+      "revision": 1,
+      "commandId": "command",
+      "from": "e2",
+      "to": "e4"
+    }
+  },
+  {
+    "name": "missing-move-revision",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "commandId": "command",
+      "from": "e2",
+      "to": "e4"
+    }
+  },
+  {
+    "name": "missing-move-commandId",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "from": "e2",
+      "to": "e4"
+    }
+  },
+  {
+    "name": "missing-move-from",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "commandId": "command",
+      "to": "e4"
+    }
+  },
+  {
+    "name": "missing-move-to",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "commandId": "command",
+      "from": "e2"
+    }
+  },
+  {
+    "name": "extra-move",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "commandId": "command",
+      "from": "e2",
+      "to": "e4",
+      "unexpected": true
+    }
+  },
+  {
+    "name": "missing-snapshot-request-v",
+    "valid": false,
+    "message": {
+      "type": "snapshot-request",
+      "gameId": "game-1",
+      "generation": "generation-1"
+    }
+  },
+  {
+    "name": "missing-snapshot-request-type",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "gameId": "game-1",
+      "generation": "generation-1"
+    }
+  },
+  {
+    "name": "missing-snapshot-request-gameId",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot-request",
+      "generation": "generation-1"
+    }
+  },
+  {
+    "name": "missing-snapshot-request-generation",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot-request",
+      "gameId": "game-1"
+    }
+  },
+  {
+    "name": "extra-snapshot-request",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot-request",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "unexpected": true
+    }
+  },
+  {
+    "name": "missing-error-v",
+    "valid": false,
+    "message": {
+      "type": "error",
+      "code": "peer_unavailable",
+      "message": "Peer disconnected"
+    }
+  },
+  {
+    "name": "missing-error-type",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "code": "peer_unavailable",
+      "message": "Peer disconnected"
+    }
+  },
+  {
+    "name": "missing-error-code",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "error",
+      "message": "Peer disconnected"
+    }
+  },
+  {
+    "name": "missing-error-message",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "error",
+      "code": "peer_unavailable"
+    }
+  },
+  {
+    "name": "extra-error",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "error",
+      "code": "peer_unavailable",
+      "message": "Peer disconnected",
+      "unexpected": true
+    }
+  },
+  {
+    "name": "invalid-v-0",
+    "valid": false,
+    "message": {
+      "v": 1,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-v-1",
+    "valid": false,
+    "message": {
+      "v": 2,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-v-2",
+    "valid": false,
+    "message": {
+      "v": true,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-v-3",
+    "valid": false,
+    "message": {
+      "v": 3.1,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-v-4",
+    "valid": false,
+    "message": {
+      "v": null,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-type-0",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "unknown",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-type-1",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": null,
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-revision-0",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": -1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-revision-1",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1.5,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-revision-2",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 9007199254740992,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-revision-3",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": true,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-revision-4",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": null,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-gameId-0",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-gameId-1",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": null,
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-gameId-2",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-generation-0",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-generation-1",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": null,
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-board-0",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-board-1",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X",
+        "X"
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-board-2",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": null,
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-bottomColor-0",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": null,
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-bottomColor-1",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "blue",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-playerColor-0",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "blue",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-turn-0",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "blue",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-result-0",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": "unknown",
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-resultReason-0",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": "unknown"
+    }
+  },
+  {
+    "name": "invalid-checkSquare-0",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": "z9",
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-legalMoves-0",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": null,
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-legalMoves-1",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "z9",
+          "to": "e4"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-legalMoves-2",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e2",
+          "to": "e4",
+          "promotion": "q"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-legalMoves-3",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        },
+        {
+          "from": "e2",
+          "to": "e4"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-player-white",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-player-black",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-player-whiteAvatar",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-player-blackAvatar",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-avatar-151",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": "http://example.com/a",
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-avatar-152",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": "file:///a",
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-avatar-153",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": "https://user:pass@example.com/a",
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-avatar-154",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": "not-url",
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-avatar-155",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": "https://example.com/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-clock-remainingMs",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": -1,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-clock-running",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": "yes"
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-clocks-observedAt",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        }
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-clocks-white-remainingMs",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "running": true
+        },
+        "black": {
+          "remainingMs": null,
+          "running": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "missing-clocks-black-running",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "snapshot",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "board": [
+        "r",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "K",
+        null,
+        null,
+        null
+      ],
+      "players": {
+        "white": "White",
+        "black": "Black",
+        "whiteAvatar": null,
+        "blackAvatar": null
+      },
+      "playerColor": "white",
+      "turn": "white",
+      "clocks": {
+        "white": {
+          "remainingMs": 300000,
+          "running": true
+        },
+        "black": {
+          "remainingMs": null
+        },
+        "observedAt": 1000
+      },
+      "result": null,
+      "legalMoves": [
+        {
+          "from": "e1",
+          "to": "d1"
+        },
+        {
+          "from": "e1",
+          "to": "f1"
+        },
+        {
+          "from": "e1",
+          "to": "d2"
+        },
+        {
+          "from": "e1",
+          "to": "e2"
+        },
+        {
+          "from": "e1",
+          "to": "f2"
+        }
+      ],
+      "checkSquare": null,
+      "bottomColor": "white",
+      "resultReason": null
+    }
+  },
+  {
+    "name": "invalid-move-promotionNone",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "commandId": "command",
+      "from": "e2",
+      "to": "e4",
+      "promotion": null
+    }
+  },
+  {
+    "name": "invalid-move-promotionk",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "commandId": "command",
+      "from": "e2",
+      "to": "e4",
+      "promotion": "k"
+    }
+  },
+  {
+    "name": "invalid-move-froma9",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "commandId": "command",
+      "from": "a9",
+      "to": "e4"
+    }
+  },
+  {
+    "name": "invalid-move-commandId",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "move",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "revision": 1,
+      "commandId": "",
+      "from": "e2",
+      "to": "e4"
+    }
+  },
+  {
+    "name": "invalid-authenticated165",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "authenticated",
+      "role": "wrong",
+      "pairingId": "pair"
+    }
+  },
+  {
+    "name": "invalid-authenticate166",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "authenticate",
+      "credential": "secret"
+    }
+  },
+  {
+    "name": "invalid-outcome167",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "outcome",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "commandId": "cmd",
+      "outcome": "accepted",
+      "reason": null
+    }
+  },
+  {
+    "name": "invalid-status168",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "status",
+      "gameId": "game-1",
+      "generation": "generation-1",
+      "available": null,
+      "reason": null
+    }
+  },
+  {
+    "name": "invalid-error169",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "error",
+      "code": "",
+      "message": "bad"
+    }
+  },
+  {
+    "name": "invalid-error170",
+    "valid": false,
+    "message": {
+      "v": 3,
+      "type": "error",
+      "code": "bad",
+      "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    }
+  }
+]

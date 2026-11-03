@@ -1,6 +1,6 @@
-import { gameLayout } from "./chesscom-layout"
+import { Color } from "@chess-tv/protocol"
 
-type Color = "white" | "black"
+import { gameLayout } from "./chesscom-layout"
 
 export type TurnReading =
   | { state: "unknown"; reason: string }
@@ -48,8 +48,8 @@ export function readChessComTurn(doc: Document): TurnReading {
       state: "latest",
       latestPly: 0,
       displayedPly: 0,
-      nextColorInLatestPosition: "white",
-      nextColorInDisplayedPosition: "white",
+      nextColorInLatestPosition: Color.White,
+      nextColorInDisplayedPosition: Color.White,
     }
   }
 
@@ -73,7 +73,7 @@ export function readChessComTurn(doc: Document): TurnReading {
   if (selectedIndex < 0) return unknown("Selected move is outside the main line.")
   const latestPly = moves.length
   const displayedPly = selectedIndex + 1
-  const nextColor = (ply: number): Color => (ply % 2 === 0 ? "white" : "black")
+  const nextColor = (ply: number): Color => (ply % 2 === 0 ? Color.White : Color.Black)
   return {
     state: displayedPly === latestPly ? "latest" : "history",
     latestPly,

@@ -74,21 +74,16 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
       XCTAssertNotNil(request.value(forHTTPHeaderField: "Authorization"))
       throw URLError(.notConnectedToInternet)
     }
-    var auth = Message(type: "authenticated")
-    auth.role = "tv"
-    auth.pairingId = "pair"
+    let auth = Authenticated(role: .tv, pairingId: "pair")
     session.receive(auth)
-    var context = Message(type: "session")
     let snapshot = try ProtocolTests.fixture()
-    context.generation = snapshot.generation
-    context.gameId = snapshot.gameId
-    context.peerConnected = true
+    let context = SessionState(
+      generation: snapshot.generation, gameId: snapshot.gameId, peerConnected: true)
     session.receive(context)
     session.receive(snapshot)
-    var status = Message(type: "status")
-    status.generation = snapshot.generation
-    status.gameId = snapshot.gameId
-    status.available = true
+    let status = GameStatus(
+      context: GameContext(gameId: snapshot.gameId, generation: snapshot.generation),
+      available: true)
     session.receive(status)
     session.submit(from: 60, to: 59)
     XCTAssertNotNil(session.pending)
@@ -165,14 +160,17 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
         var bytes = [UInt8](repeating: 0, count: 128)
         let count = stream.read(&bytes, maxLength: bytes.count)
         XCTAssertGreaterThan(count, 0)
-        let decision = try JSONDecoder().decode([String: Bool].self, from: Data(bytes.prefix(max(0, count))))
+        let decision = try JSONDecoder().decode(
+          [String: Bool].self, from: Data(bytes.prefix(max(0, count))))
         XCTAssertEqual(decision, ["confirm": true])
         if lostDecisionResponse { throw URLError(.networkConnectionLost) }
         body = ["state": "confirmed"]
       case 5:
         XCTAssertEqual(request.httpMethod, "GET")
         XCTAssertEqual(request.url?.path, "/v1/pairing/\(id)")
-        body = ["state": "confirmed", "expiresAt": expiry, "pairingId": "pair", "credential": credential]
+        body = [
+          "state": "confirmed", "expiresAt": expiry, "pairingId": "pair", "credential": credential,
+        ]
       default:
         XCTFail("Unexpected extra pairing request")
         throw URLError(.badServerResponse)

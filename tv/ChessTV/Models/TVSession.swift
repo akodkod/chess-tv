@@ -10,13 +10,13 @@ import Observation
   private(set) var peerConnected = false
   private(set) var generation: String?
   private(set) var gameId: String?
-  private(set) var snapshot: Message?
-  private var movePreview: Message?
-  private var positions: [Message] = []
+  private(set) var snapshot: Snapshot?
+  private var movePreview: Snapshot?
+  private var positions: [Snapshot] = []
   private(set) var reviewIndex: Int?
   private(set) var clockReading: ClockReading?
   private(set) var available = false
-  private(set) var pending: Message?
+  private(set) var pending: MoveRequest?
   private(set) var checkingMove = false
   private(set) var needsReconnect = false
   private enum Notice {
@@ -37,7 +37,8 @@ import Observation
       }
     }
   }
-  private var currentNotice = Notice.message("Pair this TV with the Chrome extension.", warning: false)
+  private var currentNotice = Notice.message(
+    "Pair this TV with the Chrome extension.", warning: false)
   var notice: String { currentNotice.text }
   private(set) var moveNotice: String?
   private(set) var now: TimeInterval = ProcessInfo.processInfo.systemUptime
@@ -93,7 +94,7 @@ import Observation
   func previewCaptureSound() {
     if soundsEnabled { sounds.play(captureSound.sound) }
   }
-  var displayedSnapshot: Message? {
+  var displayedSnapshot: Snapshot? {
     reviewIndex.map { positions[$0] } ?? movePreview ?? snapshot
   }
   var isReviewing: Bool { reviewIndex != nil }
@@ -103,7 +104,8 @@ import Observation
     guard fresh, index > 0,
       let transition = BoardTransition.between(positions[index - 1], positions[index]),
       let move = transition.moves.first,
-      positions[index].playerColor == nil || Square.color(of: move.piece) != positions[index].playerColor
+      positions[index].playerColor == nil
+        || Square.color(of: move.piece) != positions[index].playerColor
     else { return nil }
     // Castling transitions put the king first; highlight the move's two squares.
     return move
@@ -119,7 +121,7 @@ import Observation
     guard let index = reviewIndex else { return }
     reviewIndex = index + 1 < positions.count - 1 ? index + 1 : nil
   }
-  private func recordPosition(_ message: Message) {
+  private func recordPosition(_ message: Snapshot) {
     guard fresh, let previous = positions.last,
       previous.generation == message.generation, previous.gameId == message.gameId,
       previous.playerColor == message.playerColor
@@ -377,8 +379,8 @@ import Observation
   func receive(_ message: Message) {
     guard active else { return }
     now = uptime()
-    if message.type == "authenticated" {
-      guard message.role == "tv", message.pairingId == credential?.pairingId else {
+    if case .authenticated(let message) = message {
+      guard message.role == .tv, message.pairingId == credential?.pairingId else {
         closed(code: 1002, reason: "Relay authenticated the wrong device. Unpair and try again.")
         return
       }
@@ -389,29 +391,29 @@ import Observation
       setNotice("Waiting for the extension…")
       return
     }
-    if message.type == "error" {
+    if case .error(let message) = message {
       if ["unauthorized", "invalid_credential", "unsupported_version", "invalid_message"].contains(
-        message.code ?? "")
+        message.code)
       {
-        closed(code: 1002, reason: message.message ?? "Relay rejected this client.")
+        closed(code: 1002, reason: message.message)
       } else {
         available = false
         fresh = false
         freezeClocks()
         if message.code == "peer_unavailable" { peerConnected = false }
-        setNotice(message.message ?? "Relay request failed.", warning: true)
+        setNotice(message.message, warning: true)
         // Routing errors cannot repair the context they rejected. Wait for the
         // relay's next session instead of looping snapshot requests into errors.
       }
       return
     }
     guard authenticated else { return }
-    if message.type == "session" {
+    if case .session(let message) = message {
       if pending != nil && message.generation != generation { pendingInterrupted = true }
       if pending != nil && message.gameId == nil { sawDetachAfterPending = true }
       generation = message.generation
       gameId = message.gameId
-      peerConnected = message.peerConnected == true
+      peerConnected = message.peerConnected
       available = false
       fresh = false
       snapshotAt = nil
@@ -419,17 +421,19 @@ import Observation
       freezeClocks()
       setNotice(
         !peerConnected
-        ? "Waiting for the Chrome extension to reconnect…"
-        : gameId == nil
-          ? "Start a Chess.com game, then connect it in the Chrome extension"
-          : "Synchronizing game…", warning: !peerConnected)
+          ? "Waiting for the Chrome extension to reconnect…"
+          : gameId == nil
+            ? "Start a Chess.com game, then connect it in the Chrome extension"
+            : "Synchronizing game…", warning: !peerConnected)
       requestSnapshot()
       return
     }
-    guard message.generation == generation, message.gameId == gameId, gameId != nil else { return }
-    switch message.type {
-    case "snapshot":
-      if fresh, let old = snapshot?.revision, let next = message.revision, next < old { return }
+    switch message {
+    case .snapshot(let message):
+      guard message.generation == generation, message.gameId == gameId, gameId != nil else {
+        return
+      }
+      if fresh, let old = snapshot?.revision, message.revision < old { return }
       if fresh, message.revision == snapshot?.revision,
         message.board != snapshot?.board || message.turn != snapshot?.turn
           || message.playerColor != snapshot?.playerColor || message.result != snapshot?.result
@@ -453,7 +457,8 @@ import Observation
           sounds.play((result == .whiteWon) == (player == .white) ? .win : .lose)
         } else if let transition = BoardTransition.between(previous, message) {
           sounds.play(
-            message.checkSquare != nil ? .check
+            message.checkSquare != nil
+              ? .check
               : transition.capturedSquare == nil ? .move : captureSound.sound)
         }
       }
@@ -469,31 +474,35 @@ import Observation
       snapshot = message
       fresh = true
       snapshotAt = now
-      if let clocks = message.clocks {
-        clockReading = ClockReading(
-          clocks: clocks, receivedAt: now, frozenAt: message.result == nil ? nil : now)
-      }
+      clockReading = ClockReading(
+        clocks: message.clocks, receivedAt: now, frozenAt: message.result == nil ? nil : now)
       reconcileInterrupted()
-    case "status":
-      available = message.available == true
+    case .status(let message):
+      guard message.generation == generation, message.gameId == gameId, gameId != nil else {
+        return
+      }
+      available = message.available
       statusAt = now
       setNotice(
         message.reason ?? "",
         warning: !available && snapshot?.result == nil && message.reason != nil)
       reconcileInterrupted()
-    case "outcome":
+    case .outcome(let message):
+      guard message.generation == generation, message.gameId == gameId, gameId != nil else {
+        return
+      }
       guard message.commandId == pending?.commandId, !pendingInterrupted else { return }
-      if message.outcome == "uncertain" {
+      if message.outcome == .uncertain {
         movePreview = nil
         moveNotice = message.reason
       } else {
-        if message.outcome == "rejected" { movePreview = nil }
+        if message.outcome == .rejected { movePreview = nil }
         pending = nil
         pendingAt = nil
         checkingMove = false
         available = false
         statusAt = nil
-        moveNotice = message.outcome == "rejected" ? (message.reason ?? "Move rejected.") : nil
+        moveNotice = message.outcome == .rejected ? (message.reason ?? "Move rejected.") : nil
         requestSnapshot()
       }
     default: break
@@ -512,24 +521,20 @@ import Observation
       checkingMove = false
     }
   }
-  func submit(from: Int, to: Int, promotion: String? = nil) {
+  func submit(from: Int, to: Int, promotion: Promotion? = nil) {
     now = uptime()
     guard canMove, (0..<64).contains(from), (0..<64).contains(to), from != to,
-      let snapshot, let board = snapshot.board,
-      Square.color(of: board[from]) == snapshot.playerColor
+      let snapshot,
+      Square.color(of: snapshot.board[from]) == snapshot.playerColor
     else { return }
-    let promotes = Square.promotion(piece: board[from], destination: to)
-    guard promotes ? ["q", "r", "b", "n"].contains(promotion ?? "") : promotion == nil else {
+    let promotes = Square.promotion(piece: snapshot.board[from], destination: to)
+    guard promotes ? promotion != nil : promotion == nil else {
       return
     }
-    var move = Message(type: "move")
-    move.gameId = gameId
-    move.generation = generation
-    move.revision = snapshot.revision
-    move.commandId = UUID().uuidString
-    move.from = Square.name(from)
-    move.to = Square.name(to)
-    move.promotion = promotion
+    let move = MoveRequest(
+      context: snapshot.context, revision: snapshot.revision,
+      commandId: UUID().uuidString, from: Square.name(from), to: Square.name(to),
+      promotion: promotion)
     pending = move
     pendingAt = now
     checkingMove = false
@@ -537,14 +542,13 @@ import Observation
     sawDetachAfterPending = false
     moveNotice = nil
     movePreview = BoardTransition.preview(snapshot, from: from, to: to, promotion: promotion)
-    send(move)
+    send(.move(move))
   }
   func requestSnapshot() {
     guard authenticated, peerConnected, let generation, let gameId else { return }
-    var message = Message(type: "snapshot-request")
-    message.generation = generation
-    message.gameId = gameId
-    send(message)
+    send(
+      .snapshotRequest(
+        SnapshotRequest(context: GameContext(gameId: gameId, generation: generation))))
   }
   private func send(_ message: Message) {
     let epoch = connection

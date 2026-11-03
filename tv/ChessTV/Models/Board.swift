@@ -15,25 +15,25 @@ enum Square {
   static func order(for color: PieceColor?) -> [Int] {
     (0..<64).map { displayIndex($0, for: color) }
   }
-  static func color(of piece: String?) -> PieceColor? {
+  static func color(of piece: Piece?) -> PieceColor? {
     guard let piece else { return nil }
-    return piece == piece.uppercased() ? .white : .black
+    return piece.color
   }
-  static func promotion(piece: String?, destination: Int) -> Bool {
-    (piece == "P" && destination / 8 == 0) || (piece == "p" && destination / 8 == 7)
+  static func promotion(piece: Piece?, destination: Int) -> Bool {
+    (piece == .whitePawn && destination / 8 == 0) || (piece == .blackPawn && destination / 8 == 7)
   }
-  static func pieceName(_ piece: String?) -> String {
+  static func pieceName(_ piece: Piece?) -> String {
     guard let piece else { return "empty" }
     let names = ["p": "pawn", "n": "knight", "b": "bishop", "r": "rook", "q": "queen", "k": "king"]
     return
-      "\(color(of: piece) == .white ? "White" : "Black") \(names[piece.lowercased()] ?? "piece")"
+      "\(color(of: piece) == .white ? "White" : "Black") \(names[piece.rawValue.lowercased()] ?? "piece")"
   }
-  static func glyph(_ piece: String?) -> String {
+  static func glyph(_ piece: Piece?) -> String {
     guard let piece else { return "" }
     // Request text presentation: the black pawn otherwise becomes a colored emoji.
     // Use filled silhouettes for both sides, with contrasting foreground/outline.
     let symbols = ["k": "♚", "q": "♛", "r": "♜", "b": "♝", "n": "♞", "p": "♟"]
-    return (symbols[piece.lowercased()] ?? "") + "\u{FE0E}"
+    return (symbols[piece.rawValue.lowercased()] ?? "") + "\u{FE0E}"
   }
 }
 
@@ -54,7 +54,6 @@ struct ClockReading {
     return String(format: "%d:%02d", seconds / 60, seconds % 60)
   }
 }
-
 
 extension String {
   var displayText: String {

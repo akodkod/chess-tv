@@ -1,9 +1,7 @@
-import type { Message } from "@chess-tv/protocol"
+import { Color, GameResult, GameResultReason, pieceSchema, type Snapshot } from "@chess-tv/protocol"
 import { Chess } from "chess.js"
 
 import { position } from "./chesscom-move"
-
-type Snapshot = Extract<Message, { type: "snapshot" }>
 
 // Reconstruct rules from the complete recorded game, then independently compare
 // every rendered square. Never publish a guessed position during an animation.
@@ -14,13 +12,7 @@ export function readGame(doc: Document) {
   const board: Snapshot["board"] = chess
     .board()
     .flat()
-    .map((p) =>
-      p
-        ? ((p.color === "w" ? p.type.toUpperCase() : p.type) as NonNullable<
-            Snapshot["board"][number]
-          >)
-        : null,
-    )
+    .map((p) => (p ? pieceSchema.parse(p.color === "w" ? p.type.toUpperCase() : p.type) : null))
   for (let i = 0; i < 64; i++) {
     const square = `${String.fromCharCode(97 + (i % 8))}${8 - Math.floor(i / 8)}`
     const piece = observed.pieces.get(square)?.code
@@ -30,22 +22,22 @@ export function readGame(doc: Document) {
   const resultText = observed.list.querySelector(".game-result")?.textContent?.trim()
   let result: Snapshot["result"] =
     resultText === "1-0"
-      ? "white-won"
+      ? GameResult.WhiteWon
       : resultText === "0-1"
-        ? "black-won"
+        ? GameResult.BlackWon
         : resultText === "1/2-1/2"
-          ? "draw"
+          ? GameResult.Draw
           : null
   let resultReason: Snapshot["resultReason"] = null
   if (chess.isCheckmate()) {
-    result = chess.turn() === "w" ? "black-won" : "white-won"
-    resultReason = "checkmate"
+    result = chess.turn() === "w" ? GameResult.BlackWon : GameResult.WhiteWon
+    resultReason = GameResultReason.Checkmate
   } else if (chess.isStalemate()) {
-    result = "draw"
-    resultReason = "stalemate"
+    result = GameResult.Draw
+    resultReason = GameResultReason.Stalemate
   } else if (chess.isInsufficientMaterial()) {
-    result = "draw"
-    resultReason = "insufficient-material"
+    result = GameResult.Draw
+    resultReason = GameResultReason.InsufficientMaterial
   }
   // Only accept a page-supplied reason once the move list confirms a result.
   // The modal can appear a rendering pass later than the final board position.
@@ -54,15 +46,21 @@ export function readGame(doc: Document) {
       .querySelector(".game-over-modal-subtitle-text")
       ?.textContent?.trim()
       .toLowerCase()
-    if (subtitle && /\b(time(?:out)?|time out)\b/.test(subtitle)) resultReason = "timeout"
-    else if (subtitle?.includes("resignation")) resultReason = "resignation"
-    else if (result === "draw") {
-      if (chess.isThreefoldRepetition()) resultReason = "repetition"
-      else if (chess.isDrawByFiftyMoves()) resultReason = "fifty-move-rule"
-      else if (subtitle?.includes("agreement")) resultReason = "agreement"
+    if (subtitle && /\b(time(?:out)?|time out)\b/.test(subtitle))
+      resultReason = GameResultReason.Timeout
+    else if (subtitle?.includes("resignation")) resultReason = GameResultReason.Resignation
+    else if (result === GameResult.Draw) {
+      if (chess.isThreefoldRepetition()) resultReason = GameResultReason.Repetition
+      else if (chess.isDrawByFiftyMoves()) resultReason = GameResultReason.FiftyMoveRule
+      else if (subtitle?.includes("agreement")) resultReason = GameResultReason.Agreement
     }
   }
-  const players: Snapshot["players"] = { white: null, black: null }
+  const players: Snapshot["players"] = {
+    white: null,
+    black: null,
+    whiteAvatar: null,
+    blackAvatar: null,
+  }
   const clocks: Snapshot["clocks"] = {
     white: { remainingMs: null, running: null },
     black: { remainingMs: null, running: null },
@@ -74,7 +72,7 @@ export function readGame(doc: Document) {
     const flipped = observed.board.classList.contains("flipped")
     for (const row of rows) {
       const top = row.classList.contains(topClass)
-      const color = top === flipped ? "white" : "black"
+      const color = top === flipped ? Color.White : Color.Black
       players[color] =
         row
           .querySelector('[data-test-element="user-tagline-username"]')
@@ -82,12 +80,12 @@ export function readGame(doc: Document) {
           .slice(0, 128) || null
       const image = row.querySelector<HTMLImageElement>("img.cc-avatar-img")
       const avatar = avatarURL(image?.currentSrc || image?.getAttribute("src"), doc.baseURI)
-      if (avatar) players[color === "white" ? "whiteAvatar" : "blackAvatar"] = avatar
+      if (avatar) players[color === Color.White ? "whiteAvatar" : "blackAvatar"] = avatar
       const clock = row.querySelector(".clock-component")
       if (
         observed.online &&
         (!clock?.classList.contains(`clock-${color}`) ||
-          clock.classList.contains(`clock-${color === "white" ? "black" : "white"}`))
+          clock.classList.contains(`clock-${color === Color.White ? Color.Black : Color.White}`))
       )
         throw new Error("Waiting for player colors and clocks to agree.")
       const remainingMs = parseClock(
@@ -101,7 +99,7 @@ export function readGame(doc: Document) {
             !result &&
             (observed.online
               ? clock!.classList.contains("clock-player-turn")
-              : (chess.turn() === "w" ? "white" : "black") === color),
+              : (chess.turn() === "w" ? Color.White : Color.Black) === color),
         }
         clocks.observedAt = Date.now()
       }
@@ -113,7 +111,7 @@ export function readGame(doc: Document) {
     const profile = new URL(profiles[0]!.href, doc.baseURI)
     const username = /^\/member\/([^/]+)\/?$/.exec(profile.pathname)?.[1]?.toLowerCase()
     if (profile.origin === "https://www.chess.com" && username) {
-      const matches = (["white", "black"] as const).filter(
+      const matches = ([Color.White, Color.Black] as const).filter(
         (color) => players[color]?.toLowerCase() === username,
       )
       if (matches.length === 1) playerColor = matches[0]!
@@ -121,7 +119,7 @@ export function readGame(doc: Document) {
   }
   const activeClocks = doc.querySelectorAll(".player-component .clock-player-turn")
   const followedUser = new URL(doc.URL).searchParams.get("username")?.toLowerCase()
-  const followedColors = (["white", "black"] as const).filter(
+  const followedColors = ([Color.White, Color.Black] as const).filter(
     (color) => followedUser && players[color]?.toLowerCase() === followedUser,
   )
   const bottomColor =
@@ -129,12 +127,14 @@ export function readGame(doc: Document) {
     (followedColors.length === 1
       ? followedColors[0]!
       : observed.board.classList.contains("flipped")
-        ? "black"
-        : "white")
+        ? Color.Black
+        : Color.White)
   const playable =
     !observed.online ||
     (activeClocks.length === 1 &&
-      activeClocks[0]!.classList.contains(`clock-${chess.turn() === "w" ? "white" : "black"}`) &&
+      activeClocks[0]!.classList.contains(
+        `clock-${chess.turn() === "w" ? Color.White : Color.Black}`,
+      ) &&
       clocks.white.remainingMs !== null &&
       clocks.black.remainingMs !== null)
   return {

@@ -1,4 +1,11 @@
-import { MAX_BYTES, messageSchema, type Message } from "@chess-tv/protocol"
+import {
+  DeviceRole,
+  MessageKind,
+  VERSION,
+  MAX_BYTES,
+  messageSchema,
+  type Message,
+} from "@chess-tv/protocol"
 
 export class RelayLink {
   socket?: WebSocket
@@ -58,7 +65,13 @@ export class RelayLink {
     ws.onopen = () => {
       if (ws !== this.socket) return
       try {
-        ws.send(JSON.stringify({ v: 2, type: "authenticate", credential: this.credential }))
+        ws.send(
+          JSON.stringify({
+            v: VERSION,
+            type: MessageKind.Authenticate,
+            credential: this.credential,
+          }),
+        )
       } catch {
         this.closed(ws, 0, "Authentication failed")
       }
@@ -80,8 +93,8 @@ export class RelayLink {
         return
       }
       const m = parsed.data
-      if (m.type === "authenticated") {
-        if (m.role !== "extension" || this.authenticated) {
+      if (m.type === MessageKind.Authenticated) {
+        if (m.role !== DeviceRole.Extension || this.authenticated) {
           this.fail("Relay returned an invalid device role.")
           return
         }
@@ -96,10 +109,11 @@ export class RelayLink {
             return
           }
           this.nonce ??= crypto.randomUUID()
-          this.send({ v: 2, type: "ping", nonce: this.nonce })
+          this.send({ v: VERSION, type: MessageKind.Ping, nonce: this.nonce })
         }, 20000)
-      } else if (m.type === "ping") this.send({ v: 2, type: "pong", nonce: m.nonce })
-      else if (m.type === "pong") {
+      } else if (m.type === MessageKind.Ping)
+        this.send({ v: VERSION, type: MessageKind.Pong, nonce: m.nonce })
+      else if (m.type === MessageKind.Pong) {
         if (m.nonce === this.nonce) {
           this.lastPong = Date.now()
           this.nonce = undefined

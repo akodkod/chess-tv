@@ -1,18 +1,19 @@
+import { Color, MoveOutcome, Promotion } from "@chess-tv/protocol"
 import { Chess } from "chess.js"
 
 import { gameLayout } from "./chesscom-layout"
 import { readChessComTurn } from "./chesscom-turn"
 
-type MoveRequest = {
+type PageMoveRequest = {
   kind: "bot-move"
   id: string
   token: string
   from: string
   to: string
-  color: "white" | "black"
-  promotion?: "q" | "r" | "b" | "n"
+  color: Color
+  promotion?: Promotion
 }
-type BotReply = { message: string; outcome: "observed-complete" | "uncertain" }
+type BotReply = { message: string; outcome: MoveOutcome.ObservedComplete | MoveOutcome.Uncertain }
 
 export function position(doc: Document) {
   const turn = readChessComTurn(doc)
@@ -66,7 +67,7 @@ export function squareCenter(square: string, rect: DOMRect, flipped: boolean) {
 export function moveObserved(
   before: ReturnType<typeof position>,
   after: ReturnType<typeof position>,
-  move: MoveRequest,
+  move: PageMoveRequest,
 ) {
   const piece = before.pieces.get(move.from)!.code
   const promoted = move.promotion ? piece[0] + move.promotion : piece
@@ -137,7 +138,7 @@ export function createMoveController() {
   const outcomes = new Map<string, Promise<BotReply>>()
   const token = (p: ReturnType<typeof position>) => instance + p.fingerprint
 
-  async function submit(move: MoveRequest): Promise<BotReply> {
+  async function submit(move: PageMoveRequest): Promise<BotReply> {
     if (pending || uncertain)
       throw new Error("A move is unresolved. Inspect Chrome; do not resend it.")
     if (document.hidden) throw new Error("Keep the game tab visible.")
@@ -181,7 +182,10 @@ export function createMoveController() {
         clearTimeout(timeout)
         pending = false
         uncertain = unresolved
-        resolve({ message, outcome: unresolved ? "uncertain" : "observed-complete" })
+        resolve({
+          message,
+          outcome: unresolved ? MoveOutcome.Uncertain : MoveOutcome.ObservedComplete,
+        })
       }
       let promotionSelected = false
       const observer = new MutationObserver(() => {
@@ -237,7 +241,7 @@ export function createMoveController() {
     get unresolved() {
       return pending || uncertain
     },
-    async move(action: MoveRequest) {
+    async move(action: PageMoveRequest) {
       const known = outcomes.get(action.id)
       if (known) return await known
       if (outcomes.size >= 500) throw new Error("Session move limit reached. Reconnect the game.")

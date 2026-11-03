@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vite-plus/test"
 
 import snapshot from "../fixtures/snapshot.json"
+import { VERSION } from "./index"
 import { parseMessage } from "./index"
 describe("protocol", () => {
   it("accepts shared snapshots with explicit unknown clocks", () => {
@@ -30,7 +31,7 @@ describe("protocol", () => {
   })
   it("accepts all promotions and rejects invalid coordinates", () => {
     const move = {
-      v: 2,
+      v: VERSION,
       type: "move",
       gameId: "g",
       generation: "s",
@@ -90,3 +91,19 @@ it("keeps viewing orientation separate from player identity", () => {
   }
   expect(() => parseMessage({ ...snapshot, bottomColor: "unknown" })).toThrow()
 })
+
+// Both runtimes read exactly the same contract cases.
+import cases from "../fixtures/messages.json"
+import { messageSchema, MessageKind } from "./index"
+it("covers every message kind in the shared corpus", () => {
+  expect(new Set(cases.filter((c) => c.valid).map((c) => c.message.type))).toEqual(
+    new Set(Object.values(MessageKind)),
+  )
+})
+for (const entry of cases) {
+  it(`shared contract: ${entry.name}`, () => {
+    const parsed = messageSchema.safeParse(entry.message)
+    expect(parsed.success).toBe(entry.valid)
+    if (parsed.success) expect(parsed.data).toEqual(entry.message)
+  })
+}

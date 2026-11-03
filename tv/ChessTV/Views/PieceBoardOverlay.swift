@@ -3,7 +3,7 @@ import UIKit
 
 /// Pieces have no focus or hit targets; the underlying square buttons own input.
 struct PieceBoardOverlay: View {
-  let snapshot: Message
+  let snapshot: Snapshot
   let side: CGFloat
   var selectedSquare: Int?
   var animateChanges = true
@@ -22,7 +22,7 @@ struct PieceBoardOverlay: View {
 }
 
 private struct PieceLayerBoard: UIViewRepresentable {
-  let snapshot: Message
+  let snapshot: Snapshot
   let side: CGFloat
   let selectedSquare: Int?
   let animateChanges: Bool
@@ -41,10 +41,10 @@ private struct PieceLayerBoard: UIViewRepresentable {
 /// Model positions always hold the latest board; presentation layers retain motion
 /// across clock/confirmation updates and provide the origin of interrupted moves.
 @MainActor final class PieceLayerView: UIView {
-  private var previous: Message?
+  private var previous: Snapshot?
   private var pieces: [Int: CALayer] = [:]
   private var flights: [CALayer] = []
-  private var images: [String: UIImage] = [:]
+  private var images: [Piece: UIImage] = [:]
   private var side: CGFloat = 0
   private var resetToken = ""
   private var animating = false
@@ -67,15 +67,18 @@ private struct PieceLayerBoard: UIViewRepresentable {
   }
 
   func update(
-    _ snapshot: Message, side: CGFloat, selectedSquare: Int?,
+    _ snapshot: Snapshot, side: CGFloat, selectedSquare: Int?,
     animateChanges: Bool, resetToken: String
   ) {
     let old = previous
-    let reset = self.side != side || self.resetToken != resetToken
+    let reset =
+      self.side != side || self.resetToken != resetToken
       || animating != animateChanges || old?.gameId != snapshot.gameId
-      || old?.generation != snapshot.generation || old?.boardOrientation != snapshot.boardOrientation
+      || old?.generation != snapshot.generation
+      || old?.boardOrientation != snapshot.boardOrientation
     let changed = old?.board != snapshot.board
-    let transition = !reset && animateChanges
+    let transition =
+      !reset && animateChanges
       ? old.flatMap { BoardTransition.presentationBetween($0, snapshot) } : nil
     self.side = side
     self.resetToken = resetToken
@@ -93,12 +96,13 @@ private struct PieceLayerBoard: UIViewRepresentable {
       return false
     }
     if let transition {
-      let reversing = (snapshot.revision ?? 0) < (old?.revision ?? 0)
+      let reversing = snapshot.revision < (old?.revision ?? 0)
       if reversing {
         for flight in flights { flight.removeFromSuperlayer() }
         flights = []
       }
-      let opponentCapture = transition.capturedSquare != nil
+      let opponentCapture =
+        transition.capturedSquare != nil
         && snapshot.playerColor != nil && old?.turn != snapshot.playerColor
       let duration = opponentCapture ? 0.35 : 0.18
       if let square = transition.capturedSquare, let victim = pieces.removeValue(forKey: square) {
@@ -111,7 +115,8 @@ private struct PieceLayerBoard: UIViewRepresentable {
       let moving = transition.moves.map { ($0, pieces.removeValue(forKey: $0.from)) }
       for (move, existing) in moving {
         let piece = existing ?? makePiece(move.piece)
-        let start = piece.presentation()?.position ?? center(move.from, color: snapshot.boardOrientation)
+        let start =
+          piece.presentation()?.position ?? center(move.from, color: snapshot.boardOrientation)
         let target = center(move.to, color: snapshot.boardOrientation)
         piece.removeAnimation(forKey: "move")
         piece.position = target
@@ -133,7 +138,8 @@ private struct PieceLayerBoard: UIViewRepresentable {
         }
       }
     }
-    if let board = snapshot.board {
+    do {
+      let board = snapshot.board
       for square in 0..<min(64, board.count) {
         guard let code = board[square] else {
           pieces.removeValue(forKey: square)?.removeFromSuperlayer()
@@ -168,14 +174,14 @@ private struct PieceLayerBoard: UIViewRepresentable {
     previous = snapshot
   }
 
-  private func image(_ code: String) -> UIImage {
+  private func image(_ code: Piece) -> UIImage {
     if let image = images[code] { return image }
     let prefix = Square.color(of: code) == .white ? "w" : "b"
-    let image = UIImage(named: "chess-\(prefix)\(code.lowercased())") ?? UIImage()
+    let image = UIImage(named: "chess-\(prefix)\(code.rawValue.lowercased())") ?? UIImage()
     images[code] = image
     return image
   }
-  private func makePiece(_ code: String) -> CALayer {
+  private func makePiece(_ code: Piece) -> CALayer {
     let piece = CALayer()
     piece.contents = image(code).cgImage
     piece.contentsGravity = .resizeAspect
@@ -186,8 +192,9 @@ private struct PieceLayerBoard: UIViewRepresentable {
   }
   private func center(_ square: Int, color: PieceColor?) -> CGPoint {
     let index = Square.displayIndex(square, for: color)
-    return CGPoint(x: (CGFloat(index % 8) + 0.5) * side / 8,
-                   y: (CGFloat(index / 8) + 0.5) * side / 8)
+    return CGPoint(
+      x: (CGFloat(index % 8) + 0.5) * side / 8,
+      y: (CGFloat(index / 8) + 0.5) * side / 8)
   }
   private func launch(
     _ victim: CALayer, square: Int, attacker: Int, color: PieceColor?,
@@ -196,7 +203,8 @@ private struct PieceLayerBoard: UIViewRepresentable {
     let origin = center(square, color: color)
     let victimFile = Square.displayIndex(square, for: color) % 8
     let attackerFile = Square.displayIndex(attacker, for: color) % 8
-    let direction: CGFloat = attackerFile == victimFile
+    let direction: CGFloat =
+      attackerFile == victimFile
       ? (victimFile < 4 ? -1 : 1) : (attackerFile < victimFile ? 1 : -1)
     victim.removeAllAnimations()
     victim.transform = CATransform3DIdentity
@@ -207,9 +215,10 @@ private struct PieceLayerBoard: UIViewRepresentable {
     let steps = 120
     motion.values = (0...steps).map { step in
       let t = CGFloat(step) / CGFloat(steps)
-      return NSValue(cgPoint: CGPoint(
-        x: origin.x + direction * side * 0.65 * t,
-        y: origin.y + side * (-1.4 * t + 4 * t * t)))
+      return NSValue(
+        cgPoint: CGPoint(
+          x: origin.x + direction * side * 0.65 * t,
+          y: origin.y + side * (-1.4 * t + 4 * t * t)))
     }
     scale.values = (0...steps).map { step in
       let t = CGFloat(step) / CGFloat(steps)

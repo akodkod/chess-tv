@@ -29,9 +29,7 @@ import Foundation
     receiver = Task { [weak self] in
       guard let self else { return }
       do {
-        var auth = Message(type: "authenticate")
-        auth.credential = credential
-        try await send(auth)
+        try await send(.authenticate(Authenticate(credential: credential)))
         guard epoch == self.epoch else { return }
         heartbeat = Task { [weak self] in
           while !Task.isCancelled {
@@ -42,10 +40,9 @@ import Foundation
               return
             }
             if self.pingNonce == nil {
-              var ping = Message(type: "ping")
-              ping.nonce = UUID().uuidString
+              let ping = Heartbeat(nonce: UUID().uuidString)
               self.pingNonce = ping.nonce
-              do { try await self.send(ping) } catch {
+              do { try await self.send(.ping(ping)) } catch {
                 self.fail(epoch: epoch, code: 0, reason: "Relay connection was lost.")
                 return
               }
@@ -59,17 +56,15 @@ import Foundation
             throw ProtocolFailure("Expected a text JSON relay message.")
           }
           let message = try Message.decode(Data(text.utf8))
-          if message.type == "ping" {
-            var pong = Message(type: "pong")
-            pong.nonce = message.nonce
-            try await send(pong)
-          } else if message.type == "pong" {
-            if message.nonce == pingNonce {
+          switch message {
+          case .ping(let ping):
+            try await send(.pong(Heartbeat(nonce: ping.nonce)))
+          case .pong(let pong):
+            if pong.nonce == pingNonce {
               lastPong = ProcessInfo.processInfo.systemUptime
               pingNonce = nil
             }
-          } else {
-            onMessage?(message)
+          default: onMessage?(message)
           }
         }
       } catch {

@@ -20,7 +20,7 @@ flowchart LR
 
 Chess.com's observed state is authoritative. The extension observes the page and performs human-selected moves. The relay authenticates and routes messages. The TV renders snapshots and requests moves.
 
-Use a small Bun workspace containing `extension`, `relay`, and `protocol` packages, alongside a native Xcode project. Share TypeScript protocol definitions directly; align Swift `Codable` types through JSON fixtures. No generated clients or library publishing pipeline is needed.
+Use a small Bun workspace containing `extension`, `relay`, and `protocol` packages, alongside a native Xcode project. Share named Zod schemas, inferred payload types, and native TypeScript enums directly. Swift uses an associated-value `Message` enum with concrete payloads; snapshots, previews, and history use `Snapshot`, and pending commands use `MoveRequest`. Protocol v3 requires orientation and explicit nulls for unknown result reasons and avatars. Align both runtimes through a shared valid/invalid JSON fixture corpus. No generated clients or library publishing pipeline is needed.
 
 | Area                                 | Choice                                                                             |
 | ------------------------------------ | ---------------------------------------------------------------------------------- |
@@ -93,7 +93,7 @@ Use a versioned envelope and reject incompatible versions with an actionable err
 | Message           | Contents and responsibility                                                                                                                                                                           |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Attachment/status | Game identity, session generation, availability, and reason when input is blocked                                                                                                                     |
-| Full snapshot     | Game identity, generation, position revision, board placement, player/color, side to move, observed clocks with timing metadata, legal destinations, check square, result, and optional result reason |
+| Full snapshot     | Game identity, generation, position revision, board placement, player/color, side to move, observed clocks with timing metadata, legal destinations, check square, result, and nullable result reason |
 | Move request      | Unique command ID, expected game/generation/revision, source, destination, and promotion choice when needed                                                                                           |
 | Move outcome      | Command ID and rejected, uncertain, or observed-complete outcome                                                                                                                                      |
 | Snapshot request  | Ask the extension to observe and publish fresh state                                                                                                                                                  |

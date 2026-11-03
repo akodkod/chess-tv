@@ -1,3 +1,4 @@
+import { Color } from "@chess-tv/protocol"
 import { JSDOM } from "jsdom"
 import { expect, it } from "vite-plus/test"
 
@@ -11,7 +12,7 @@ function snapshot(moves: string[], pawn = "54") {
       .map(
         (san, i) => `
       <div class="main-line-row" data-whole-move-number="${Math.floor(i / 2) + 1}">
-        <div class="main-line-ply ${i % 2 ? "black" : "white"}-move" data-node="0-${i}">
+        <div class="main-line-ply ${i % 2 ? Color.Black : Color.White}-move" data-node="0-${i}">
           <span class="node-highlight-content ${i === moves.length - 1 ? "selected" : ""}">${san}</span>
         </div></div>`,
       )
@@ -25,7 +26,7 @@ const move = {
   token: "test",
   from: "e4",
   to: "e5",
-  color: "white" as const,
+  color: Color.White as const,
 }
 
 it("confirms e5 even when a bot reply has already appended another ply", () => {

@@ -80,3 +80,13 @@ it("accepts optional result reasons and rejects unsupported reasons", () => {
   }
   expect(() => parseMessage({ ...snapshot, resultReason: "guessed" })).toThrow()
 })
+
+it("keeps viewing orientation separate from player identity", () => {
+  for (const bottomColor of ["white", "black"]) {
+    expect(parseMessage({ ...snapshot, playerColor: null, bottomColor })).toMatchObject({
+      playerColor: null,
+      bottomColor,
+    })
+  }
+  expect(() => parseMessage({ ...snapshot, bottomColor: "unknown" })).toThrow()
+})

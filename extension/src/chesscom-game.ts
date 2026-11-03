@@ -120,6 +120,17 @@ export function readGame(doc: Document) {
     }
   }
   const activeClocks = doc.querySelectorAll(".player-component .clock-player-turn")
+  const followedUser = new URL(doc.URL).searchParams.get("username")?.toLowerCase()
+  const followedColors = (["white", "black"] as const).filter(
+    (color) => followedUser && players[color]?.toLowerCase() === followedUser,
+  )
+  const bottomColor =
+    playerColor ??
+    (followedColors.length === 1
+      ? followedColors[0]!
+      : observed.board.classList.contains("flipped")
+        ? "black"
+        : "white")
   const playable =
     !observed.online ||
     (activeClocks.length === 1 &&
@@ -136,6 +147,7 @@ export function readGame(doc: Document) {
     players,
     clocks,
     playerColor,
+    bottomColor,
   }
 }
 

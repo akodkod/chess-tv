@@ -16,13 +16,13 @@ struct PairingView: View {
           Text("Code expires in \(remaining / 60):\(String(format: "%02d", remaining % 60))")
             .font(.caption).foregroundStyle(.secondary).monospacedDigit()
         }.accessibilityHidden(true)
-        Text(session.notice).multilineTextAlignment(.center)
+        Text(session.notice.displayText).multilineTextAlignment(.center)
       } else {
-        Text(session.notice).multilineTextAlignment(.center)
+        Text(session.notice.displayText).multilineTextAlignment(.center)
         Button(session.busy ? "Requesting code…" : "Get pairing code") { session.createCode() }
           .disabled(session.busy)
       }
-      Text("Keep Chrome awake, with the connected game tab selected and visible.")
+      Text("Keep Chrome awake, with the connected game tab selected and visible")
         .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
     }.frame(maxWidth: 1100).padding(60)
   }

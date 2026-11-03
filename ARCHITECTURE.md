@@ -102,7 +102,7 @@ Represent unknown values explicitly, including clocks; unknown is not zero. No h
 
 The relay issues a new opaque session generation whenever either connection is replaced or attachment changes, and shares it with both endpoints. The extension must adopt it before publishing fresh state. Both clients reject older generations. The extension advances position revision for board or move-relevant status changes, but not clock-only updates.
 
-The adapter requires reliable game identity, board, player, and turn observation, plus reliable move acceptance detection. Chess.com remains authoritative for acceptance. The extension replays the complete recorded history with chess.js to reject illegal user-selected moves and checks the resulting placement against every rendered square. It never chooses a move, infers castling/en-passant rights from placement alone, or treats the TV’s temporary move preview as authoritative.
+The adapter requires reliable game identity, board, and turn observation. Move input additionally requires player identity and reliable move acceptance detection. Online spectator snapshots have a null playerColor and a separate bottomColor chosen from the URL username, falling back to browser orientation. The TV disables square focus and selection while retaining live updates and move review. Chess.com remains authoritative for acceptance. The extension replays the complete recorded history with chess.js to reject illegal user-selected moves and checks the resulting placement against every rendered square. It never chooses a move, infers castling/en-passant rights from placement alone, or treats the TV’s temporary move preview as authoritative.
 
 ### Move and recovery rules
 

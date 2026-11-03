@@ -24,7 +24,7 @@ export function buildSettings(mode: string, relayValue?: string) {
       name: "Chess TV",
       version: "0.1.0",
       minimum_chrome_version: "116",
-      description: "Play your Chess.com game from Apple TV.",
+      description: "Play or watch Chess.com games on Apple TV",
       permissions: ["storage", "scripting", "alarms"],
       host_permissions: [
         "https://www.chess.com/play/computer*",

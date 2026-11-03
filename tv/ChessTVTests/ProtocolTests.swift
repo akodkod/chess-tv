@@ -3,6 +3,20 @@ import XCTest
 @testable import ChessTV
 
 final class ProtocolTests: XCTestCase {
+  func testSpectatorOrientationAndDisplayText() throws {
+    var snapshot = try Self.fixture()
+    snapshot.playerColor = nil
+    for color in [PieceColor.white, .black] {
+      snapshot.bottomColor = color
+      let decoded = try Message.decode(snapshot.encoded())
+      XCTAssertEqual(decoded.boardOrientation, color)
+      XCTAssertNil(decoded.playerColor)
+      XCTAssertEqual(Square.order(for: decoded.boardOrientation).first, color == .black ? 63 : 0)
+    }
+    XCTAssertEqual("Viewing game.".displayText, "Viewing game")
+    XCTAssertEqual("Open Chess.com to watch.".displayText, "Open Chess.com to watch")
+    XCTAssertEqual("Game changed. Connect again.".displayText, "Game changed. Connect again.")
+  }
   static func fixture() throws -> Message {
     let url = Bundle(for: ProtocolTests.self).url(forResource: "snapshot", withExtension: "json")!
     return try Message.decode(Data(contentsOf: url))

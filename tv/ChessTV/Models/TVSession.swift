@@ -101,10 +101,9 @@ import Observation
     if !isReviewing && movePreview != nil { return nil }
     let index = reviewIndex ?? (positions.count - 1)
     guard fresh, index > 0,
-      let player = positions[index].playerColor,
       let transition = BoardTransition.between(positions[index - 1], positions[index]),
       let move = transition.moves.first,
-      Square.color(of: move.piece) != player
+      positions[index].playerColor == nil || Square.color(of: move.piece) != positions[index].playerColor
     else { return nil }
     // Castling transitions put the king first; highlight the move's two squares.
     return move
@@ -434,6 +433,7 @@ import Observation
       if fresh, message.revision == snapshot?.revision,
         message.board != snapshot?.board || message.turn != snapshot?.turn
           || message.playerColor != snapshot?.playerColor || message.result != snapshot?.result
+          || message.bottomColor != snapshot?.bottomColor
           || message.resultReason != snapshot?.resultReason
           || message.legalMoves != snapshot?.legalMoves
           || message.checkSquare != snapshot?.checkSquare

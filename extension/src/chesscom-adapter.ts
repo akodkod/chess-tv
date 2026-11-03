@@ -12,7 +12,7 @@ export class ChessComAdapter {
   readonly instance = crypto.randomUUID()
   private gameId = crypto.randomUUID()
   private generation = ""
-  private color: Color = "white"
+  private color: Color | null = null
   private enabled = false
   private revision = 0
   private fingerprint = ""
@@ -28,7 +28,7 @@ export class ChessComAdapter {
   private read() {
     const p = readGame(this.doc)
     const color = p.playerColor
-    if (!color)
+    if (!color && !p.online)
       throw new Error(
         "Cannot detect your playing color. Sign in to Chess.com, open your current game, and reconnect.",
       )
@@ -61,6 +61,7 @@ export class ChessComAdapter {
     const fingerprint = JSON.stringify([
       p.fingerprint,
       this.color,
+      p.bottomColor,
       p.result,
       p.resultReason,
       p.playable,
@@ -79,6 +80,7 @@ export class ChessComAdapter {
     const context = { v: 2 as const, gameId: this.gameId, generation: this.generation }
     const available =
       this.enabled &&
+      this.color !== null &&
       !this.doc.hidden &&
       !this.controller.unresolved &&
       !p.result &&
@@ -92,6 +94,7 @@ export class ChessComAdapter {
         board: p.boardCells,
         players: p.players,
         playerColor: this.color,
+        bottomColor: p.bottomColor,
         turn: p.chess.turn() === "w" ? "white" : "black",
         clocks: p.clocks,
         result: p.result,
@@ -120,9 +123,11 @@ export class ChessComAdapter {
           ? null
           : this.controller.unresolved
             ? "Move unresolved. Inspect Chrome and reconnect the game."
-            : p.result
-              ? "Game finished. Start a new game in Chrome."
-              : "Keep the game visible and connected.",
+            : this.color === null
+              ? "Viewing game."
+              : p.result
+                ? "Game finished. Start a new game in Chrome."
+                : "Keep the game visible and connected.",
       },
     ])
   }
@@ -158,6 +163,7 @@ export class ChessComAdapter {
         throw new Error("Position changed. Choose your move again.")
       if (
         !this.enabled ||
+        !this.color ||
         this.doc.hidden ||
         p.result ||
         !p.playable ||

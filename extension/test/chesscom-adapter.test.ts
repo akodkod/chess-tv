@@ -670,3 +670,49 @@ it.each(["stopped clocks", "wrong turn", "missing identity", "history view"])(
     expect(click).not.toHaveBeenCalled()
   },
 )
+
+it.each([false, true])("streams a friend's game read-only (signed out=%s)", async (signedOut) => {
+  const { adapter, doc, board, chess, render } = onlineFixture()
+  const profile = doc.querySelector<HTMLAnchorElement>('a[data-user-activity-key="profile"]')!
+  if (signedOut) profile.remove()
+  else profile.href = "https://www.chess.com/member/spectator"
+  const click = vi.fn()
+  board.addEventListener("click", click)
+  const snapshot = await sync(adapter)
+  expect(snapshot.playerColor).toBeNull()
+  expect(snapshot.players).toMatchObject({ black: "Human", white: "Zach" })
+  const reply = await adapter.handle(command(snapshot, "d7", "d5"))
+  expect(reply.messages).toContainEqual(
+    expect.objectContaining({ type: "outcome", outcome: "rejected" }),
+  )
+  expect(reply.messages).toContainEqual(
+    expect.objectContaining({ type: "status", available: false, reason: "Viewing game." }),
+  )
+  expect(click).not.toHaveBeenCalled()
+  chess.move("d5")
+  render()
+  const next = await sync(adapter)
+  expect(next.revision).toBeGreaterThan(snapshot.revision)
+  expect(next.board).not.toEqual(snapshot.board)
+  expect(next.playerColor).toBeNull()
+})
+
+it.each(["white", "black"] as const)(
+  "orients spectator games toward the followed %s player",
+  async (color) => {
+    const { adapter, doc, dom, board } = onlineFixture()
+    doc.querySelector<HTMLAnchorElement>('a[data-user-activity-key="profile"]')!.href =
+      "https://www.chess.com/member/viewer"
+    const username = color === "black" ? "HUMAN" : "ZACH"
+    dom.reconfigure({ url: `https://www.chess.com/game/186417811766?username=${username}` })
+    const snapshot = await sync(adapter)
+    expect(snapshot).toMatchObject({ playerColor: null, bottomColor: color })
+    const click = vi.fn()
+    board.addEventListener("click", click)
+    await adapter.handle(command(snapshot, "d7", "d5"))
+    expect(click).not.toHaveBeenCalled()
+    dom.reconfigure({ url: "https://www.chess.com/game/186417811766?username=unknown" })
+    const fallback = await sync(adapter)
+    expect(fallback.bottomColor).toBe("white")
+  },
+)

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 
+import { displayText } from "./display-text"
 import type { PopupState } from "./messages"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
@@ -56,7 +57,7 @@ export function ChessComPopup() {
               ? "Connected to TV"
               : state.gameId
                 ? "Game connected — see Debug for status."
-                : "Open a bot game to connect automatically."
+                : "Open a game to play or watch on TV."
   return (
     <main className="w-[320px] space-y-5 bg-stone-50 p-5 text-stone-900">
       <header className="flex items-center justify-between gap-4">
@@ -73,7 +74,7 @@ export function ChessComPopup() {
                 className="size-2 shrink-0 rounded-full bg-emerald-700"
               />
             )}
-            {summary}
+            {displayText(summary)}
           </p>
         ) : (
           <span />
@@ -99,7 +100,7 @@ export function ChessComPopup() {
                 role="status"
                 className="text-sm break-words"
               >
-                {problem ?? state?.status ?? "Connecting…"}
+                {displayText(problem ?? state?.status ?? "Connecting…")}
               </p>
               <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-xs">
                 {[
@@ -164,7 +165,7 @@ export function ChessComPopup() {
             </>
           ) : state && !state.paired ? (
             <>
-              <p className="text-sm text-stone-600">Enter the code shown on your TV.</p>
+              <p className="text-sm text-stone-600">Enter the code shown on your TV</p>
               <form
                 className="space-y-3"
                 onSubmit={(event) => {
@@ -197,7 +198,7 @@ export function ChessComPopup() {
                   role="status"
                   className="text-sm"
                 >
-                  Pairing needs attention — see Debug.
+                  Pairing needs attention — see Debug
                 </p>
               )}
             </>

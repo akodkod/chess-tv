@@ -341,7 +341,7 @@ async function autoAttach() {
   try {
     await attach(true)
   } catch (e) {
-    status = e instanceof Error ? e.message : "Start a bot game and connect it to the TV."
+    status = e instanceof Error ? e.message : "Open a game to play or watch on TV"
   }
 }
 async function tick() {

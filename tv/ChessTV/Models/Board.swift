@@ -54,3 +54,16 @@ struct ClockReading {
     return String(format: "%d:%02d", seconds / 60, seconds % 60)
   }
 }
+
+
+extension String {
+  var displayText: String {
+    let text = trimmingCharacters(in: .whitespacesAndNewlines)
+    guard text.hasSuffix(".") else { return text }
+    var count = 0
+    text.enumerateSubstrings(in: text.startIndex..<text.endIndex, options: .bySentences) {
+      _, _, _, _ in count += 1
+    }
+    return count == 1 ? String(text.dropLast()) : text
+  }
+}

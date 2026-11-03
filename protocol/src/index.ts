@@ -47,6 +47,7 @@ export const messageSchema = z.discriminatedUnion("type", [
       blackAvatar: avatar,
     }),
     playerColor: color.nullable(),
+    bottomColor: color.optional(),
     turn: color.nullable(),
     clocks: z.strictObject({
       white: clock,

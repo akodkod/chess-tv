@@ -73,7 +73,7 @@ private struct PieceLayerBoard: UIViewRepresentable {
     let old = previous
     let reset = self.side != side || self.resetToken != resetToken
       || animating != animateChanges || old?.gameId != snapshot.gameId
-      || old?.generation != snapshot.generation || old?.playerColor != snapshot.playerColor
+      || old?.generation != snapshot.generation || old?.boardOrientation != snapshot.boardOrientation
     let changed = old?.board != snapshot.board
     let transition = !reset && animateChanges
       ? old.flatMap { BoardTransition.presentationBetween($0, snapshot) } : nil
@@ -104,15 +104,15 @@ private struct PieceLayerBoard: UIViewRepresentable {
       if let square = transition.capturedSquare, let victim = pieces.removeValue(forKey: square) {
         launch(
           victim, square: square, attacker: transition.moves.first!.from,
-          color: snapshot.playerColor, delay: duration,
+          color: snapshot.boardOrientation, delay: duration,
           duration: opponentCapture ? 1.75 : 1.25)
       }
       // Remove sources together, so castling can reuse both existing layers.
       let moving = transition.moves.map { ($0, pieces.removeValue(forKey: $0.from)) }
       for (move, existing) in moving {
         let piece = existing ?? makePiece(move.piece)
-        let start = piece.presentation()?.position ?? center(move.from, color: snapshot.playerColor)
-        let target = center(move.to, color: snapshot.playerColor)
+        let start = piece.presentation()?.position ?? center(move.from, color: snapshot.boardOrientation)
+        let target = center(move.to, color: snapshot.boardOrientation)
         piece.removeAnimation(forKey: "move")
         piece.position = target
         piece.zPosition = 1
@@ -143,7 +143,7 @@ private struct PieceLayerBoard: UIViewRepresentable {
         pieces[square] = piece
         piece.contents = image(code).cgImage
         piece.bounds = CGRect(x: 0, y: 0, width: side / 8, height: side / 8)
-        piece.position = center(square, color: snapshot.playerColor)
+        piece.position = center(square, color: snapshot.boardOrientation)
         let isSelected = selectedSquare == square
         if selected != selectedSquare || reset || changed {
           let from = piece.presentation()?.transform ?? piece.transform

@@ -88,6 +88,28 @@ final class MemoryCredentials: CredentialStoring {
     XCTAssertTrue(session.statusText.hasPrefix("Move interrupted."))
   }
 
+  func testSpectatorUpdatesAndReviewNeverEnableMoves() throws {
+    state()
+    var initial = try soundPosition()
+    initial.playerColor = nil
+    session.receive(initial)
+    available()
+    XCTAssertFalse(session.canMove)
+    session.submit(from: 52, to: 36)
+    XCTAssertNil(session.pending)
+    let next = pawnMove(initial)
+    session.receive(next)
+    XCTAssertEqual(session.displayedSnapshot?.board, next.board)
+    XCTAssertEqual(session.displayedOpponentMove?.from, 52)
+    XCTAssertEqual(session.displayedOpponentMove?.to, 36)
+    XCTAssertTrue(session.canGoBack)
+    session.previousMove()
+    XCTAssertEqual(session.displayedSnapshot?.board, initial.board)
+    session.nextMove()
+    XCTAssertFalse(session.canMove)
+    XCTAssertTrue(socket.sent.filter { $0.type == "move" }.isEmpty)
+  }
+
   func testMoveReviewKeepsLiveUpdatesAndPreventsSubmission() throws {
     state()
     let initial = try soundPosition()
@@ -580,6 +602,15 @@ final class MemoryCredentials: CredentialStoring {
     attachment.name = "Board focus - \(color.rawValue)"
     attachment.lifetime = .keepAlways
     add(attachment)
+    snapshot.playerColor = nil
+    snapshot.revision! += 1
+    session.receive(snapshot)
+    try await Task.sleep(for: .milliseconds(300))
+    candidates.removeAll()
+    visited.removeAll()
+    collectFocusItems(window)
+    XCTAssertEqual(candidates.count, 2, "Spectators can focus Settings and Connection only")
+    XCTAssertFalse(host.isBoardSquare(system.focusedItem))
   }
   func testBoardRenderingForVisualInspection() throws {
     guard ProcessInfo.processInfo.environment["CHESS_TV_RENDER"] == "1" else {

@@ -28,6 +28,7 @@ struct BoardView: View {
   @State private var promotionSource: Int?
   @State private var restoreFocus: Int?
   @FocusState private var focused: Int?
+  @FocusState private var settingsFocused: Bool
   @Environment(\.colorSchemeContrast) private var contrast
 
   var body: some View {
@@ -35,15 +36,16 @@ struct BoardView: View {
       let side = min(geometry.size.height - 116, geometry.size.width - 404)
       HStack(alignment: .center, spacing: 64) {
         VStack(spacing: 10) {
-          playerLine(snapshot.playerColor == .black ? .white : .black)
+          playerLine(snapshot.boardOrientation == .black ? .white : .black)
           grid(side: max(240, side))
             .zIndex(1)
-          playerLine(snapshot.playerColor == .black ? .black : .white)
+          playerLine(snapshot.boardOrientation == .black ? .black : .white)
         }.frame(width: max(240, side))
           .zIndex(1)
         VStack(alignment: .leading, spacing: 32) {
           VStack(alignment: .leading, spacing: 20) {
             Button("Settings", systemImage: "gearshape", action: onSettings)
+              .focused($settingsFocused)
             Button(
               "Connection", systemImage: "antenna.radiowaves.left.and.right",
               action: onConnection)
@@ -89,7 +91,11 @@ struct BoardView: View {
     .task {
       // A game can arrive while Connection already owns focus. Hand focus to
       // the board once on appearance, without resetting it on snapshot updates.
-      focused = Square.index(snapshot.playerColor == .black ? "e7" : "e2")
+      if snapshot.playerColor != nil {
+        focused = Square.index(snapshot.boardOrientation == .black ? "e7" : "e2")
+      } else {
+        settingsFocused = true
+      }
     }
     .sheet(
       isPresented: Binding(
@@ -118,6 +124,10 @@ struct BoardView: View {
     .onChange(of: session.selectionContext) { _, _ in
       source = nil
       promotionTarget = nil
+      if snapshot.playerColor == nil && focused != nil {
+        focused = nil
+        settingsFocused = true
+      }
     }
     .onExitCommand(perform: source != nil && promotionTarget == nil ? { source = nil } : nil)
   }
@@ -151,12 +161,7 @@ struct BoardView: View {
     {
       return nil
     }
-    guard text.hasSuffix(".") else { return text }
-    var sentenceCount = 0
-    text.enumerateSubstrings(in: text.startIndex..<text.endIndex, options: .bySentences) {
-      _, _, _, _ in sentenceCount += 1
-    }
-    return sentenceCount == 1 ? String(text.dropLast()) : text
+    return text.displayText
   }
 
   private func playerLine(_ color: PieceColor) -> some View {
@@ -188,7 +193,7 @@ struct BoardView: View {
     }.font(.headline)
   }
   private func grid(side: CGFloat) -> some View {
-    let order = Square.order(for: snapshot.playerColor)
+    let order = Square.order(for: snapshot.boardOrientation)
     let opponentMove = session.displayedOpponentMove
     return VStack(spacing: 0) {
       ForEach(0..<8) { row in
@@ -252,6 +257,7 @@ struct BoardView: View {
       }.frame(width: size, height: size)
     }
     .buttonStyle(BoardSquareButtonStyle()).focused($focused, equals: index)
+    .disabled(snapshot.playerColor == nil)
     .accessibilityLabel("\(Square.name(index)), \(Square.pieceName(piece))")
     .accessibilityValue(
       [
@@ -266,7 +272,7 @@ struct BoardView: View {
     .accessibilityAddTraits(selected ? [.isSelected] : [])
   }
   @ViewBuilder private func squareLabels(_ index: Int, size: CGFloat, light: Bool) -> some View {
-    let displayIndex = Square.displayIndex(index, for: snapshot.playerColor)
+    let displayIndex = Square.displayIndex(index, for: snapshot.boardOrientation)
     let name = Square.name(index)
     ZStack(alignment: .topLeading) {
       if edgeSquareLabelsOnly {

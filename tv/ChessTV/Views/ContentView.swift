@@ -33,7 +33,7 @@ struct ContentView: View {
             Image(systemName: "checkerboard.rectangle").font(.system(size: 80)).accessibilityHidden(
               true)
             Text("Waiting for a game").font(.title)
-            Text(session.statusText).multilineTextAlignment(.center)
+            Text(session.statusText.displayText).multilineTextAlignment(.center)
             Spacer()
           }
         }.padding(.horizontal, 32).padding(.vertical, 16)
@@ -49,7 +49,7 @@ struct ContentView: View {
     .sheet(isPresented: $showConnection) {
       VStack(spacing: 30) {
         Text("Connection").font(.title)
-        Text(session.statusText).multilineTextAlignment(.center)
+        Text(session.statusText.displayText).multilineTextAlignment(.center)
         Button("Reconnect relay") {
           session.reconnect()
           showConnection = false
@@ -81,7 +81,7 @@ private struct BoardSettingsView: View {
         Toggle("Show square labels", isOn: $showSquareLabels)
         Toggle("Labels on board edges only", isOn: $edgeSquareLabelsOnly)
           .disabled(!showSquareLabels)
-        Text("Show ranks along the left edge and files along the bottom edge.")
+        Text("Show ranks along the left edge and files along the bottom edge")
           .font(.callout).foregroundStyle(.secondary)
           .multilineTextAlignment(.center)
           .fixedSize(horizontal: false, vertical: true)

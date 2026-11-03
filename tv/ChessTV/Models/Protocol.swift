@@ -92,6 +92,8 @@ struct Message: Codable, Equatable {
   var checkSquare: String?
   var players: Players?
   var playerColor: PieceColor?
+  var bottomColor: PieceColor?
+  var boardOrientation: PieceColor? { bottomColor ?? playerColor }
   var turn: PieceColor?
   var clocks: Clocks?
   var result: GameResult?
@@ -134,7 +136,7 @@ struct Message: Codable, Equatable {
     }
     let required = fields.union(["v", "type"])
     let allowed = type == "move" ? required.union(["promotion"])
-      : type == "snapshot" ? required.union(["resultReason"]) : required
+      : type == "snapshot" ? required.union(["resultReason", "bottomColor"]) : required
     guard required.isSubset(of: Set(object.keys)), Set(object.keys).isSubset(of: allowed) else {
       throw ProtocolFailure("Relay message fields do not match protocol v2.")
     }

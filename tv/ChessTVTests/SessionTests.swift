@@ -74,6 +74,92 @@ final class MemoryCredentials: CredentialStoring {
     session.receive(try ProtocolTests.fixture())
     available()
   }
+  func testVoiceWarningIsTransientAndDoesNotDisableMoves() throws {
+    try ready()
+    let couldMove = session.canMove
+    let warning = GameStatus(context: GameContext(gameId: "game-1", generation: "generation-1"),
+      available: true, reason: "Voice command: That move is not legal.")
+    session.receive(warning)
+    XCTAssertEqual(session.gameplayWarning, warning.reason)
+    XCTAssertEqual(session.canMove, couldMove)
+    time += 4.1
+    session.tick()
+    XCTAssertNil(session.gameplayWarning)
+    session.receive(warning)
+    available()
+    XCTAssertNil(session.gameplayWarning)
+    var stale = warning
+    stale.generation = "old-generation"
+    session.receive(stale)
+    XCTAssertNil(session.gameplayWarning)
+  }
+  func testIdleSleepRequiresAnActiveAttachedUnfinishedGame() throws {
+    XCTAssertFalse(session.shouldPreventIdleSleep, "Waiting for a game must allow sleep")
+    try ready()
+    XCTAssertTrue(session.shouldPreventIdleSleep)
+    var snapshot = try XCTUnwrap(session.snapshot)
+    snapshot.playerColor = nil
+    snapshot.revision += 1
+    session.receive(snapshot)
+    XCTAssertTrue(session.shouldPreventIdleSleep, "Spectating must stay awake too")
+    session.setActive(false)
+    XCTAssertFalse(session.shouldPreventIdleSleep, "Backgrounding must restore idle sleep")
+    session.setActive(true)
+    session.receive(Authenticated(role: .tv, pairingId: "pair"))
+    state(game: nil)
+    XCTAssertFalse(session.shouldPreventIdleSleep, "A detached stale board must allow sleep")
+    state(generation: "new-generation", game: "new-game")
+    XCTAssertFalse(session.shouldPreventIdleSleep, "The old board is not the newly attached game")
+  }
+
+  func testIdleSleepUsesLiveResultWhileReviewing() throws {
+    state()
+    let initial = try soundPosition()
+    session.receive(initial)
+    available()
+    var next = pawnMove(initial)
+    session.receive(next)
+    session.previousMove()
+    XCTAssertTrue(session.isReviewing)
+    XCTAssertTrue(session.shouldPreventIdleSleep)
+    next.revision += 1
+    next.result = .whiteWon
+    session.receive(next)
+    XCTAssertNil(session.displayedSnapshot?.result)
+    XCTAssertFalse(session.shouldPreventIdleSleep, "Reviewing an earlier move cannot keep a finished game awake")
+  }
+
+  func testIdleSleepSurvivesTemporaryButNotTerminalDisconnect() throws {
+    try ready()
+    session.closed(code: 1006, reason: "Temporary network interruption")
+    XCTAssertTrue(session.shouldPreventIdleSleep)
+    session.closed(code: 4003, reason: "Pairing revoked")
+    XCTAssertFalse(session.shouldPreventIdleSleep)
+  }
+
+  func testConfirmedVoiceMoveHidesCursorUntilRemoteInteraction() throws {
+    try ready()
+    XCTAssertFalse(session.boardCursorHidden)
+    outcome(.rejected, command: "voice-rejected")
+    outcome(.uncertain, command: "voice-uncertain")
+    outcome(.observedComplete, command: "unrelated-remote-command")
+    XCTAssertFalse(session.boardCursorHidden)
+    outcome(.observedComplete, command: "voice-first")
+    XCTAssertTrue(session.boardCursorHidden)
+    available()
+    XCTAssertTrue(session.boardCursorHidden, "Routine updates must not reveal the cursor")
+    session.revealBoardCursor()
+    XCTAssertFalse(session.boardCursorHidden)
+    outcome(.observedComplete, command: "voice-first")
+    XCTAssertFalse(session.boardCursorHidden, "Duplicate outcomes must not hide the cursor again")
+    outcome(.observedComplete, command: "voice-second")
+    XCTAssertTrue(session.boardCursorHidden)
+    state(generation: "new-game")
+    XCTAssertFalse(session.boardCursorHidden)
+    outcome(.observedComplete, command: "voice-stale")
+    XCTAssertFalse(session.boardCursorHidden, "Old-context voice outcomes must be ignored")
+  }
+
   func testDisplayTextCannotGiveTransportErrorUnpairPriority() throws {
     try ready()
     session.submit(from: 60, to: 59)
@@ -553,8 +639,8 @@ final class MemoryCredentials: CredentialStoring {
     }
     try await Task.sleep(for: .milliseconds(300))
     let system = try XCTUnwrap(UIFocusSystem.focusSystem(for: window))
-    let connection = try XCTUnwrap(system.focusedItem)
-    XCTAssertFalse(host.isBoardSquare(connection))
+    let settings = try XCTUnwrap(system.focusedItem)
+    XCTAssertFalse(host.isBoardSquare(settings))
     state()
     var snapshot = try ProtocolTests.fixture()
     snapshot.playerColor = color
@@ -564,7 +650,7 @@ final class MemoryCredentials: CredentialStoring {
     try await Task.sleep(for: .milliseconds(500))
     let square = try XCTUnwrap(system.focusedItem)
     XCTAssertTrue(host.isBoardSquare(square), "Board focus must select silent feedback")
-    XCTAssertFalse(square === connection, "The arriving board must take focus from Connection")
+    XCTAssertFalse(square === settings, "The arriving board must take focus from Settings")
     var candidates: [ObjectIdentifier: any UIFocusItem] = [:]
     var visited: Set<ObjectIdentifier> = []
     func collectFocusItems(_ environment: any UIFocusEnvironment) {
@@ -584,7 +670,7 @@ final class MemoryCredentials: CredentialStoring {
     }
     collectFocusItems(window)
     XCTAssertEqual(
-      candidates.count, 66, "Connection, Settings and all 64 squares must be focusable")
+      candidates.count, 65, "Settings and all 64 squares must be focusable")
     XCTAssertNotNil(candidates[ObjectIdentifier(square)])
     snapshot.revision += 1
     session.receive(snapshot)
@@ -604,9 +690,63 @@ final class MemoryCredentials: CredentialStoring {
     candidates.removeAll()
     visited.removeAll()
     collectFocusItems(window)
-    XCTAssertEqual(candidates.count, 2, "Spectators can focus Settings and Connection only")
+    XCTAssertEqual(candidates.count, 1, "Spectators can focus Settings only")
     XCTAssertFalse(host.isBoardSquare(system.focusedItem))
   }
+  func testInlineSettingsPreservesBoardAndDisablesBoardFocus() async throws {
+    try ready()
+    let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.first as? UIWindowScene)
+    let previousWindow = scene.keyWindow
+    let window = UIWindow(windowScene: scene)
+    var board = BoardView(session: session, snapshot: try XCTUnwrap(session.displayedSnapshot),
+      onSettings: {})
+    let host = BoardFocusHostingController(rootView: board)
+    window.rootViewController = host
+    window.makeKeyAndVisible()
+    defer {
+      window.isHidden = true
+      previousWindow?.makeKeyAndVisible()
+    }
+    func region(in view: UIView) -> BoardFocusRegionView? {
+      if let region = view as? BoardFocusRegionView { return region }
+      return view.subviews.lazy.compactMap { region(in: $0) }.first
+    }
+    try await Task.sleep(for: .milliseconds(300))
+    let originalRegion = try XCTUnwrap(region(in: host.view))
+    let originalFrame = originalRegion.convert(originalRegion.bounds, to: host.view)
+    let focus = try XCTUnwrap(UIFocusSystem.focusSystem(for: window))
+    XCTAssertTrue(host.isBoardSquare(focus.focusedItem))
+
+    board.settingsPanel = AnyView(BoardSettingsView(
+      session: session, page: .constant(.settings), showSquareLabels: .constant(true),
+      edgeSquareLabelsOnly: .constant(true), soundsEnabled: .constant(true),
+      soundVolume: .constant(1), captureSound: .constant(.classic),
+      lastMoveColor: .constant(.yellow), selectedSquareColor: .constant(.yellow)))
+    host.rootView = board
+    try await Task.sleep(for: .milliseconds(300))
+    XCTAssertTrue(region(in: host.view) === originalRegion, "Opening settings must not remount the board")
+    XCTAssertEqual(originalRegion.bounds.size, originalFrame.size, "The board keeps its size when there is room")
+    XCTAssertNotNil(focus.focusedItem)
+    XCTAssertFalse(host.isBoardSquare(focus.focusedItem), "Settings must remove focus from the board")
+
+    var updatedSnapshot = board.snapshot
+    updatedSnapshot.revision += 1
+    board = BoardView(session: session, snapshot: updatedSnapshot, onSettings: {},
+      settingsPanel: board.settingsPanel)
+    host.rootView = board
+    try await Task.sleep(for: .milliseconds(100))
+    XCTAssertTrue(region(in: host.view) === originalRegion)
+    XCTAssertFalse(host.isBoardSquare(focus.focusedItem), "Incoming updates must not steal settings focus")
+
+    board.settingsPanel = nil
+    host.rootView = board
+    try await Task.sleep(for: .milliseconds(300))
+    XCTAssertTrue(region(in: host.view) === originalRegion)
+    XCTAssertNotNil(focus.focusedItem)
+    XCTAssertFalse(host.isBoardSquare(focus.focusedItem), "Closing settings restores the Settings button")
+    XCTAssertEqual(originalRegion.convert(originalRegion.bounds, to: host.view), originalFrame)
+  }
+
   func testBoardRenderingForVisualInspection() throws {
     guard ProcessInfo.processInfo.environment["CHESS_TV_RENDER"] == "1" else {
       throw XCTSkip(

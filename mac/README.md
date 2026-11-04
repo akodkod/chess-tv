@@ -1,6 +1,6 @@
 # Chess TV for macOS
 
-A single Chess.com webview with a connection status bar. macOS 14 or later.
+A single Chess.com browser island with connection status and controls in the window toolbar. macOS 14 or later.
 
 ## Build and run
 
@@ -10,7 +10,12 @@ Install the repository's dependencies with `bun install --frozen-lockfile`, then
 ./mac/script/build_and_run.sh
 ```
 
-Or open `mac/ChessTVMac.xcodeproj` and run the **ChessTVMac** scheme. The Xcode build phase bundles the existing TypeScript adapter with Vite+ for Safari 17; no Chrome extension is required. Xcode and Bun must be installed. The development app is signed locally; distribution and notarization are not configured.
+The script first builds the pinned `transcribe.cpp` Swift framework under
+`mac/.generated`. First setup requires network access and Python 3; if CMake/Ninja
+are missing, pinned copies are installed into `mac/.build/runtime-tools`.
+For direct Xcode builds, run `./mac/script/prepare_speech_runtime.sh` once first.
+
+Then open `mac/ChessTVMac.xcodeproj` and run the **ChessTVMac** scheme. The Xcode build phase bundles the existing TypeScript adapter with Vite+ for Safari 17; no Chrome extension is required. Xcode and Bun must be installed. The development app is signed locally; distribution and notarization are not configured.
 
 The run script also accepts `--verify`, `--debug`, `--logs`, and `--telemetry`. The local Codex Run action invokes it.
 
@@ -23,7 +28,7 @@ The run script also accepts `--verify`, `--debug`, `--logs`, and `--telemetry`. 
 
 TV moves remain enabled when the Mac window is unfocused, covered, hidden, or minimized. Keep the app running and the Mac awake. A Mac-only animation callback fallback keeps Chess.com board updates progressing while WebKit hides the page. The adapter still requires board/history confirmation and never retries an uncertain move. Choose bots, new games, and time controls on Chess.com. Use **Navigate** for Back (⌘[), Forward (⌘]), Home (⇧⌘H), and Reload (⌘R).
 
-**Disconnect Game** pauses automatic attachment. **Connect / Reconnect Game** resumes it and acknowledges inspection of an interrupted move. Always inspect the actual board before using this action after an uncertain move. Commands are never automatically replayed after a crash, navigation, or ambiguous result.
+**Disconnect Game** pauses automatic attachment. **Connect Game** resumes automatic attachment. The action reads **Reconnect Game** when a game is already attached or an interrupted move needs inspection; reconnecting acknowledges that inspection. Always inspect the actual board before using this action after an uncertain move. Commands are never automatically replayed after a crash, navigation, or ambiguous result.
 
 Pairing credentials, pending claims, and interrupted-move state are stored in Keychain, scoped to the relay origin. Unpairing revokes the pairing remotely; an offline revocation retains the credential and blocks reconnection until Unpair succeeds. The webview never receives relay credentials.
 
@@ -52,3 +57,136 @@ xcodebuild -project mac/ChessTVMac.xcodeproj -scheme ChessTVMac \
 Native tests cover pairing, expiry/rejection, revocation retry, page availability, stale commands, durable interruption recovery, the shared wire corpus, and adapter execution in a real WKWebView. The WebKit fixture verifies isolated-world access, DOM-observed moves with visible, hidden, and minimized windows, and duplicate-command handling. A native integration test starts the real Bun relay on a temporary port/database and exercises pairing, snapshots, move outcomes, relay reconnection, and unpairing with a simulated TV client.
 
 Live validation: signed-in bot play, pairing with a physical Apple TV through Device Hub, TV-to-Mac moves, Mac-to-TV updates, and bot replies were verified. Background verification included a TV move and bot reply with the Mac window minimized, then a capture and bot reply with the app hidden. Real-WebKit regression fixtures require animation callbacks to complete in visible, hidden, and minimized windows.
+
+## Voice control
+
+Click the microphone in the window toolbar to toggle English voice commands. It
+starts off on each launch. In **… → Voice Settings…**, choose Apple recognition
+(macOS 26+) or **Parakeet Unified English** (Apple Silicon, macOS 14+).
+Both transcribe locally. Apple is the initial selection. Download Parakeet and
+its Silero speech detector (about 733 MB total), then select it. Downloads are
+pinned and size/SHA-256 verified before installation in Application Support.
+First use asks for microphone access. No audio is uploaded.
+
+Parakeet runs Q8_0 Unified EN 0.6B through the pinned `transcribe.cpp` Swift
+bindings with Metal. Live preview uses the 480 ms buffered-streaming configuration;
+a command is finalized after 600 ms of silence. It retains 300 ms of pre-roll,
+resets between commands, and rejects speech over ten seconds rather than executing
+a truncated command. The model stays loaded during listening. Removing models
+stops capture and switches back to Apple.
+Audio is not saved. Recent transcripts appear in the in-memory debug history. Recognition details are available in the debug window rather than the toolbar.
+
+For the Apple engine, **Prefer recognition accuracy** is on by default. Turn it off for faster recognition. This preference
+persists across launches; changing it restarts active listening and discards
+pending speech. Listening itself still starts off on each launch.
+
+Open a supported Chess.com game and wait for your turn, then say one command:
+
+- “Rook D4”
+- “Knight F3” (“night” is accepted as “knight”)
+- “Pawn D4”
+- “Rook from B1 to B4” when multiple rooks can reach B4
+- “Pawn takes D6”
+- “Castle king side” or “castle queen side”
+- “Pawn E8 promote to queen” (rook, bishop, and knight also supported)
+
+Always name the piece, including Pawn. “D4”, “dee four”, and “move D4” are
+rejected rather than interpreted as pawn moves. This also applies to Jev.
+A starting square is optional when the piece and destination identify one legal
+move; include it to resolve ambiguity.
+
+Piece-first commands work without saying “move”; “night” is accepted as “knight”.
+Spoken square names such as “gee four” and “bee seven” are accepted. Alternative
+transcriptions are checked against the same board: only one distinct legal move
+may match. Conflicting moves or ambiguous pieces ask you to repeat the command.
+
+A complete command identifying exactly one legal move plays immediately. Name a
+starting file, rank, or square if multiple pieces can reach the destination.
+Promotions require a piece. Unrelated speech is ignored. Rejected commands show a brief toolbar notice and send their explanation to the paired Apple TV for a temporary warning. The warning does not disable legal moves; successful commands simply perform the move.
+
+Voice works without a TV pairing, and a connected TV receives the normal board
+updates. Listening continues with the window hidden or minimized while the Mac
+is awake. Turning it off immediately stops capture and discards pending speech;
+a move already dispatched to Chess.com still completes. Microphone interruption
+or sleep stops listening with an error; toggle it back on to retry. Denied
+microphone access can be enabled in System Settings → Privacy & Security →
+Microphone.
+
+### Jev interpretation
+
+Enable **Use Jev for unrecognized commands** and enter a key in the secure Settings
+field. **Save Key** stores it in a separate macOS Keychain item; **Test Saved Key**
+sends a synthetic command without playing a move. Keys never enter the webview,
+source files, or logs. Saving a key does not enable Jev automatically.
+
+Exact commands stay local. For unrecognized speech while it is your turn, Jev
+receives the transcript and the app-validated legal move descriptions, never audio.
+Only a supplied legal move with reported probability at least 0.98 may execute.
+This threshold is a conservative starting point, not an accuracy guarantee.
+Ambiguity, negation, conflicting commands and explicit illegal moves do not reach
+the fallback. Uncertain responses ask you to repeat; timeouts and errors do not
+retry or replay. A board change, navigation, microphone-off or settings change
+invalidates pending interpretation. Exact commands work even when Jev is unavailable.
+
+Native voice and TV commands share the session's serialized queue and durable
+move-dispatch boundary. The Mac-only isolated adapter endpoints `voice-position`, `voice-resolve`,
+`voice-selected-move`, and `voice-move` bind commands to the observed game and board. A delayed command
+cannot apply to a changed position, and uncertain moves remain locked until
+inspection and **Reconnect Game**, including standalone play. No relay
+protocol changes are required.
+
+## Development signing
+
+Debug and Release builds use Apple Development signing with personal team
+`Z5Z34R777D`, matching the TV project. Xcode selects the installed certificate
+and private key for that team. The build fails if that identity is unavailable;
+it does not silently fall back to ad-hoc signing.
+
+A stable signed identity lets Keychain recognize subsequent builds. The first
+launch after switching from the old ad-hoc build may still ask for access to the
+existing TV pairing. Approve that prompt locally; “Always Allow” remembers access
+for the signed app. This does not require your Chess.com password. Development
+signing is for local use, not a notarized distribution build.
+
+### Speech verification
+
+Ordinary tests mock Jev and do not download models or read your API key. Optional
+live tests use installed models, generated (not microphone) chess audio, and the
+saved Jev key. Generate fixtures and run:
+
+```sh
+mkdir -p mac/.build/voice-fixtures
+say -o mac/.build/voice-fixtures/pawn.wav --file-format=WAVE --data-format=LEF32@16000 'Pawn G four.'
+say -o mac/.build/voice-fixtures/knight.wav --file-format=WAVE --data-format=LEF32@16000 'Knight F three.'
+TEST_RUNNER_CHESS_VOICE_LIVE_TESTS=1 xcodebuild -project mac/ChessTVMac.xcodeproj \
+  -scheme ChessTVMac -destination 'platform=macOS,arch=arm64' -derivedDataPath mac/.build \
+  -only-testing:ChessTVMacTests/SpeechPipelineTests test
+```
+
+These smoke tests establish integration, not accuracy on your accent or microphone.
+Compare both engines on the same commands in a bot game; record correct moves,
+rejections, wrong moves, and end-of-speech latency. The trial target is zero wrong
+executions, better command success than Apple, and warm p95 latency below two
+seconds; real-voice measurements are still required.
+
+The runtime is MIT licensed; its framework includes third-party notices. Parakeet
+weights use the NVIDIA Open Model License; Silero VAD uses MIT. Model weights are
+not bundled with the repository or app.
+
+### Voice recognition debugging
+
+Open **Voice → Voice Recognition Debug…** (⌥⌘D), or use the button in
+Voice Settings. The window shows partial/final transcripts, alternatives,
+segment timing, local parser decisions, legal moves, Jev request/response JSON
+and probabilities, request latency, cancellations, and observed move completion.
+Events have an utterance trace ID to associate asynchronous results. The latest
+300 events are kept only in memory, including while the window is closed.
+**Copy All** copies them for troubleshooting; **Clear** removes them. No audio
+or authorization headers are included. Copied details do include spoken text
+and the board position.
+
+The local parser runs first. Jev handles parser fallbacks, choosing among legal
+moves plus `unclear`, `not_a_command`, and `illegal_requested_move`. A legal
+choice must have probability at least 0.98; the app checks the current position
+again before dispatch. The probability is a model score, not a measured move
+accuracy guarantee. Debugging does not relax this threshold or replay commands.

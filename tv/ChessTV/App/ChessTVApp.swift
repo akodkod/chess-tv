@@ -8,6 +8,10 @@ private struct AppRoot: View {
   @Environment(\.scenePhase) private var scenePhase
   @State private var session: TVSession?
   @State private var configurationError: String?
+  private var preventIdleSleep: Bool {
+    scenePhase == .active && session?.shouldPreventIdleSleep == true
+  }
+
   var body: some View {
     Group {
       if let session {
@@ -28,6 +32,10 @@ private struct AppRoot: View {
       } catch { configurationError = error.localizedDescription }
     }
     .onChange(of: scenePhase) { _, phase in session?.setActive(phase == .active) }
+    .onChange(of: preventIdleSleep, initial: true) { _, preventSleep in
+      UIApplication.shared.isIdleTimerDisabled = preventSleep
+    }
+    .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
   }
 }
 

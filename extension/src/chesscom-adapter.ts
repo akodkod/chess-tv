@@ -11,6 +11,13 @@ import { readGame } from "./chesscom-game"
 import { createMoveController, type MoveControllerOptions } from "./chesscom-move"
 import { completedBotPath, liveBotPath } from "./chesscom-url"
 import { ContentErrorCode, contentAction, type ContentReply } from "./messages"
+import {
+  resolveVoiceAlternatives,
+  prepareVoiceMove,
+  voiceCandidates,
+  type VoiceCandidate,
+  type VoiceResolution,
+} from "./voice-command"
 
 class GameChangedError extends Error {}
 
@@ -207,6 +214,106 @@ export class ChessComAdapter {
       return outcome(reply.outcome ?? MoveOutcome.Uncertain, reply.message)
     } catch (e) {
       return outcome(MoveOutcome.Rejected, e instanceof Error ? e.message : "Move unavailable.")
+    }
+  }
+  // Mac-only entry points. They are not accepted by the extension's content-action schema.
+  voicePosition(): ContentReply & { voicePosition?: string; voiceCandidates?: VoiceCandidate[] } {
+    try {
+      const p = this.read()
+      if (
+        !this.color ||
+        p.result ||
+        !p.playable ||
+        this.controller.unresolved ||
+        (p.chess.turn() === "w" ? Color.White : Color.Black) !== this.color
+      )
+        throw new Error("Wait for your turn in an active game.")
+      return {
+        ...this.reply(),
+        voiceCandidates: voiceCandidates(p.chess),
+        voicePosition: JSON.stringify([
+          this.instance,
+          this.gameId,
+          p.chess.fen(),
+          p.history,
+          this.color,
+        ]),
+      }
+    } catch (e) {
+      return this.reply([], {
+        code: ContentErrorCode.Unavailable,
+        message: e instanceof Error ? e.message : "Game unavailable.",
+      })
+    }
+  }
+  voiceResolve(
+    text: string,
+    alternatives: string[],
+    position: string,
+  ): ContentReply & { voiceResolution: VoiceResolution } {
+    const current = this.voicePosition()
+    if (current.voicePosition !== position)
+      return {
+        ...current,
+        voiceResolution: { state: "rejected", reason: "Position changed. Repeat your command." },
+      }
+    return {
+      ...current,
+      voiceResolution: prepareVoiceMove(this.read().chess, [text, ...alternatives]),
+    }
+  }
+  async voiceMove(
+    text: string,
+    position: string,
+    commandId: string,
+    alternatives: string[] = [],
+    selectedMove?: string,
+  ): Promise<ContentReply> {
+    const current = this.voicePosition()
+    const reject = (reason: string) =>
+      this.reply([
+        {
+          v: VERSION,
+          type: MessageKind.Outcome,
+          gameId: this.gameId,
+          generation: this.generation || "mac-local",
+          commandId,
+          outcome: MoveOutcome.Rejected,
+          reason: reason.slice(0, 256),
+        },
+      ])
+    if (!current.voicePosition || current.voicePosition !== position)
+      return reject(current.error?.message ?? "Position changed. Repeat your command.")
+    try {
+      const resolved = selectedMove
+        ? this.read()
+            .chess.moves({ verbose: true })
+            .find((move) => move.lan === selectedMove)
+        : resolveVoiceAlternatives(this.read().chess, [text, ...alternatives])
+      if (!resolved) return reject("Say move or castle to begin a command.")
+      const enabled = this.enabled
+      this.enabled = true
+      if (!this.generation) this.generation = "mac-local"
+      try {
+        return await this.handle({
+          kind: "move",
+          move: {
+            v: VERSION,
+            type: MessageKind.Move,
+            gameId: this.gameId,
+            generation: this.generation,
+            revision: this.revision,
+            commandId,
+            from: resolved.from,
+            to: resolved.to,
+            ...(resolved.promotion ? { promotion: resolved.promotion } : {}),
+          },
+        })
+      } finally {
+        this.enabled = enabled
+      }
+    } catch (e) {
+      return reject(e instanceof Error ? e.message : "Move unavailable.")
     }
   }
   async handle(raw: unknown): Promise<ContentReply> {

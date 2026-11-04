@@ -40,6 +40,12 @@ import Observation
   private var currentNotice = Notice.message(
     "Pair this TV with the Chrome extension.", warning: false)
   var notice: String { currentNotice.text }
+  private var voiceWarningUntil: TimeInterval?
+  private(set) var lastVoiceMoveCommandID: String?
+  private(set) var boardCursorHidden = false
+
+  func revealBoardCursor() { boardCursorHidden = false }
+
   private(set) var moveNotice: String?
   private(set) var now: TimeInterval = ProcessInfo.processInfo.systemUptime
   private var snapshotAt: TimeInterval?
@@ -99,6 +105,12 @@ import Observation
   }
   var displayedSnapshot: Snapshot? {
     reviewIndex.map { positions[$0] } ?? movePreview ?? snapshot
+  }
+  /// Use the live position, not the reviewed position or whose turn it is.
+  /// Temporary transport interruptions do not end an attached game.
+  var shouldPreventIdleSleep: Bool {
+    guard active, credential != nil, !needsReconnect, let snapshot else { return false }
+    return snapshot.gameId == gameId && snapshot.generation == generation && snapshot.result == nil
   }
   var isReviewing: Bool { reviewIndex != nil }
   var displayedOpponentMove: BoardTransition.Movement? {
@@ -166,9 +178,11 @@ import Observation
   /// Gameplay displays actionable notices; setup screens can still show statusText.
   var gameplayWarning: String? {
     if pendingInterrupted || checkingMove { return statusText }
+    if let until = voiceWarningUntil, now >= until { return nil }
     return currentNotice.isWarning ? notice : nil
   }
   private func setNotice(_ text: String, warning: Bool = false) {
+    voiceWarningUntil = nil
     currentNotice = .message(text, warning: warning)
   }
 
@@ -306,6 +320,8 @@ import Observation
         guard op == operation else { return }
         try store.remove()
         self.credential = nil
+        lastVoiceMoveCommandID = nil
+        boardCursorHidden = false
         positions = []
         reviewIndex = nil
         snapshot = nil
@@ -414,6 +430,10 @@ import Observation
     if case .session(let message) = message {
       if pending != nil && message.generation != generation { pendingInterrupted = true }
       if pending != nil && message.gameId == nil { sawDetachAfterPending = true }
+      if generation != message.generation || gameId != message.gameId {
+        lastVoiceMoveCommandID = nil
+        boardCursorHidden = false
+      }
       generation = message.generation
       gameId = message.gameId
       peerConnected = message.peerConnected
@@ -426,7 +446,7 @@ import Observation
         !peerConnected
           ? "Waiting for the Chrome extension to reconnect…"
           : gameId == nil
-            ? "Start a Chess.com game, then connect it in the Chrome extension"
+            ? "Start a game on Chess.com"
             : "Synchronizing game…", warning: !peerConnected)
       requestSnapshot()
       return
@@ -488,10 +508,20 @@ import Observation
       statusAt = now
       setNotice(
         message.reason ?? "",
-        warning: !available && snapshot?.result == nil && message.reason != nil)
+        warning: message.reason?.hasPrefix("Voice command: ") == true
+          || (!available && snapshot?.result == nil && message.reason != nil))
+      if message.reason?.hasPrefix("Voice command: ") == true { voiceWarningUntil = now + 4 }
       reconcileInterrupted()
     case .outcome(let message):
       guard message.generation == generation, message.gameId == gameId, gameId != nil else {
+        return
+      }
+      // Mac voice commands use a source-prefixed ID; the relay forwards outcomes unchanged.
+      if message.commandId.hasPrefix("voice-"), message.outcome == .observedComplete {
+        if lastVoiceMoveCommandID != message.commandId {
+          lastVoiceMoveCommandID = message.commandId
+          boardCursorHidden = true
+        }
         return
       }
       guard message.commandId == pending?.commandId, !pendingInterrupted else { return }

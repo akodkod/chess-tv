@@ -3,6 +3,7 @@ set -euo pipefail
 MAC_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MODE="${1:-run}"
 case "$MODE" in run|--logs|--debug|--telemetry|--verify) ;; *) echo "Usage: $0 [--logs|--debug|--telemetry|--verify]" >&2; exit 2;; esac
+"$MAC_ROOT/script/prepare_speech_runtime.sh"
 pkill -x ChessTVMac >/dev/null 2>&1 || true
 xcodebuild -project "$MAC_ROOT/ChessTVMac.xcodeproj" -scheme ChessTVMac \
   -configuration Debug -derivedDataPath "$MAC_ROOT/.build" build

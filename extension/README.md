@@ -67,3 +67,10 @@ Rapid-game observation was verified in Dia against a friend game and on the conn
 Spectator support requires the updated extension, relay, and TV app together because strict snapshot readers must recognize `bottomColor`.
 
 Live spectator verification on 2026-11-02: the paired Dia extension streamed game `186417811766` to physical HappyTV after the relay update. The TV showed cocoprismo at the bottom as Black, live clocks and incoming moves, “Viewing game” without a trailing period, and focus on Settings with board selection disabled. Automated checks passed: 142 JavaScript tests and 73 native tests (2 opt-in native tests skipped).
+
+## Icon
+
+The extension uses the shared gold queen artwork in `artwork/ChessTV.icon`.
+After changing that artwork, run `./extension/script/export_icons.sh` from the
+repository root on a Mac with Xcode installed, then rebuild the extension. The
+script exports the toolbar/manifest PNG sizes and the full-size source preview.

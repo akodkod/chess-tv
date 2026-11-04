@@ -16,7 +16,15 @@ import XCTest
     try await verifyMove(background: "minimized")
   }
 
-  private func verifyMove(background: String?) async throws {
+  func testVoiceMovesWithoutTVWhileHidden() async throws {
+    try await verifyMove(background: "hidden", voice: true)
+  }
+
+  func testVoiceMovesWithoutTVWhileMinimized() async throws {
+    try await verifyMove(background: "minimized", voice: true)
+  }
+
+  private func verifyMove(background: String?, voice: Bool = false) async throws {
     let browser = ChessBrowser()
     let window = NSWindow(contentRect: NSRect(x: 100, y: 100, width: 900, height: 900),
       styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
@@ -68,6 +76,21 @@ import XCTest
       let hidden = try await browser.webView.evaluateJavaScript("document.hidden") as? Bool
       XCTAssertEqual(hidden, true)
       XCTAssertTrue(browser.usable)
+    }
+    if voice {
+      let positionReply = try await browser.call(["kind": "voice-position"])
+      let position = try XCTUnwrap(positionReply.voicePosition)
+      XCTAssertEqual(positionReply.voiceCandidates?.count, 20)
+      let resolution = try await browser.call(["kind": "voice-resolve", "text": "move garbled square",
+        "alternatives": ["E4. Move pon E4."], "position": position])
+      XCTAssertEqual(resolution.voiceResolution?.state, "resolved")
+      let move = try XCTUnwrap(resolution.voiceResolution?.move)
+      let result = try await browser.call(["kind": "voice-selected-move", "move": move,
+        "position": position, "commandId": UUID().uuidString])
+      XCTAssertTrue(result.messages.contains { if case .outcome(let value) = $0 {
+        return value.outcome == .observedComplete
+      }; return false })
+      return
     }
     let reply = try await browser.call(["kind": "sync", "generation": "web-test", "enabled": true])
     XCTAssertNil(reply.error)

@@ -21,6 +21,8 @@ import WebKit
       forMainFrameOnly: true, in: .page))
     webView = WKWebView(frame: .zero, configuration: configuration)
     super.init()
+    // Keep embedded page media silent, including across navigation.
+    webView.setAllMediaPlaybackSuspended(true, completionHandler: nil)
     do {
       guard let url = Bundle.main.url(forResource: "adapter", withExtension: "js") else {
         throw ProtocolFailure("The bundled game adapter is missing. Rebuild the app.")

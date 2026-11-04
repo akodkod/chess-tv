@@ -22,7 +22,9 @@ struct BoardView: View {
   var lastMoveColor = BoardHighlightColor.yellow
   var selectedSquareColor = BoardHighlightColor.yellow
   var onSettings: () -> Void
-  var onConnection: () -> Void
+  var settingsPanel: AnyView? = nil
+
+  private var settingsOpen: Bool { settingsPanel != nil }
   @State private var source: Int?
   @State private var promotionTarget: Int?
   @State private var promotionSource: Int?
@@ -30,10 +32,12 @@ struct BoardView: View {
   @FocusState private var focused: Int?
   @FocusState private var settingsFocused: Bool
   @Environment(\.colorSchemeContrast) private var contrast
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var body: some View {
     GeometryReader { geometry in
-      let side = min(geometry.size.height - 116, geometry.size.width - 404)
+      let panelWidth: CGFloat = settingsOpen ? 560 : 340
+      let side = min(geometry.size.height - 116, geometry.size.width - panelWidth - 64)
       HStack(alignment: .center, spacing: 64) {
         VStack(spacing: 10) {
           playerLine(snapshot.boardOrientation == .black ? .white : .black)
@@ -42,62 +46,38 @@ struct BoardView: View {
           playerLine(snapshot.boardOrientation == .black ? .black : .white)
         }.frame(width: max(240, side))
           .zIndex(1)
-        VStack(alignment: .leading, spacing: 32) {
-          VStack(alignment: .leading, spacing: 20) {
-            Button("Settings", systemImage: "gearshape", action: onSettings)
-              .focused($settingsFocused)
-            Button(
-              "Connection", systemImage: "antenna.radiowaves.left.and.right",
-              action: onConnection)
+        Group {
+          if let settingsPanel {
+            settingsPanel
+          } else {
+            gamePanel
           }
-          .font(.caption)
-          .focusSection()
-          Spacer(minLength: 24)
-          statusSnapshots
-          Group {
-            if session.isReviewing {
-              Text(
-                "\(session.movesBehindLive) \(session.movesBehindLive == 1 ? "move" : "moves") ago"
-              )
-              .font(.title2.weight(.semibold))
-            } else if let result = snapshot.result {
-              VStack(alignment: .leading, spacing: 4) {
-                Text(result.title(for: snapshot.playerColor))
-                Text(result.detail(reason: snapshot.resultReason, player: snapshot.playerColor))
-                  .foregroundStyle(.secondary)
-              }
-              .font(.title2.weight(.semibold))
-              .lineSpacing(2)
-            } else {
-              Text(snapshot.turn.map { "\($0.rawValue.capitalized)\nto move" } ?? "Turn\nunknown")
-                .font(.title2.weight(.semibold))
-                .lineSpacing(2)
-            }
-          }
-          .fixedSize(horizontal: false, vertical: true)
-          HStack(spacing: 24) {
-            Button("Previous move", systemImage: "chevron.left") { session.previousMove() }
-              .disabled(!session.canGoBack)
-            Button("Next move", systemImage: "chevron.right") { session.nextMove() }
-              .disabled(!session.canGoForward)
-          }
-          .labelStyle(.iconOnly)
-          .font(.caption)
-          .focusSection()
         }
-        .frame(width: 340, height: max(240, side), alignment: .leading)
+        .frame(width: panelWidth, height: max(240, side), alignment: .leading)
       }.frame(maxWidth: .infinity, maxHeight: .infinity)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: settingsOpen)
     }
     // Group the board and side-panel controls for remote focus navigation.
     .focusSection()
     .task {
-      // A game can arrive while Connection already owns focus. Hand focus to
-      // the board once on appearance, without resetting it on snapshot updates.
+      guard !settingsOpen else { return }
       if snapshot.playerColor != nil {
         focused = Square.index(snapshot.boardOrientation == .black ? "e7" : "e2")
       } else {
         settingsFocused = true
       }
+    }
+    .onChange(of: focused) { _, square in
+      if square != nil && !settingsOpen { session.revealBoardCursor() }
+    }
+    .onChange(of: session.lastVoiceMoveCommandID) { _, _ in
+      source = nil
+      promotionTarget = nil
+    }
+    .onChange(of: settingsOpen) { _, open in
+      focused = nil
+      source = nil
+      if !open { settingsFocused = true }
     }
     .sheet(
       isPresented: Binding(
@@ -126,13 +106,56 @@ struct BoardView: View {
     .onChange(of: session.selectionContext) { _, _ in
       source = nil
       promotionTarget = nil
-      if snapshot.playerColor == nil && focused != nil {
+      if !settingsOpen && snapshot.playerColor == nil && focused != nil {
         focused = nil
         settingsFocused = true
       }
     }
-    .onExitCommand(perform: source != nil && promotionTarget == nil ? { source = nil } : nil)
+    .onExitCommand(perform: !settingsOpen && source != nil && promotionTarget == nil ? { source = nil } : nil)
   }
+  private var gamePanel: some View {
+    VStack(alignment: .leading, spacing: 32) {
+      VStack(alignment: .leading, spacing: 20) {
+        Button("Settings", systemImage: "gearshape", action: onSettings)
+          .focused($settingsFocused)
+      }
+      .font(.caption)
+      .focusSection()
+      Spacer(minLength: 24)
+      statusSnapshots
+      Group {
+        if session.isReviewing {
+          Text(
+            "\(session.movesBehindLive) \(session.movesBehindLive == 1 ? "move" : "moves") ago"
+          )
+          .font(.title2.weight(.semibold))
+        } else if let result = snapshot.result {
+          VStack(alignment: .leading, spacing: 4) {
+            Text(result.title(for: snapshot.playerColor))
+            Text(result.detail(reason: snapshot.resultReason, player: snapshot.playerColor))
+              .foregroundStyle(.secondary)
+          }
+          .font(.title2.weight(.semibold))
+          .lineSpacing(2)
+        } else {
+          Text(snapshot.turn.map { "\($0.rawValue.capitalized)\nto move" } ?? "Turn\nunknown")
+            .font(.title2.weight(.semibold))
+            .lineSpacing(2)
+        }
+      }
+      .fixedSize(horizontal: false, vertical: true)
+      HStack(spacing: 24) {
+        Button("Previous move", systemImage: "chevron.left") { session.previousMove() }
+          .disabled(!session.canGoBack)
+        Button("Next move", systemImage: "chevron.right") { session.nextMove() }
+          .disabled(!session.canGoForward)
+      }
+      .labelStyle(.iconOnly)
+      .font(.caption)
+      .focusSection()
+    }
+  }
+
   private var statusSnapshots: some View {
     VStack(alignment: .leading, spacing: 16) {
       Group {
@@ -235,7 +258,7 @@ struct BoardView: View {
           $0.from == Square.name(from) && $0.to == Square.name(index)
         } == true
       } == true
-    let isFocused = focused == index
+    let isFocused = focused == index && !session.boardCursorHidden
     let light = (index / 8 + index % 8).isMultiple(of: 2)
     let highlightColor = selectedSquareColor.tint(lightSquare: light)
     let highlightOpacity =
@@ -264,7 +287,7 @@ struct BoardView: View {
       }.frame(width: size, height: size)
     }
     .buttonStyle(BoardSquareButtonStyle()).focused($focused, equals: index)
-    .disabled(snapshot.playerColor == nil)
+    .disabled(settingsOpen || snapshot.playerColor == nil)
     .accessibilityLabel("\(Square.name(index)), \(Square.pieceName(piece))")
     .accessibilityValue(
       [
@@ -281,27 +304,36 @@ struct BoardView: View {
   @ViewBuilder private func squareLabels(_ index: Int, size: CGFloat, light: Bool) -> some View {
     let displayIndex = Square.displayIndex(index, for: snapshot.boardOrientation)
     let name = Square.name(index)
-    ZStack(alignment: .topLeading) {
+    Group {
       if edgeSquareLabelsOnly {
-        if displayIndex % 8 == 0 {
-          Text(String(name.suffix(1)))
-            .padding(6).frame(width: size, height: size, alignment: .topLeading)
+        ZStack {
+          if displayIndex % 8 == 0 {
+            Text(String(name.suffix(1)))
+              .padding(6)
+              .frame(width: size, height: size, alignment: .topLeading)
+          }
+          if displayIndex / 8 == 7 {
+            Text(String(name.prefix(1)))
+              .padding(6)
+              .frame(width: size, height: size, alignment: .bottomTrailing)
+          }
         }
-        if displayIndex / 8 == 7 {
-          Text(String(name.prefix(1)))
-            .padding(6).frame(width: size, height: size, alignment: .bottomTrailing)
-        }
+        .font(.system(size: max(12, size * 0.20), weight: .bold))
       } else {
-        Text(name).padding(4).offset(x: 4)
+        Text(name.uppercased())
+          .font(.system(size: max(11, size * 0.15), weight: .semibold))
+          .padding(6)
+          .frame(width: size, height: size, alignment: .topTrailing)
       }
     }
-    .font(.system(size: max(12, size * 0.17) - 1, weight: .regular))
-    .foregroundStyle(light ? Color.black : Color.white)
-    .opacity(edgeSquareLabelsOnly ? 0.65 : 0.3)
+    .foregroundStyle(light
+      ? Color(red: 0.22, green: 0.16, blue: 0.10)
+      : Color(red: 0.86, green: 0.79, blue: 0.66))
     .accessibilityHidden(true)
     .allowsHitTesting(false)
   }
   private func select(_ index: Int) {
+    session.revealBoardCursor()
     guard session.canMove else { return }
     let board = snapshot.board
     if source == index {

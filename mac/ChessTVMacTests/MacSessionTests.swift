@@ -78,6 +78,24 @@ import XCTest
   func move() -> MoveRequest {
     MoveRequest(context: context, revision: 1, commandId: "command", from: "e2", to: "e4")
   }
+  func testVoiceWarningUsesStatusWithoutDisablingMovesAndClearsOnStop() async throws {
+    try await attach()
+    session.reportVoiceWarning("That move is not legal.")
+    try await session.tick()
+    XCTAssertTrue(socket.sent.contains(.status(GameStatus(context: context, available: true,
+      reason: "Voice command: That move is not legal."))))
+    XCTAssertTrue(session.available)
+    session.setVoiceEnabled(false)
+    socket.sent.removeAll()
+    try await session.tick()
+    XCTAssertTrue(socket.sent.contains(.status(GameStatus(context: context, available: true))))
+  }
+  func testStandaloneVoiceWarningDoesNotConnectOrSend() async {
+    session.reportVoiceWarning("Repeat your command.")
+    for _ in 0..<20 { await Task.yield() }
+    XCTAssertTrue(socket.sent.isEmpty)
+    XCTAssertEqual(socket.connects, 0)
+  }
   func testPairingPersistsAndAttaches() async throws {
     try await attach()
     XCTAssertTrue(session.paired)
@@ -177,9 +195,132 @@ import XCTest
     XCTAssertEqual(page.calls.count, count)
     XCTAssertTrue(store.state.interruptedMove)
   }
+  func testStandaloneVoiceAndDurableOutcomes() async throws {
+    var outcome: MoveOutcome = .observedComplete
+    page.action = { [self] input in
+      if input["kind"] as? String == "voice-position" {
+        return AdapterReply(instance: "instance", gameId: "game", messages: [], error: nil, voicePosition: "position")
+      }
+      XCTAssertEqual(input["kind"] as? String, "voice-move")
+      XCTAssertTrue((input["commandId"] as? String)?.hasPrefix("voice-") == true)
+      XCTAssertTrue(store.state.interruptedMove)
+      return AdapterReply(instance: "instance", gameId: "game", messages: [
+        .outcome(CommandOutcome(context: context, commandId: input["commandId"] as! String, outcome: outcome))
+      ], error: nil)
+    }
+    session.setVoiceEnabled(true)
+    try await session.tick()
+    let position = try XCTUnwrap(session.voicePosition)
+    try await session.submitVoice("move e4", position: position)
+    XCTAssertFalse(store.state.interruptedMove)
+    XCTAssertFalse(session.paired)
+    XCTAssertTrue(socket.sent.isEmpty)
+    outcome = .uncertain
+    do { try await session.submitVoice("move d4", position: XCTUnwrap(session.voicePosition)); XCTFail() } catch {}
+    XCTAssertTrue(store.state.interruptedMove)
+    XCTAssertNil(session.voicePosition)
+    let count = page.calls.count
+    do { try await session.submitVoice("move d4", position: position); XCTFail() } catch {}
+    XCTAssertEqual(page.calls.count, count)
+  }
+  func testPairedVoiceOutcomeCarriesSourceToTV() async throws {
+    try await attach()
+    page.action = { [self] input in
+      if input["kind"] as? String == "voice-position" {
+        return AdapterReply(instance: "instance", gameId: "game", messages: [], error: nil,
+          voicePosition: "position")
+      }
+      if input["kind"] as? String == "voice-move" {
+        let id = try XCTUnwrap(input["commandId"] as? String)
+        return AdapterReply(instance: "instance", gameId: "game", messages: [
+          .outcome(CommandOutcome(context: context, commandId: id, outcome: .observedComplete))
+        ], error: nil)
+      }
+      return AdapterReply(instance: "instance", gameId: "game", messages: [], error: nil)
+    }
+    session.setVoiceEnabled(true)
+    try await session.tick()
+    let position = try XCTUnwrap(session.voicePosition)
+    socket.sent.removeAll()
+    try await session.submitVoice("move e4", position: position)
+    XCTAssertTrue(socket.sent.contains {
+      if case .outcome(let result) = $0 {
+        return result.commandId.hasPrefix("voice-") && result.outcome == .observedComplete
+      }
+      return false
+    })
+  }
+
+  func testVoiceOffAndNavigationRejectCapturedPosition() async throws {
+    page.action = { _ in AdapterReply(instance: "instance", gameId: "game", messages: [], error: nil, voicePosition: "position") }
+    session.setVoiceEnabled(true)
+    try await session.tick()
+    let position = try XCTUnwrap(session.voicePosition)
+    page.documentID = UUID()
+    do { try await session.submitVoice("move e4", position: position); XCTFail() } catch {}
+    XCTAssertFalse(store.state.interruptedMove)
+    session.setVoiceEnabled(false)
+    do { try await session.submitVoice("move e4", position: position); XCTFail() } catch {}
+    XCTAssertFalse(page.calls.contains { $0["kind"] as? String == "voice-move" })
+  }
   func testExternalDomainsAreNotTreatedAsChessCom() {
     XCTAssertTrue(ChessBrowser.isChessURL(URL(string: "https://www.chess.com/login")!))
     XCTAssertFalse(ChessBrowser.isChessURL(URL(string: "https://chess.com.evil.example")!))
     XCTAssertFalse(ChessBrowser.isChessURL(URL(string: "http://www.chess.com")!))
   }
+  func testAIInterpretationDoesNotDispatchAfterBoardChanges() async throws {
+    session.setVoiceEnabled(true)
+    var token = "one"
+    page.action = { input in
+      if input["kind"] as? String == "voice-resolve" {
+        return AdapterReply(instance: "instance", gameId: "game", messages: [], error: nil,
+          voicePosition: token, voiceCandidates: [VoiceCandidate(id: "g2g4", description: "pawn g2 to g4")],
+          voiceResolution: VoiceResolution(state: "fallback", move: nil, reason: nil))
+      }
+      return AdapterReply(instance: "instance", gameId: "game", messages: [], error: nil, voicePosition: token)
+    }
+    try await session.tick()
+    let captured = try XCTUnwrap(session.voicePosition)
+    var started = false
+    session.useJev = { true }
+    session.interpretWithJev = { _, _ in
+      started = true
+      try await Task.sleep(for: .seconds(20))
+      return "g2g4"
+    }
+    let task = Task { try await session.interpretVoice("move pony g4", alternatives: [], position: captured, status: { _ in }) }
+    for _ in 0..<100 where !started { try await Task.sleep(for: .milliseconds(5)) }
+    XCTAssertTrue(started)
+    token = "two"
+    // This tick must remain free to run while the network request is pending.
+    try await session.tick()
+    do { try await task.value; XCTFail("Expected cancellation") } catch {}
+    XCTAssertFalse(page.calls.contains { $0["kind"] as? String == "voice-selected-move" })
+    session.stop()
+  }
+
+  func testExactResolutionUsesSelectedMoveBoundaryWithoutAI() async throws {
+    session.setVoiceEnabled(true)
+    page.action = { input in
+      let kind = input["kind"] as? String
+      if kind == "voice-resolve" {
+        return AdapterReply(instance: "instance", gameId: "game", messages: [], error: nil,
+          voicePosition: "one", voiceResolution: VoiceResolution(state: "resolved", move: "g2g4", reason: nil))
+      }
+      if kind == "voice-selected-move" {
+        XCTAssertEqual(input["move"] as? String, "g2g4")
+        XCTAssertTrue(self.store.state.interruptedMove)
+        let outcome = CommandOutcome(context: self.context, commandId: input["commandId"] as! String,
+          outcome: .observedComplete, reason: nil)
+        return AdapterReply(instance: "instance", gameId: "game", messages: [.outcome(outcome)], error: nil)
+      }
+      return AdapterReply(instance: "instance", gameId: "game", messages: [], error: nil, voicePosition: "one")
+    }
+    session.interpretWithJev = { _, _ in XCTFail("Exact move must stay local"); return nil }
+    try await session.tick()
+    try await session.interpretVoice("move g4", alternatives: [], position: XCTUnwrap(session.voicePosition), status: { _ in })
+    XCTAssertFalse(store.state.interruptedMove)
+    session.stop()
+  }
+
 }

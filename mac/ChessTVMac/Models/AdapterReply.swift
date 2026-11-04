@@ -9,6 +9,9 @@ struct AdapterReply: Decodable {
   let gameId: String?
   let messages: [Message]
   let error: Failure?
+  var voicePosition: String? = nil
+  var voiceCandidates: [VoiceCandidate]? = nil
+  var voiceResolution: VoiceResolution? = nil
 }
 
 @MainActor protocol GamePage: AnyObject {

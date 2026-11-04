@@ -763,3 +763,84 @@ it.each([false, true])("hidden-page input requires host opt-in (%s)", async (all
   await adapter.handle(request)
   expect(clicks).toBe(allowBackground ? 2 : 0)
 })
+
+it.each([false, true])(
+  "plays local voice with TV enabled=%s and rejects stale repeats",
+  async (tv) => {
+    const { doc, board, chess, render } = fixture()
+    const adapter = new ChessComAdapter(doc, { allowBackground: true })
+    if (tv) await sync(adapter)
+    const position = adapter.voicePosition().voicePosition!
+    expect(position).toBeTruthy()
+    let clicks = 0
+    board.addEventListener("click", () => {
+      if (++clicks === 2) {
+        chess.move("e4")
+        chess.move("e5")
+        render()
+      }
+    })
+    const id = crypto.randomUUID()
+    const reply = await adapter.voiceMove("Pawn e four", position, id)
+    expect(reply.messages).toContainEqual(
+      expect.objectContaining({ type: MessageKind.Outcome, outcome: MoveOutcome.ObservedComplete }),
+    )
+    expect(reply.messages.find((m) => m.type === MessageKind.Snapshot)?.generation).toBe(
+      tv ? "generation" : "mac-local",
+    )
+    await adapter.voiceMove("Pawn e four", position, id)
+    expect(clicks).toBe(2)
+    expect(chess.history()).toEqual(["e4", "e5"])
+  },
+)
+it("local voice rejects wrong-turn, illegal and changed-game commands without clicks", async () => {
+  const { adapter, board, chess, render } = fixture()
+  const click = vi.fn()
+  board.addEventListener("click", click)
+  const position = adapter.voicePosition().voicePosition!
+  const reply = await adapter.voiceMove("Pawn e5", position, crypto.randomUUID())
+  expect(reply.messages).toContainEqual(
+    expect.objectContaining({ type: MessageKind.Outcome, outcome: MoveOutcome.Rejected }),
+  )
+  chess.move("e4")
+  render()
+  expect(adapter.voicePosition().voicePosition).toBeUndefined()
+  await adapter.voiceMove("Pawn d4", position, crypto.randomUUID())
+  expect(click).not.toHaveBeenCalled()
+})
+
+it("rejects competing voice alternatives before clicking the board", async () => {
+  const { adapter, board } = fixture()
+  const click = vi.fn()
+  board.addEventListener("click", click)
+  const position = adapter.voicePosition().voicePosition!
+  const reply = await adapter.voiceMove("Pawn g4", position, crypto.randomUUID(), ["Pawn e4"])
+  expect(reply.messages).toContainEqual(
+    expect.objectContaining({
+      outcome: MoveOutcome.Rejected,
+      reason: expect.stringContaining("different moves"),
+    }),
+  )
+  expect(click).not.toHaveBeenCalled()
+})
+
+it("resolves without clicks and rejects illegal or stale AI-selected moves", async () => {
+  const { adapter, board, chess, render } = fixture()
+  const click = vi.fn()
+  board.addEventListener("click", click)
+  const position = adapter.voicePosition().voicePosition!
+  expect(adapter.voicePosition().voiceCandidates).toHaveLength(20)
+  expect(adapter.voiceResolve("Pawn g4", [], position).voiceResolution).toEqual({
+    state: "resolved",
+    move: "g2g4",
+  })
+  expect(click).not.toHaveBeenCalled()
+  const invalid = await adapter.voiceMove("", position, crypto.randomUUID(), [], "g2g5")
+  expect(invalid.messages).toContainEqual(
+    expect.objectContaining({ outcome: MoveOutcome.Rejected }),
+  )
+  chess.move("e4")
+  render()
+  await adapter.voiceMove("", position, crypto.randomUUID(), [], "g2g4")
+  expect(click).not.toHaveBeenCalled()
+})

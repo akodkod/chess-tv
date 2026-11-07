@@ -5,6 +5,12 @@
 };
 "objectVersion" = 56;
 "objects" = {
+"A10D1F6CB26F4E5493A02001" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "text.xcconfig";
+"path" = "Config/Signing.xcconfig";
+"sourceTree" = "SOURCE_ROOT";
+};
 "DAAA00000000000000000003" = { "isa" = "PBXFileReference"; "lastKnownFileType" = "sourcecode.swift"; "path" = "ChessTVMac/Views/VoiceDebugView.swift"; "sourceTree" = "SOURCE_ROOT"; };
 "DAAA00000000000000000004" = { "isa" = "PBXBuildFile"; "fileRef" = "DAAA00000000000000000003"; };
 "DAAA00000000000000000001" = { "isa" = "PBXFileReference"; "lastKnownFileType" = "sourcecode.swift"; "path" = "ChessTVMac/Models/VoiceDiagnostics.swift"; "sourceTree" = "SOURCE_ROOT"; };
@@ -184,6 +190,7 @@
 };
 "89E1FD6268CC0F221A2BE178" = {
 "isa" = "XCBuildConfiguration";
+"baseConfigurationReference" = "A10D1F6CB26F4E5493A02001";
 "name" = "Debug";
 "buildSettings" = {
 "SDKROOT" = "macosx";
@@ -191,7 +198,6 @@
 "SWIFT_VERSION" = "5.0";
 "CODE_SIGN_STYLE" = "Automatic";
 "CODE_SIGN_IDENTITY" = "Apple Development";
-"DEVELOPMENT_TEAM" = "Z5Z34R777D";
 "ENABLE_USER_SCRIPT_SANDBOXING" = "NO";
 "CLANG_ENABLE_MODULES" = "YES";
 "ENABLE_TESTABILITY" = "YES";
@@ -203,6 +209,7 @@
 };
 "E6DE6C99132752C914FEF632" = {
 "isa" = "XCBuildConfiguration";
+"baseConfigurationReference" = "A10D1F6CB26F4E5493A02001";
 "name" = "Release";
 "buildSettings" = {
 "SDKROOT" = "macosx";
@@ -210,7 +217,6 @@
 "SWIFT_VERSION" = "5.0";
 "CODE_SIGN_STYLE" = "Automatic";
 "CODE_SIGN_IDENTITY" = "Apple Development";
-"DEVELOPMENT_TEAM" = "Z5Z34R777D";
 "ENABLE_USER_SCRIPT_SANDBOXING" = "NO";
 "CLANG_ENABLE_MODULES" = "YES";
 "ENABLE_TESTABILITY" = "YES";

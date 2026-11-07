@@ -13,7 +13,7 @@ bun install --frozen-lockfile
 
 1. Load `extension/dist` with **Load unpacked** in `chrome://extensions` (Developer mode enabled).
 2. Run the Apple TV app with `./tv/script/build_and_run.sh`, or select your Apple TV in Xcode.
-3. Get a pairing code on the TV. Enter it in the **Chess TV** extension and confirm on the TV.
+3. Get a pairing code on the TV. Enter it in the **Chess TV** extension; the current TV app confirms automatically.
 4. Start or continue a bot game at `https://www.chess.com/play/computer`, or an online game at `https://www.chess.com/game/<id>`.
 5. The current game connects automatically once paired. The extension matches your signed-in Chess.com profile to the player rows. Online games also connect in view mode when your account does not match a player or you are signed out. View mode synchronizes the board, players, clocks, and result, with the URL’s `username` player at the bottom (falling back to the browser’s orientation) and TV square selection disabled. Bot games still require a detected playing account.
 6. Use the TV remote to select a piece, then its destination. Back cancels selection. Promotion opens a piece chooser on the TV.

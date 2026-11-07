@@ -27,36 +27,26 @@ Production requires a trusted TLS reverse proxy and persistent storage for the d
 
 ## Railway deployment
 
-The `chess-tv` project has a `relay` service in `production`, exposed at
-`https://chess-tv-relay.kodkod.me`. Both clients must use this origin
-for physical Apple TV play. The service uses the repository root and Railpack;
-the root `packageManager` pins Bun 1.4.2. Runtime settings are managed on Railway:
+To host your own relay, create a Railway service from this repository with the
+repository root as its source directory and Railpack as the builder. Configure:
 
 - Start command: `bun run start`; health check: `/health` (60-second timeout).
-- One replica in Europe, with sleeping disabled. Live sessions and pending
-  challenges are process-local; do not add replicas without changing the relay.
+- One replica, with sleeping disabled. Live sessions and pending challenges are
+  process-local; do not add replicas without changing the relay.
 - `HOST=0.0.0.0`, `NODE_ENV=production`, and Railway's supplied `PORT`.
-- `DATABASE_PATH=/data/relay.db`, backed by the service's persistent `/data` volume.
-- Restart on failure, at most 10 retries.
-- GitHub source: `akodkod/chess-tv`, branch `main`. Watch paths include `relay`,
-  `protocol`, root `package.json`, and `bun.lock`.
+- `DATABASE_PATH=/data/relay.db`, backed by a persistent volume mounted at `/data`.
+- Watch paths covering `relay`, `protocol`, root `package.json`, and `bun.lock`.
+- A reachable HTTPS origin configured in both clients (see their READMEs).
 
-To deploy current local source with the authenticated Railway CLI:
-
-```sh
-railway up --project e1954941-391c-44bb-a3a3-fe27b11e55a2 --environment production --service relay --detach
-curl --fail https://chess-tv-relay.kodkod.me/health
-```
-
-Wait for the uploaded deployment to reach `SUCCESS` before treating the health
-response as verification of that version. Redeployments disconnect sockets;
+Use your own project and service when deploying. Keep deployment IDs and access
+tokens in local tooling or the hosting provider's settings. Wait for a successful
+deployment and verify its `/health` endpoint. Redeployments disconnect sockets;
 clients reconnect and resynchronize, while pairing credentials survive on the
 volume. Pending pairing challenges must be started again after a restart.
 
-For this personal deployment the existing conservative IP rate limits are kept:
-clients sharing a Railway proxy peer may share the 5 creation / 10 claim attempts
-per minute. Forwarded headers are not trusted. Before broader use, implement and
-test a proxy trust policy for Railway's ingress rather than blindly trusting
+Clients sharing a proxy peer may share the 5 creation / 10 claim attempts per
+minute. Forwarded headers are not trusted. Before broader use, implement and
+test a proxy trust policy for your ingress rather than blindly trusting
 client-supplied `X-Forwarded-For` or `X-Real-IP`.
 
 ## Pairing HTTP API

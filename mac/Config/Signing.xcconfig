@@ -1,0 +1,2 @@
+// Keep personal signing settings out of the shared Xcode project.
+#include? "Local.xcconfig"

@@ -4,7 +4,8 @@ A single Chess.com browser island with connection status and controls in the win
 
 ## Build and run
 
-Install the repository's dependencies with `bun install --frozen-lockfile`, then run:
+Install the repository's dependencies with `bun install --frozen-lockfile` and
+configure [development signing](#development-signing), then run:
 
 ```sh
 ./mac/script/build_and_run.sh
@@ -23,7 +24,7 @@ The run script also accepts `--verify`, `--debug`, `--logs`, and `--telemetry`. 
 
 1. Sign in to Chess.com inside the app. Its persistent WebKit profile is separate from your regular browser.
 2. Request a code in the Apple TV app, then choose **… → Pair TV** on the Mac.
-3. Enter the six-digit code and confirm on the TV.
+3. Enter the six-digit code; the current TV app confirms automatically.
 4. Open a supported standard bot or online game. Attachment is automatic; online spectator games are view-only.
 
 TV moves remain enabled when the Mac window is unfocused, covered, hidden, or minimized. Keep the app running and the Mac awake. A Mac-only animation callback fallback keeps Chess.com board updates progressing while WebKit hides the page. The adapter still requires board/history confirmation and never retries an uncertain move. Choose bots, new games, and time controls on Chess.com. Use **Navigate** for Back (⌘[), Forward (⌘]), Home (⇧⌘H), and Reload (⌘R).
@@ -137,10 +138,12 @@ protocol changes are required.
 
 ## Development signing
 
-Debug and Release builds use Apple Development signing with personal team
-`Z5Z34R777D`, matching the TV project. Xcode selects the installed certificate
-and private key for that team. The build fails if that identity is unavailable;
-it does not silently fall back to ad-hoc signing.
+Debug and Release builds use Apple Development signing. Before building, copy
+`mac/Config/Local.xcconfig.example` to `mac/Config/Local.xcconfig` and replace
+`YOUR_TEAM_ID` with your own team ID. The local file is ignored by Git and applies
+to both configurations. Install the matching Apple Development certificate and
+private key through Xcode. The build fails if that identity is unavailable; it
+does not silently fall back to ad-hoc signing.
 
 A stable signed identity lets Keychain recognize subsequent builds. The first
 launch after switching from the old ad-hoc build may still ask for access to the

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Adapt the Icon Composer queen to tvOS layers. Requires rsvg-convert (librsvg)."""
+"""Adapt the Warm mint pawn to tvOS layers. Requires rsvg-convert (librsvg)."""
 import json
 from pathlib import Path
 import subprocess
@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "artwork/ChessTV.icon"
 DEST = ROOT / "tv/ChessTV/Assets.xcassets/AppIcon.brandassets"
 INFO = {"author": "xcode", "version": 1}
+ET.register_namespace("", "http://www.w3.org/2000/svg")
 
 
 def contents(path, **fields):
@@ -17,25 +18,24 @@ def contents(path, **fields):
 
 
 def render(path, width, height, foreground):
-    svg = ET.Element("svg", xmlns="http://www.w3.org/2000/svg",
+    svg = ET.Element("{http://www.w3.org/2000/svg}svg",
                      width=str(width), height=str(height), viewBox=f"0 0 {width} {height}")
     if foreground:
-        queen = ET.parse(SOURCE / "Assets/queen.svg").getroot()
-        queen.set("x", str((width - height) / 2))
-        queen.set("y", "0")
-        queen.set("width", str(height))
-        queen.set("height", str(height))
-        svg.append(queen)
+        # Keep the shadow attached to the pawn as tvOS moves this parallax layer.
+        for filename in ["cast-shadow.svg", "ivory-pawn.svg"]:
+            layer = ET.parse(SOURCE / "Assets" / filename).getroot()
+            layer.set("x", str((width - height) / 2))
+            layer.set("y", "0")
+            layer.set("width", str(height))
+            layer.set("height", str(height))
+            svg.append(layer)
     else:
-        # Retain the Composer background hue with a subtle vertical gradient.
-        color = json.loads((SOURCE / "icon.json").read_text())["fill"]["automatic-gradient"]
-        rgb = [float(v) for v in color.split(":")[1].split(",")[:3]]
-        defs = ET.SubElement(svg, "defs")
-        gradient = ET.SubElement(defs, "linearGradient", id="background", x2="0", y2="1")
-        for offset, factor in [("0%", 1.3), ("100%", 0.8)]:
-            value = "#" + "".join(f"{round(min(1, c * factor) * 255):02x}" for c in rgb)
-            ET.SubElement(gradient, "stop", offset=offset, **{"stop-color": value})
-        ET.SubElement(svg, "rect", width="100%", height="100%", fill="url(#background)")
+        # Extend the selected gradient across the landscape tile without letterboxing.
+        background = ET.parse(SOURCE / "Assets/soft-mint-field.svg").getroot()
+        background.set("width", str(width))
+        background.set("height", str(height))
+        background.set("preserveAspectRatio", "none")
+        svg.append(background)
     subprocess.run(["rsvg-convert", "-o", str(path)], input=ET.tostring(svg), check=True)
 
 
@@ -48,8 +48,8 @@ for name, width, height, scales in [
     assets.append({"filename": stack.name, "idiom": "tv", "role": "primary-app-icon",
                    "size": f"{width}x{height}"})
     contents(stack, layers=[{"filename": f"{layer}.imagestacklayer"}
-                            for layer in ["Queen", "Background"]])
-    for layer in ["Queen", "Background"]:
+                            for layer in ["Pawn", "Background"]])
+    for layer in ["Pawn", "Background"]:
         folder = stack / f"{layer}.imagestacklayer"
         contents(folder)
         imageset = folder / "Content.imageset"
@@ -57,5 +57,5 @@ for name, width, height, scales in [
                                     "idiom": "tv", "scale": f"{scale}x"} for scale in scales])
         for scale in scales:
             render(imageset / f"image@{scale}x.png", width * scale, height * scale,
-                   foreground=layer == "Queen")
+                   foreground=layer == "Pawn")
 contents(DEST, assets=assets)

@@ -1,3 +1,5 @@
+<p><img src="artwork/ChessTV.png" alt="Chess TV — ivory pawn on a warm mint background" width="128" height="128"></p>
+
 # Chess TV
 
 Play standard Chess.com or Lichess games on Apple TV, or watch Chess.com games. Use the TV remote to choose

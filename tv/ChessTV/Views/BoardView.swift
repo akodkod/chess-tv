@@ -163,12 +163,6 @@ struct BoardView: View {
   private var statusSnapshots: some View {
     VStack(alignment: .leading, spacing: 16) {
       Group {
-        if snapshot.result == nil,
-          let checked = snapshot.checkSquare.flatMap(Square.index),
-          let color = Square.color(of: snapshot.board[checked])
-        {
-          Text("\(color.rawValue.capitalized) in check").font(.callout)
-        }
         if let warning = session.gameplayWarning.flatMap(messageText) {
           Text(warning).font(.callout)
         }

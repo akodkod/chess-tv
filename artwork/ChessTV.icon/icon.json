@@ -1,28 +1,70 @@
 {
+  "features": [
+    "specular-location"
+  ],
   "fill": {
-    "automatic-gradient": "extended-srgb:0.07500,0.08500,0.10000,1.00000"
+    "solid": "extended-srgb:0.77255,0.83529,0.70196,1.00000"
   },
   "groups": [
     {
+      "name": "Ivory pawn",
       "layers": [
         {
-          "image-name": "queen.svg",
-          "name": "Queen"
+          "image-name": "ivory-pawn.svg",
+          "name": "Ivory pawn"
         }
       ],
-      "name": "Queen",
       "shadow": {
         "kind": "neutral",
-        "opacity": 0.5
+        "opacity": 0.19
       },
+      "specular": "inside",
       "translucency": {
-        "enabled": true,
-        "value": 0.08
+        "enabled": false,
+        "value": 0
+      }
+    },
+    {
+      "name": "Cast shadow",
+      "layers": [
+        {
+          "image-name": "cast-shadow.png",
+          "name": "Cast shadow"
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0
+      },
+      "specular": false,
+      "translucency": {
+        "enabled": false,
+        "value": 0
+      }
+    },
+    {
+      "name": "Soft mint field",
+      "layers": [
+        {
+          "image-name": "soft-mint-field.svg",
+          "name": "Soft mint field"
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0
+      },
+      "specular": false,
+      "translucency": {
+        "enabled": false,
+        "value": 0
       }
     }
   ],
   "supported-platforms": {
-    "circles": ["watchOS"],
+    "circles": [
+      "watchOS"
+    ],
     "squares": "shared"
   }
 }

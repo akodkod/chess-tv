@@ -84,7 +84,7 @@ Automated checks: 378 JavaScript tests passed; native suite executed 48 tests wi
 
 ## Icon
 
-The extension uses the shared gold queen artwork in `artwork/ChessTV.icon`.
+The extension uses the shared Warm mint pawn artwork in `artwork/ChessTV.icon`.
 After changing that artwork, run `./extension/script/export_icons.sh` from the
 repository root on a Mac with Xcode installed, then rebuild the extension. The
-script exports the toolbar/manifest PNG sizes and the full-size source preview.
+script exports the toolbar/manifest PNG sizes and the full-size source preview, including `artwork/ChessTV.png` for the README.

@@ -1,7 +1,11 @@
 import { MessageKind, MoveOutcome, VERSION, type Message } from "@chess-tv/protocol"
 import { z } from "zod"
 
-import { allowedGameURL as supported } from "./chesscom-url"
+import { allowedGameURL as supported } from "./game-sites"
+import { LichessAPI, lichessCredential, type LichessCredential } from "./lichess-api"
+import { lichessRequest } from "./lichess-driver"
+import { connectLichess } from "./lichess-oauth"
+import { lichessGameID } from "./lichess-url"
 import {
   ContentErrorCode,
   contentReply,
@@ -21,6 +25,9 @@ const bindingSchema = z.strictObject({
   locked: z.boolean(),
 })
 type Binding = z.infer<typeof bindingSchema>
+let lichess: LichessCredential | undefined
+let lichessConnecting = false
+const lichessAPI = new LichessAPI(() => lichess)
 let autoConnect = true
 let binding: Binding | undefined
 let link: RelayLink | undefined
@@ -38,6 +45,10 @@ const pairing = new Pairing(__SETTINGS__.relay, async (saved) => {
 const ready = (async () => {
   await chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" })
   await chrome.storage.session.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" })
+  const savedLichess = lichessCredential.safeParse(
+    (await chrome.storage.local.get("lichess")).lichess,
+  )
+  if (savedLichess.success) lichess = savedLichess.data
   autoConnect = (await chrome.storage.local.get("autoConnect")).autoConnect !== false
   const stored = savedSchema.safeParse((await chrome.storage.local.get("pairing")).pairing)
   if (stored.success && stored.data.relay === __SETTINGS__.relay) pairing.saved = stored.data
@@ -65,6 +76,8 @@ async function saveBinding() {
 
 function state(): PopupState {
   return {
+    lichessAccount: lichess?.name ?? null,
+    lichessConnecting,
     autoConnect,
     paired: !!pairing.saved.device,
     pairing: !!pairing.saved.claim,
@@ -215,7 +228,9 @@ async function synchronize() {
       }),
     )
   } catch {
-    reportUnavailable("Game unavailable. Keep the attached Chess.com game open and visible.")
+    reportUnavailable(
+      "Game unavailable. Keep the attached Chess.com or Lichess game open and visible.",
+    )
   }
 }
 async function receive(message: Message) {
@@ -305,6 +320,7 @@ async function detach() {
       /* Closed or navigated tab. */
     }
   }
+  lichessAPI.stop()
   binding = undefined
   await saveBinding()
   if (attached) sendAttachment(null)
@@ -316,7 +332,7 @@ async function attach(automatic = false) {
   if (phase !== "idle") throw new Error("Wait for the connection to synchronize.")
   const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
   if (!tab?.id || !supported(tab.url))
-    throw new Error("Open a supported Chess.com game in the active tab.")
+    throw new Error("Open a supported Chess.com or Lichess game in the active tab.")
   if (automatic && !(await chrome.windows.get(tab.windowId)).focused) return
   await detach()
   await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content.js"] })
@@ -371,6 +387,35 @@ async function tick() {
   await autoAttach()
 }
 chrome.runtime.onMessage.addListener((raw: unknown, sender, reply) => {
+  const request = lichessRequest.safeParse(raw)
+  if (
+    request.success &&
+    sender.id === chrome.runtime.id &&
+    sender.tab?.id &&
+    sender.frameId === 0 &&
+    lichessGameID(sender.url) === request.data.gameId
+  ) {
+    const tabId = sender.tab.id
+    void (async () => {
+      await ready
+      const tab = await chrome.tabs.get(tabId)
+      if (lichessGameID(tab.url) !== request.data.gameId || (binding && binding.tabId !== tabId))
+        throw new Error("The attached Lichess game changed.")
+      if (
+        request.data.kind === "lichess-move" &&
+        (!binding ||
+          binding.tabId !== tabId ||
+          binding.commandId !== request.data.commandId ||
+          binding.locked ||
+          !(await active()))
+      )
+        throw new Error("No authorized move is pending for this game.")
+      return lichessAPI.handle(request.data)
+    })().then(reply, (e) =>
+      reply({ error: e instanceof Error ? e.message : "Lichess unavailable." }),
+    )
+    return true
+  }
   // Only our popup may operate the worker. Content scripts never receive credentials.
   if (sender.id !== chrome.runtime.id || sender.url !== chrome.runtime.getURL("popup.html")) return
   const parsed = popupAction.safeParse(raw)
@@ -378,9 +423,52 @@ chrome.runtime.onMessage.addListener((raw: unknown, sender, reply) => {
     reply({ error: "Invalid request." })
     return
   }
+  if (parsed.data.kind === "lichess-connect") {
+    if (lichessConnecting) {
+      reply(state())
+      return
+    }
+    lichessConnecting = true
+    error = null
+    void connectLichess()
+      .then(async (credential) => {
+        await enqueue(async () => {
+          if (binding) await detach()
+          lichessAPI.stop()
+          await chrome.storage.local.set({ lichess: credential })
+          lichess = credential
+        })
+      })
+      .catch(() => {
+        error = "Lichess connection was not completed. Try Connect Lichess again."
+      })
+      .finally(() => {
+        lichessConnecting = false
+        scheduleTick()
+      })
+    reply(state())
+    return
+  }
   void enqueue(async () => {
     try {
       const action = parsed.data
+      if (action.kind === "lichess-disconnect") {
+        if (binding) await detach()
+        lichessAPI.stop()
+        if (lichess) {
+          const response = await fetch("https://lichess.org/api/token", {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${lichess.token}` },
+            redirect: "error",
+            credentials: "omit",
+            signal: AbortSignal.timeout(10000),
+          })
+          if (!response.ok && response.status !== 401)
+            throw new Error("Cannot revoke Lichess access. Retry Disconnect Lichess.")
+        }
+        await chrome.storage.local.remove("lichess")
+        lichess = undefined
+      }
       if (action.kind === "pair") {
         error = null
         await pairing.claim(action.code)

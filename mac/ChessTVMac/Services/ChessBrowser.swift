@@ -3,6 +3,8 @@ import Observation
 import WebKit
 
 @MainActor @Observable final class ChessBrowser: NSObject, GamePage, WKNavigationDelegate, WKUIDelegate {
+  let lichess: LichessConnection
+  var site: String { webView.url?.host == "lichess.org" ? "Lichess" : "Chess.com" }
   let webView: WKWebView
   private let world = WKContentWorld.world(name: "ChessTV.Adapter")
   private(set) var documentID = UUID()
@@ -10,7 +12,8 @@ import WebKit
   var loadError: String?
   var loading = true
 
-  override init() {
+  init(lichess: LichessConnection? = nil) {
+    self.lichess = lichess ?? LichessConnection()
     let configuration = WKWebViewConfiguration()
     configuration.websiteDataStore = .default()
     // Keep the adapter callable when the app is hidden or its window is minimized.
@@ -21,6 +24,7 @@ import WebKit
       forMainFrameOnly: true, in: .page))
     webView = WKWebView(frame: .zero, configuration: configuration)
     super.init()
+    configuration.userContentController.addScriptMessageHandler(LichessBridge(browser: self), contentWorld: world, name: "lichess")
     // Keep embedded page media silent, including across navigation.
     webView.setAllMediaPlaybackSuspended(true, completionHandler: nil)
     do {
@@ -83,14 +87,38 @@ import WebKit
   var usable: Bool {
     return !loading && loadError == nil && webView.window != nil
   }
-  func home() { webView.load(URLRequest(url: URL(string: "https://www.chess.com")!)) }
+  func selectSite(_ site: String) {
+    UserDefaults.standard.set(site, forKey: "chessSite")
+    home()
+  }
+  func home() {
+    let origin = UserDefaults.standard.string(forKey: "chessSite") == "lichess" ? "https://lichess.org" : "https://www.chess.com"
+    webView.load(URLRequest(url: URL(string: origin)!))
+  }
+  func connectLichess() async {
+    lichess.window = webView.window
+    await lichess.connect()
+    if lichess.error == nil { invalidate(); await openLichessGame() }
+  }
+  func openLichessGame() async {
+    do {
+      UserDefaults.standard.set("lichess", forKey: "chessSite")
+      if let url = try await lichess.currentGameURL() { webView.load(URLRequest(url: url)) }
+      else { home() }
+    } catch { lichess.error = error.localizedDescription }
+  }
+  func disconnectLichess() async {
+    invalidate()
+    await lichess.disconnect()
+  }
   func invalidate() {
+    lichess.stop()
     documentID = UUID()
     onInvalidate?()
   }
   func call(_ action: [String: Any]) async throws -> AdapterReply {
-    guard !loading, webView.url?.scheme == "https", webView.url?.host == "www.chess.com" else {
-      throw ProtocolFailure("Open a supported Chess.com game.")
+    guard !loading, webView.url?.scheme == "https", ["www.chess.com", "lichess.org"].contains(webView.url?.host ?? "") else {
+      throw ProtocolFailure("Open a supported Chess.com or Lichess game.")
     }
     let document = documentID
     let result = try await webView.callAsyncJavaScript(
@@ -122,7 +150,7 @@ import WebKit
     loadError = "The page stopped responding. Reload to continue."
   }
   static func isChessURL(_ url: URL) -> Bool {
-    url.scheme == "https" && (url.host == "chess.com" || url.host?.hasSuffix(".chess.com") == true)
+    url.scheme == "https" && (url.host == "lichess.org" || url.host == "chess.com" || url.host?.hasSuffix(".chess.com") == true)
   }
   func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
     decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
@@ -155,5 +183,29 @@ import WebKit
     alert.addButton(withTitle: "OK")
     alert.addButton(withTitle: "Cancel")
     completionHandler(alert.runModal() == .alertFirstButtonReturn)
+  }
+}
+
+
+@MainActor private final class LichessBridge: NSObject, WKScriptMessageHandlerWithReply {
+  weak var browser: ChessBrowser?
+  init(browser: ChessBrowser) { self.browser = browser }
+  func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage,
+    replyHandler: @escaping (Any?, String?) -> Void) {
+    guard let browser, message.frameInfo.isMainFrame,
+      message.frameInfo.securityOrigin.protocol == "https", message.frameInfo.securityOrigin.host == "lichess.org",
+      let action = message.body as? [String: Any], let id = action["gameId"] as? String,
+      LichessConnection.gameID(in: browser.webView.url) == id else {
+      replyHandler(nil, "Lichess request is not from the current game.")
+      return
+    }
+    let document = browser.documentID
+    Task {
+      do {
+        let result = try await browser.lichess.handle(action)
+        guard browser.documentID == document else { throw ProtocolFailure("The game page changed.") }
+        replyHandler(result, nil)
+      } catch { replyHandler(nil, error.localizedDescription) }
+    }
   }
 }

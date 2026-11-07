@@ -24,14 +24,15 @@ export function buildSettings(mode: string, relayValue?: string) {
       name: "Chess TV",
       version: "0.1.0",
       minimum_chrome_version: "116",
-      description: "Play or watch Chess.com games on Apple TV",
-      permissions: ["storage", "scripting", "alarms"],
+      description: "Play Chess.com and Lichess games on Apple TV",
+      permissions: ["storage", "scripting", "alarms", "identity"],
       host_permissions: [
         "https://www.chess.com/play/computer*",
         "https://www.chess.com/game/computer/*",
         "https://www.chess.com/play/coach*",
         "https://www.chess.com/play/online*",
         "https://www.chess.com/game/*",
+        "https://lichess.org/*",
         host,
       ],
       icons: {

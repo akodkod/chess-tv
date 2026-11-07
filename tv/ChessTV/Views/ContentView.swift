@@ -58,6 +58,8 @@ struct ContentView: View {
                   } else {
                     VStack {
                       Button("Settings", systemImage: "gearshape") { settingsPage = .settings }
+                        .controlSize(.small)
+                        .font(.caption2)
                         .focused($waitingSettingsFocused)
                       Spacer()
                     }.font(.caption)

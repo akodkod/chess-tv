@@ -89,6 +89,25 @@ export function ChessComPopup() {
           {debug ? "Back" : "Debug"}
         </Button>
       </header>
+      <div className="space-y-2 border-t border-stone-200 pt-3">
+        <p className="text-xs text-stone-600">
+          {state?.lichessAccount
+            ? `Lichess · ${state.lichessAccount}`
+            : "Play Lichess games with your TV"}
+        </p>
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={busy || state?.lichessConnecting}
+          onClick={() => void act(state?.lichessAccount ? "lichess-disconnect" : "lichess-connect")}
+        >
+          {state?.lichessConnecting
+            ? "Connecting Lichess…"
+            : state?.lichessAccount
+              ? "Disconnect Lichess"
+              : "Connect Lichess"}
+        </Button>
+      </div>
       {(debug || (state && !state.paired)) && (
         <div
           id="popup-content"

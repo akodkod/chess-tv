@@ -185,6 +185,20 @@ final class ProtocolTests: XCTestCase {
     reading.frozenAt = nil
     XCTAssertEqual(reading.remaining(.white, now: 500), 0)
   }
+  func testClockDisplayHidesUnlimitedAndLongDeadlines() {
+    for remaining in [nil, 6 * 60 * 60 * 1000, 1e100] as [Double?] {
+      let reading = ClockReading(clocks: .init(
+        white: .init(remainingMs: remaining, running: false),
+        black: .init(remainingMs: 30 * 60 * 1000, running: true)), receivedAt: 100)
+      XCTAssertNil(reading.displayedRemaining(.white, now: 101))
+      XCTAssertEqual(reading.displayedRemaining(.black, now: 101), 1_799_000)
+    }
+    let reading = ClockReading(clocks: .init(
+      white: .init(remainingMs: 6 * 60 * 60 * 1000 - 1, running: false),
+      black: .init(remainingMs: 0, running: false)), receivedAt: 100)
+    XCTAssertNotNil(reading.displayedRemaining(.white, now: 100))
+    XCTAssertEqual(reading.displayedRemaining(.black, now: 100), 0)
+  }
   func testConfigurationLimitsHTTPToOptInLoopback() throws {
     XCTAssertNoThrow(try RelayConfiguration("http://127.0.0.1:3000", allowLoopback: true))
     for origin in [

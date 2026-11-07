@@ -1,10 +1,14 @@
-import { ChessComAdapter } from "./chesscom-adapter"
-import { allowedGameURL } from "./chesscom-url"
+import { createAdapter } from "./create-adapter"
+import { allowedGameURL } from "./game-sites"
 
 const scope = globalThis as typeof globalThis & { chessTVInstalled?: boolean }
 if (!scope.chessTVInstalled && allowedGameURL(location.href)) {
   scope.chessTVInstalled = true
-  const adapter = new ChessComAdapter()
+  const adapter = createAdapter(document, async (request) => {
+    const response = await chrome.runtime.sendMessage(request)
+    if (response?.error) throw new Error(response.error)
+    return response
+  })
   chrome.runtime.onMessage.addListener((raw: unknown, sender, reply) => {
     // Commands originate in our service worker, never a web page or another tab.
     if (

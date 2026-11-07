@@ -2,6 +2,8 @@ import { messageSchema, moveSchema } from "@chess-tv/protocol"
 import { z } from "zod"
 export const popupAction = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("state") }),
+  z.strictObject({ kind: z.literal("lichess-connect") }),
+  z.strictObject({ kind: z.literal("lichess-disconnect") }),
   z.strictObject({ kind: z.literal("pair"), code: z.string().regex(/^\d{6}$/) }),
   z.strictObject({ kind: z.literal("attach") }),
   z.strictObject({ kind: z.literal("reconnect") }),
@@ -26,6 +28,8 @@ export const contentReply = z.strictObject({
 })
 export type ContentReply = z.infer<typeof contentReply>
 export type PopupState = {
+  lichessAccount: string | null
+  lichessConnecting: boolean
   autoConnect: boolean
   paired: boolean
   pairing: boolean

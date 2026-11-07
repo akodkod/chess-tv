@@ -1,7 +1,9 @@
 import { z } from "zod"
 
-import { ChessComAdapter } from "./chesscom-adapter"
-import { allowedGameURL } from "./chesscom-url"
+import { createAdapter } from "./create-adapter"
+import type { GameAdapter } from "./game-adapter"
+import { allowedGameURL } from "./game-sites"
+import type { LichessRequest } from "./lichess-driver"
 
 const voiceAction = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("voice-position") }),
@@ -28,15 +30,27 @@ const voiceAction = z.discriminatedUnion("kind", [
 
 // Installed only in the app's isolated WKContentWorld, never the page world.
 const scope = globalThis as typeof globalThis & {
-  chessTV?: { handle: (action: unknown) => ReturnType<ChessComAdapter["handle"]> }
+  webkit?: {
+    messageHandlers: { lichess: { postMessage(request: LichessRequest): Promise<unknown> } }
+  }
+  chessTV?: { handle: (action: unknown) => ReturnType<GameAdapter["handle"]> }
 }
-if (location.origin === "https://www.chess.com" && !scope.chessTV) {
-  const adapter = new ChessComAdapter(document, { allowBackground: true })
+if (["https://www.chess.com", "https://lichess.org"].includes(location.origin) && !scope.chessTV) {
+  const adapter = createAdapter(
+    document,
+    async (request) => {
+      if (!scope.webkit) throw new Error("Lichess connection unavailable.")
+      return scope.webkit.messageHandlers.lichess.postMessage(request)
+    },
+    true,
+  )
   scope.chessTV = {
-    handle(action) {
-      if (!allowedGameURL(location.href)) throw new Error("Open a supported Chess.com game.")
+    async handle(action) {
+      if (!allowedGameURL(location.href))
+        throw new Error("Open a supported Chess.com or Lichess game.")
       const voice = voiceAction.safeParse(action)
       if (voice.success) {
+        await adapter.prepare()
         if (voice.data.kind === "voice-position") return Promise.resolve(adapter.voicePosition())
         if (voice.data.kind === "voice-resolve")
           return Promise.resolve(

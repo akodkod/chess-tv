@@ -16,8 +16,8 @@ struct ContentView: View {
   @State private var confirmUnpair = false
 
   private var message: String {
-    startupError ?? browser.loadError ?? voice?.commandNotice ?? voice?.error ?? session?.error
-      ?? (browser.loading ? "Loading Chess.com…" : session?.status ?? "Open a game on Chess.com")
+    startupError ?? browser.lichess.error ?? browser.loadError ?? voice?.commandNotice ?? voice?.error ?? session?.error
+      ?? (browser.loading ? "Loading \(browser.site)…" : session?.status ?? "Open a game on \(browser.site)")
   }
   var body: some View {
     BrowserView(browser: browser)
@@ -60,6 +60,12 @@ struct ContentView: View {
 
   private var toolbarActions: some View {
     HStack(spacing: 6) {
+      Menu {
+        Button("Chess.com") { browser.selectSite("chesscom") }
+        Button("Lichess") { browser.selectSite("lichess") }
+      } label: { Text(browser.site) }
+      .help("Choose chess site")
+      .accessibilityLabel("Chess site")
       if let voice {
         Button { voice.toggle() } label: {
           Image(systemName: voice.enabled ? "mic.fill" : "mic.slash")
@@ -99,6 +105,18 @@ struct ContentView: View {
           }
           Divider()
         }
+        if let account = browser.lichess.accountName {
+          Text("Lichess · \(account)")
+          Button("Open My Lichess Game") { Task { await browser.openLichessGame() } }
+          Button("Disconnect Lichess") { Task { await browser.disconnectLichess() } }
+          Button("Reconnect Lichess Account…") { Task { await browser.connectLichess() } }
+            .disabled(browser.lichess.connecting)
+        } else {
+          Button(browser.lichess.connecting ? "Connecting Lichess…" : "Connect Lichess…") {
+            Task { await browser.connectLichess() }
+          }.disabled(browser.lichess.connecting)
+        }
+        Divider()
         SettingsLink { Text("Voice Settings…") }
         Button("Reload Page") { browser.webView.reload() }
       } label: { Image(systemName: "ellipsis")

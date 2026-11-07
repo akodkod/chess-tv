@@ -2,6 +2,16 @@
 
 Status: Standard Chess.com bot games are connected to the native Apple TV app. Pairing, remote-selected moves, bot replies, recovery, special moves, player names, clocks, and results are implemented. Live browser and tvOS simulator verification is recorded in extension/README.md; physical Apple TV hardware validation remains separate.
 
+## Lichess adapter
+
+Both clients share `GameAdapter` for game identity, revisions, legal moves, voice resolution, deduplication, and uncertainty. `ChessComDriver` observes the page; `LichessDriver` replays authoritative UCI history from the Board API into the existing protocol v3 snapshot contract. No relay or TV protocol changes are required.
+
+OAuth PKCE grants only `board:play`. The extension worker stores its token in trusted local storage; `LichessConnection` stores the Mac token in Keychain. Native URLSession or worker fetch owns the NDJSON stream and authenticated move POSTs. Content scripts receive snapshots and move outcomes through validated main-frame bridges, never credentials. The adapters never synthesize Lichess board input.
+
+Scope is the authorized account's standard games: rapid, classical, correspondence, and blitz friend/AI/API challenges. Unsupported variants, initial positions, time controls, and spectators fail closed. Stream loss pauses input and reconnects; duplicate commands share one outcome, and ambiguous submissions are never retried. Castling encodings are normalized before position reconstruction and confirmation. Game creation, resignations, draws, and takebacks stay on Lichess.
+
+The sections below describe the original Chess.com implementation unless stated otherwise.
+
 ## 1. Goal and scope
 
 Play a standard Chess.com bot game on Apple TV with the Siri Remote while an awake Mac keeps the connected Chrome tab selected and visible. Sign in and start the game in Chrome, then keep its tab active in the focused Chrome window. Once paired, the extension automatically attaches a supported game when automatic connection is enabled; “Connect this game” also attaches manually. Installation is manual; one extension pairs with one TV, with one attached game at a time.
@@ -50,7 +60,7 @@ Keep three platform-required parts:
 
 - **Popup:** pairing, status, “Connect this game,” disconnect, and unpair. Use locally bundled React, Tailwind, and only the shadcn/ui controls needed. Do not inject popup styles into Chess.com. Closing the popup does not stop the connection.
 - **Service worker:** credentials, relay connection, automatic/manual tab binding, protocol validation, and reconnect coordination.
-- **Content script:** one concrete Chess.com adapter for observation and page interaction. It owns verified game revisions and move deduplication before interacting with the page. Keep selectors here; do not introduce a generic adapter framework.
+- **Content script:** one concrete Chess.com adapter for observation and page interaction. It owns verified game revisions and move deduplication before interacting with the page. Keep selectors in the Chess.com driver; the shared adapter handles site-independent command and snapshot rules.
 
 Use Chrome 116+ and exchange application heartbeats every 20 seconds. WebSocket activity can keep the worker alive within Chrome's activity window, but browser exit, sleep, and network loss still require recovery. See [Chrome WebSocket guidance](https://developer.chrome.com/docs/extensions/how-to/web-platform/websockets).
 

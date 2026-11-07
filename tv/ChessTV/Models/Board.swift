@@ -47,6 +47,11 @@ struct ClockReading {
     let elapsed = clock.running == true ? max(0, (frozenAt ?? now) - receivedAt) * 1000 : 0
     return max(0, ms - elapsed)
   }
+  func displayedRemaining(_ color: PieceColor, now: TimeInterval) -> Double? {
+    // Long per-move deadlines and unlimited-game sentinel values aren't useful TV clocks.
+    guard let ms = remaining(color, now: now), ms < 6 * 60 * 60 * 1000 else { return nil }
+    return ms
+  }
   static func format(_ ms: Double?) -> String {
     guard let ms, ms.isFinite, ms >= 0 else { return "—:—" }
     if ms >= 360_000_000 { return "99h+" }

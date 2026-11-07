@@ -1,7 +1,7 @@
 # Chess TV
 
-Play or watch standard Chess.com games on Apple TV. Use the TV remote to choose
-pieces and moves while Chess.com runs in either the native Mac app or a Chrome
+Play standard Chess.com or Lichess games on Apple TV, or watch Chess.com games. Use the TV remote to choose
+pieces and moves while your game runs in either the native Mac app or a Chrome
 extension. The Mac app also supports spoken moves, with or without a TV.
 
 Chess TV is a prototype built from source. It supports standard bot and online
@@ -11,20 +11,22 @@ are unsupported. It validates your chosen moves; it does not choose moves for yo
 ## How it works
 
 ```text
-Chess.com in the Mac app or Chrome extension ↔ relay ↔ Apple TV app
+Chess.com / Lichess ↔ Mac app or Chrome extension ↔ relay ↔ Apple TV app
 ```
 
 Choose one browser client for each TV pairing. The browser observes the actual
-Chess.com board and submits moves; the TV displays that state. A Bun relay routes
+Chess.com board or streams Lichess state through its Board API, then submits your chosen moves; the TV displays that state. A Bun relay routes
 messages and stores pairing IDs and credential hashes in SQLite.
 
-| Component | Purpose | Details |
-| --- | --- | --- |
-| `tv/` | Native SwiftUI Apple TV app | [TV setup and controls](tv/README.md) |
-| `mac/` | Native Mac browser and voice control | [Mac setup and voice commands](mac/README.md) |
-| `extension/` | Chrome browser client | [Extension setup and recovery](extension/README.md) |
-| `relay/` | Pairing API and WebSocket relay | [Hosting and protocol](relay/README.md) |
-| `protocol/` | Shared TypeScript schemas and cross-platform fixtures | [Schemas](protocol/src/index.ts) |
+| Component    | Purpose                                               | Details                                             |
+| ------------ | ----------------------------------------------------- | --------------------------------------------------- |
+| `tv/`        | Native SwiftUI Apple TV app                           | [TV setup and controls](tv/README.md)               |
+| `mac/`       | Native Mac browser and voice control                  | [Mac setup and voice commands](mac/README.md)       |
+| `extension/` | Chrome browser client                                 | [Extension setup and recovery](extension/README.md) |
+| `relay/`     | Pairing API and WebSocket relay                       | [Hosting and protocol](relay/README.md)             |
+| `protocol/`  | Shared TypeScript schemas and cross-platform fixtures | [Schemas](protocol/src/index.ts)                    |
+
+Lichess requires a separate **Connect Lichess** authorization in each client. Its Board API supports standard rapid, classical, correspondence, and blitz direct challenges or AI games. See the [extension](extension/README.md#lichess) or [Mac](mac/README.md#lichess) instructions for setup and limits.
 
 ## Requirements
 
@@ -36,7 +38,7 @@ messages and stores pairing IDs and credential hashes in SQLite.
   identity. Initial speech-runtime setup needs internet access; missing
   CMake/Ninja tools are installed locally by the setup script.
 - For the extension client: Chrome 116+.
-- A Chess.com account to play signed-in games, and a relay reachable by both clients.
+- A Chess.com or Lichess account to play signed-in games, and a relay reachable by both clients.
 
 Run the following commands from the repository root unless stated otherwise:
 

@@ -5,6 +5,10 @@
 };
 "objectVersion" = 56;
 "objects" = {
+"1C4E55000000000000000003" = { "isa" = "PBXFileReference"; "lastKnownFileType" = "sourcecode.swift"; "path" = "ChessTVMacTests/LichessTests.swift"; "sourceTree" = "SOURCE_ROOT"; };
+"1C4E55000000000000000004" = { "isa" = "PBXBuildFile"; "fileRef" = "1C4E55000000000000000003"; };
+"1C4E55000000000000000001" = { "isa" = "PBXFileReference"; "lastKnownFileType" = "sourcecode.swift"; "path" = "ChessTVMac/Services/LichessConnection.swift"; "sourceTree" = "SOURCE_ROOT"; };
+"1C4E55000000000000000002" = { "isa" = "PBXBuildFile"; "fileRef" = "1C4E55000000000000000001"; };
 "A10D1F6CB26F4E5493A02001" = {
 "isa" = "PBXFileReference";
 "lastKnownFileType" = "text.xcconfig";
@@ -165,7 +169,7 @@
 "7D1043473D55BFA90E8530D3" = {
 "isa" = "PBXFileReference";
 "explicitFileType" = "wrapper.application";
-"path" = "ChessTVMac.app";
+"path" = "ChessTV.app";
 "sourceTree" = "BUILT_PRODUCTS_DIR";
 };
 "B7480EC88B7F22D0A4757273" = {
@@ -235,11 +239,11 @@
 "isa" = "XCBuildConfiguration";
 "name" = "Debug";
 "buildSettings" = {
-"PRODUCT_NAME" = "$(TARGET_NAME)";
+"PRODUCT_NAME" = "ChessTV";
 "PRODUCT_MODULE_NAME" = "ChessTV";
 "PRODUCT_BUNDLE_IDENTIFIER" = "com.chesstv.mac";
 "GENERATE_INFOPLIST_FILE" = "YES";
-"INFOPLIST_KEY_CFBundleDisplayName" = "Chess TV";
+"INFOPLIST_KEY_CFBundleDisplayName" = "ChessTV";
 "ASSETCATALOG_COMPILER_APPICON_NAME" = "ChessTV";
 "INFOPLIST_KEY_NSMicrophoneUsageDescription" = "Chess TV listens for spoken chess moves while voice control is enabled.";
 "INFOPLIST_KEY_LSApplicationCategoryType" = "public.app-category.games";
@@ -255,11 +259,11 @@
 "isa" = "XCBuildConfiguration";
 "name" = "Release";
 "buildSettings" = {
-"PRODUCT_NAME" = "$(TARGET_NAME)";
+"PRODUCT_NAME" = "ChessTV";
 "PRODUCT_MODULE_NAME" = "ChessTV";
 "PRODUCT_BUNDLE_IDENTIFIER" = "com.chesstv.mac";
 "GENERATE_INFOPLIST_FILE" = "YES";
-"INFOPLIST_KEY_CFBundleDisplayName" = "Chess TV";
+"INFOPLIST_KEY_CFBundleDisplayName" = "ChessTV";
 "ASSETCATALOG_COMPILER_APPICON_NAME" = "ChessTV";
 "INFOPLIST_KEY_NSMicrophoneUsageDescription" = "Chess TV listens for spoken chess moves while voice control is enabled.";
 "INFOPLIST_KEY_LSApplicationCategoryType" = "public.app-category.games";
@@ -283,7 +287,7 @@
 "PRODUCT_NAME" = "$(TARGET_NAME)";
 "PRODUCT_BUNDLE_IDENTIFIER" = "com.chesstv.mac.tests";
 "GENERATE_INFOPLIST_FILE" = "YES";
-"TEST_HOST" = "$(BUILT_PRODUCTS_DIR)/ChessTVMac.app/Contents/MacOS/ChessTVMac";
+"TEST_HOST" = "$(BUILT_PRODUCTS_DIR)/ChessTV.app/Contents/MacOS/ChessTV";
 "BUNDLE_LOADER" = "$(TEST_HOST)";
 "LD_RUNPATH_SEARCH_PATHS" = ("$(inherited)","@loader_path/../Frameworks","@executable_path/../Frameworks");
 "ONLY_ACTIVE_ARCH" = "YES";
@@ -299,7 +303,7 @@
 "PRODUCT_NAME" = "$(TARGET_NAME)";
 "PRODUCT_BUNDLE_IDENTIFIER" = "com.chesstv.mac.tests";
 "GENERATE_INFOPLIST_FILE" = "YES";
-"TEST_HOST" = "$(BUILT_PRODUCTS_DIR)/ChessTVMac.app/Contents/MacOS/ChessTVMac";
+"TEST_HOST" = "$(BUILT_PRODUCTS_DIR)/ChessTV.app/Contents/MacOS/ChessTV";
 "BUNDLE_LOADER" = "$(TEST_HOST)";
 "LD_RUNPATH_SEARCH_PATHS" = ("$(inherited)","@loader_path/../Frameworks","@executable_path/../Frameworks");
 "SWIFT_OPTIMIZATION_LEVEL" = "-O";
@@ -384,7 +388,7 @@
 "BCE16DD0260827ECF338C787" = {
 "isa" = "PBXSourcesBuildPhase";
 "buildActionMask" = 2147483647;
-"files" = ("08CB248FDB9007EE8C045A64","9FE76A004985DD1C9D1B834B",
+"files" = ("1C4E55000000000000000002","08CB248FDB9007EE8C045A64","9FE76A004985DD1C9D1B834B",
 "DAAA00000000000000000002",
 "6B3D338F2DC84A159081AA02",
 "DAAA00000000000000000004","22AFB3527DEB28E3A06D7C7C","57EC0169A9E6D534DDA0F369","49CD61060BE9190158530CED","181B6FBCC44D73FFF6EB8066","5FE68A60B78E899B82B827B9","FDF515051489D379DB7A175F","DDDC50E345760B38DBBFF9D6","8C273F90CC896ABA81D84827","496732600E83CCAD0F1D780F","EA116F246B6F5D39EB0BA255","71697E636D30197E2C789C3A","C3756947A31B738ADDF90318","CA4D234A26FFEEEE0DD705ED","E3A12ADBFC31227AD287DF58","4346B346E6348204618E3010","AA4B8B2B9BB7853E257ECF8F","703E51E29886160A76089291");
@@ -410,7 +414,7 @@
 "isa" = "PBXNativeTarget";
 "name" = "ChessTVMac";
 "packageProductDependencies" = ("FAAA00000000000000000002");
-"productName" = "ChessTVMac";
+"productName" = "ChessTV";
 "productReference" = "7D1043473D55BFA90E8530D3";
 "productType" = "com.apple.product-type.application";
 "buildConfigurationList" = "E68519D21C528610D352976C";
@@ -449,7 +453,7 @@
 "9F3002A5D69B22D357A58AA9" = {
 "isa" = "PBXSourcesBuildPhase";
 "buildActionMask" = 2147483647;
-"files" = ("D87533F016AC514BD2565275","820307F18C19429C08AB2950","676B7ACC9F3AD7354BD2B082","9404B58A337012E29A7D526E","18C12249812EF23FF358DFA9","C5DA11451F2150BE0EEDC3CF");
+"files" = ("1C4E55000000000000000004","D87533F016AC514BD2565275","820307F18C19429C08AB2950","676B7ACC9F3AD7354BD2B082","9404B58A337012E29A7D526E","18C12249812EF23FF358DFA9","C5DA11451F2150BE0EEDC3CF");
 "runOnlyForDeploymentPostprocessing" = 0;
 };
 "FE44858385A62D261C958E86" = {

@@ -117,6 +117,8 @@ struct BoardView: View {
     VStack(alignment: .leading, spacing: 32) {
       VStack(alignment: .leading, spacing: 20) {
         Button("Settings", systemImage: "gearshape", action: onSettings)
+          .controlSize(.small)
+          .font(.caption2)
           .focused($settingsFocused)
       }
       .font(.caption)
@@ -198,8 +200,9 @@ struct BoardView: View {
         if let image = phase.image {
           image.resizable().scaledToFill()
         } else {
-          Image(systemName: "person.crop.square.fill")
-            .resizable().scaledToFit().foregroundStyle(.secondary)
+          Image(color == .white ? "chess-wp" : "chess-bp")
+            .resizable().scaledToFit()
+            .shadow(color: .white.opacity(0.25), radius: 16)
         }
       }
       .frame(width: 44, height: 44)
@@ -212,7 +215,7 @@ struct BoardView: View {
       .lineLimit(1).minimumScaleFactor(0.8)
       Spacer()
       if !session.isReviewing,
-        let remaining = session.clockReading?.remaining(color, now: session.now)
+        let remaining = session.clockReading?.displayedRemaining(color, now: session.now)
       {
         Text(ClockReading.format(remaining))
           .monospacedDigit().font(.headline).frame(minWidth: 100, alignment: .trailing)

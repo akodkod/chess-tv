@@ -1,6 +1,6 @@
 # Chess TV for macOS
 
-A single Chess.com browser island with connection status and controls in the window toolbar. macOS 14 or later.
+A Chess.com and Lichess browser with connection status and controls in the window toolbar. macOS 14 or later.
 
 ## Build and run
 
@@ -16,7 +16,7 @@ The script first builds the pinned `transcribe.cpp` Swift framework under
 are missing, pinned copies are installed into `mac/.build/runtime-tools`.
 For direct Xcode builds, run `./mac/script/prepare_speech_runtime.sh` once first.
 
-Then open `mac/ChessTVMac.xcodeproj` and run the **ChessTVMac** scheme. The Xcode build phase bundles the existing TypeScript adapter with Vite+ for Safari 17; no Chrome extension is required. Xcode and Bun must be installed. The development app is signed locally; distribution and notarization are not configured.
+Then open `mac/ChessTVMac.xcodeproj` and run the **ChessTVMac** scheme. The built app is named **ChessTV.app**. The Xcode build phase bundles the existing TypeScript adapter with Vite+ for Safari 17; no Chrome extension is required. Xcode and Bun must be installed. The development app is signed locally; distribution and notarization are not configured.
 
 The run script also accepts `--verify`, `--debug`, `--logs`, and `--telemetry`. The local Codex Run action invokes it.
 
@@ -35,11 +35,21 @@ Pairing credentials, pending claims, and interrupted-move state are stored in Ke
 
 The app defaults to `https://chess-tv-relay.kodkod.me`. For local development, set `RELAY_URL=http://127.0.0.1:3000` in the Xcode scheme's Run environment. HTTP is accepted only for loopback in Debug builds. Both TV and Mac must use the same relay. An app launched by Finder uses the default relay.
 
-Only Chess.com pages stay inside the main window. Other links open in the default browser. Use Chess.com's own username/password login inside the webview; external-provider popup sign-in is not implemented.
+Chess.com and Lichess pages stay inside the main window. Other links open in the default browser. Use Chess.com's own username/password login inside the webview; external-provider popup sign-in is not implemented.
+
+## Lichess
+
+Choose **Lichess** from the toolbar site menu, then **… → Connect Lichess…**. Authorize **Play games using the Board API** in your regular browser. The Mac app saves its own revocable token in Keychain, separately from the extension. **Disconnect Lichess** revokes that token.
+
+Start a game on Lichess, then choose **… → Open My Lichess Game** to open your first ongoing game. You can start it in your regular browser; API authorization does not sign the embedded webview in. A signed-out page may say “spectator,” while TV and voice input use your authorized playing account. Sign in inside the app separately if you want Lichess's own account controls there.
+
+Supported games are standard rapid, classical, correspondence, and blitz direct challenges or AI games. Bullet, pool blitz, variants, custom starting positions, puzzles, analysis, and Lichess spectator games are unsupported. Moves and live state use the official Board API through native networking, including while the window is hidden or minimized. The existing TV controls and voice commands work unchanged. Inspect the game before **Reconnect Game** after any uncertain move.
 
 ## Architecture
 
 SwiftUI owns the window and status UI. `ChessBrowser` wraps WKWebView and injects `extension/src/macos-content.ts` into an isolated content world. It calls the same adapter actions and reply format used by the extension, with main-frame and origin restrictions. A main-world script supplies timer-backed animation callbacks while the page is hidden; the adapter and relay credentials remain isolated. Reloads invalidate outstanding callbacks; same-document game changes are detected by the adapter.
+
+`LichessConnection` owns PKCE authorization, Keychain storage, the Board API stream, and move submission. The isolated WebKit bridge passes only game data and outcomes; authorization headers stay native. `GameAdapter` shares revisions, legal-move checks, voice resolution, and uncertainty rules across the Chess.com and Lichess drivers.
 
 `MacSession` owns pairing, attachment generations, serialized polling/commands, and durable move uncertainty. The macOS target directly references the TV app's protocol models, pairing HTTP helper, and WebSocket transport. The existing protocol's `extension` role represents the Mac client too; no relay or TV upgrade is required specifically for this wrapper.
 
@@ -58,6 +68,8 @@ xcodebuild -project mac/ChessTVMac.xcodeproj -scheme ChessTVMac \
 Native tests cover pairing, expiry/rejection, revocation retry, page availability, stale commands, durable interruption recovery, the shared wire corpus, and adapter execution in a real WKWebView. The WebKit fixture verifies isolated-world access, DOM-observed moves with visible, hidden, and minimized windows, and duplicate-command handling. A native integration test starts the real Bun relay on a temporary port/database and exercises pairing, snapshots, move outcomes, relay reconnection, and unpairing with a simulated TV client.
 
 Live validation: signed-in bot play, pairing with a physical Apple TV through Device Hub, TV-to-Mac moves, Mac-to-TV updates, and bot replies were verified. Background verification included a TV move and bot reply with the Mac window minimized, then a capture and bot reply with the app hidden. Real-WebKit regression fixtures require animation callbacks to complete in visible, hidden, and minimized windows.
+
+Lichess live validation on 2026-11-07: separate OAuth authorization survived relaunch, **Open My Lichess Game** found the Chrome-started AI game, and TV input played `g1-f3` while the Mac window was minimized. The `b8-c6` reply and live clocks reached the Apple TV simulator. Native tests also cover streamed confirmation, stale commands, lost responses, deduplication, unsupported time controls, and standalone voice through the real isolated WebKit bridge. Physical HappyTV was unavailable for this pass.
 
 ## Voice control
 
@@ -81,7 +93,7 @@ For the Apple engine, **Prefer recognition accuracy** is on by default. Turn it 
 persists across launches; changing it restarts active listening and discards
 pending speech. Listening itself still starts off on each launch.
 
-Open a supported Chess.com game and wait for your turn, then say one command:
+Open a supported Chess.com or authorized Lichess game and wait for your turn, then say one command:
 
 - “Rook D4”
 - “Knight F3” (“night” is accepted as “knight”)
@@ -108,7 +120,7 @@ Promotions require a piece. Unrelated speech is ignored. Rejected commands show 
 Voice works without a TV pairing, and a connected TV receives the normal board
 updates. Listening continues with the window hidden or minimized while the Mac
 is awake. Turning it off immediately stops capture and discards pending speech;
-a move already dispatched to Chess.com still completes. Microphone interruption
+a move already dispatched to the chess site still completes. Microphone interruption
 or sleep stops listening with an error; toggle it back on to retry. Denied
 microphone access can be enabled in System Settings → Privacy & Security →
 Microphone.

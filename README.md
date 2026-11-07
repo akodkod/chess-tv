@@ -1,4 +1,4 @@
-<p><img src="artwork/ChessTV.png" alt="Chess TV — ivory pawn on a warm mint background" width="128" height="128"></p>
+<p align="center"><img src="artwork/ChessTV.png" alt="Chess TV — ivory pawn on a warm mint background" width="128" height="128"></p>
 
 # Chess TV
 

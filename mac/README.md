@@ -2,6 +2,8 @@
 
 A Chess.com and Lichess browser with connection status and controls in the window toolbar. macOS 14 or later.
 
+The speaker button after the microphone toggles website sounds in the embedded browser. Sounds start muted, and your choice is remembered across launches. Apple TV sounds and microphone input are controlled separately.
+
 ## Build and run
 
 Install the repository's dependencies with `bun install --frozen-lockfile` and

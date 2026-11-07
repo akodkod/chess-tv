@@ -136,6 +136,8 @@ struct BoardView: View {
             Text(result.title(for: snapshot.playerColor))
             Text(result.detail(reason: snapshot.resultReason, player: snapshot.playerColor))
               .foregroundStyle(.secondary)
+              .lineLimit(1)
+              .minimumScaleFactor(0.5)
           }
           .font(.title2.weight(.semibold))
           .lineSpacing(2)

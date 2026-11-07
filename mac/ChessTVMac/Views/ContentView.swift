@@ -3,8 +3,24 @@ import WebKit
 
 struct BrowserView: NSViewRepresentable {
   let browser: ChessBrowser
-  func makeNSView(context: Context) -> WKWebView { browser.webView }
-  func updateNSView(_ view: WKWebView, context: Context) {}
+  func makeNSView(context: Context) -> BrowserContainerView {
+    BrowserContainerView(webView: browser.webView)
+  }
+  func updateNSView(_ view: BrowserContainerView, context: Context) {}
+}
+
+final class BrowserContainerView: NSView {
+  init(webView: WKWebView) {
+    super.init(frame: .zero)
+    webView.frame = bounds
+    webView.autoresizingMask = [.width, .height]
+    addSubview(webView)
+  }
+  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+  // WebKit forwards keys here only after the page and text editor decline them.
+  // Leave unused keys quiet instead of forwarding them to AppKit's alert sound.
+  override func keyDown(with event: NSEvent) {}
 }
 
 struct ContentView: View {
@@ -16,8 +32,8 @@ struct ContentView: View {
   @State private var confirmUnpair = false
 
   private var message: String {
-    startupError ?? browser.lichess.error ?? browser.loadError ?? voice?.commandNotice ?? voice?.error ?? session?.error
-      ?? (browser.loading ? "Loading \(browser.site)…" : session?.status ?? "Open a game on \(browser.site)")
+    (startupError ?? browser.lichess.error ?? browser.loadError ?? voice?.commandNotice ?? voice?.error ?? session?.error
+      ?? (browser.loading ? "Loading \(browser.site)…" : session?.status ?? "Open a game on \(browser.site)")).displayText
   }
   var body: some View {
     BrowserView(browser: browser)
@@ -55,7 +71,7 @@ struct ContentView: View {
       }
       .confirmationDialog("Unpair this TV?", isPresented: $confirmUnpair) {
         Button("Unpair TV", role: .destructive) { session?.unpair() }
-      } message: { Text("You can pair again using a new code from your TV.") }
+      } message: { Text("You can pair again using a new code from your TV") }
   }
 
   private var toolbarActions: some View {
@@ -74,10 +90,19 @@ struct ContentView: View {
         }
         .modifier(ToolbarControlSurface())
         .disabled(voice.unavailableReason != nil)
-        .help(voice.unavailableReason ?? (voice.enabled ? "Turn voice control off" : "Turn voice control on"))
+        .help((voice.unavailableReason ?? (voice.enabled ? "Turn voice control off" : "Turn voice control on")).displayText)
         .accessibilityLabel("Voice control")
         .accessibilityValue(voice.enabled ? "On" : "Off")
       }
+      Button { browser.toggleSoundsMuted() } label: {
+        Image(systemName: browser.soundsMuted ? "speaker.slash" : "speaker.wave.2")
+          .frame(width: 24, height: 24)
+          .foregroundStyle(browser.soundsMuted ? Color.secondary : Color.accentColor)
+      }
+      .modifier(ToolbarControlSurface())
+      .help(browser.soundsMuted ? "Unmute website sounds" : "Mute website sounds")
+      .accessibilityLabel("Website sounds")
+      .accessibilityValue(browser.soundsMuted ? "Muted" : "On")
       Menu {
         if let session {
           if session.saved.revocationPending {

@@ -16,7 +16,7 @@ struct VoiceDebugView: View {
               VStack(alignment: .leading, spacing: 5) {
                 Text("\(event.date.formatted(date: .omitted, time: .standard)) · \(event.stage) · \(event.trace.map { String($0.uuidString.prefix(8)) } ?? "session")")
                   .font(.headline)
-                Text(event.detail).font(.system(.caption, design: .monospaced))
+                Text(event.detail.displayText).font(.system(.caption, design: .monospaced))
                   .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
               }
               Divider()

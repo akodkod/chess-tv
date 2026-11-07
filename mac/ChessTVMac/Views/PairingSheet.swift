@@ -10,14 +10,14 @@ struct PairingSheet: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
       Text("Pair your TV").font(.headline)
-      Text(session.pairing ? "Confirm the pairing request on your TV."
-        : "Enter the six-digit code displayed in Chess TV.")
+      Text(session.pairing ? "Confirm the pairing request on your TV"
+        : "Enter the six-digit code displayed in Chess TV")
         .foregroundStyle(.secondary)
       if !session.pairing {
         PairingCodeInput(digits: $digits, onSubmit: submit)
           .frame(width: 304, height: 52)
       } else { ProgressView().controlSize(.small) }
-      if let error = session.error { Text(error).foregroundStyle(.red).font(.callout) }
+      if let error = session.error { Text(error.displayText).foregroundStyle(.red).font(.callout) }
       HStack {
         Spacer()
         Button("Close") { dismiss() }.keyboardShortcut(.cancelAction)

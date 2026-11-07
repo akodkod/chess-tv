@@ -1,9 +1,169 @@
 import AppKit
 import WebKit
 import XCTest
+import SwiftUI
 @testable import ChessTV
 
+@MainActor private final class UnhandledKeyRecorder: NSResponder {
+  var keys: [UInt16] = []
+  override func keyDown(with event: NSEvent) { keys.append(event.keyCode) }
+}
+
 @MainActor final class WebKitBridgeTests: XCTestCase {
+  func testWebKeysDoNotReachSystemBeepAndStillAllowTyping() async throws {
+    let browser = ChessBrowser()
+    let window = NSWindow(contentRect: NSRect(x: 100, y: 100, width: 500, height: 400),
+      styleMask: [.titled], backing: .buffered, defer: false)
+    window.contentView = NSHostingView(rootView: BrowserView(browser: browser))
+    let fallback = UnhandledKeyRecorder()
+    let next = window.nextResponder
+    window.nextResponder = fallback
+    window.makeKeyAndOrderFront(nil)
+    defer { window.nextResponder = next; window.orderOut(nil) }
+    browser.webView.loadHTMLString("""
+      <input id="entry"><script>
+      window.keys = [];
+      document.addEventListener('keydown', event => {
+        keys.push(event.key);
+        if (event.key === 'h') event.preventDefault();
+      });
+      </script>
+      """, baseURL: URL(string: "https://lichess.org"))
+    for _ in 0..<100 {
+      if !browser.webView.isLoading { break }
+      try await Task.sleep(for: .milliseconds(50))
+    }
+    window.makeFirstResponder(browser.webView)
+    func press(_ characters: String, code: UInt16) async throws {
+      let event = try XCTUnwrap(NSEvent.keyEvent(with: .keyDown, location: .zero,
+        modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+        windowNumber: window.windowNumber, context: nil, characters: characters,
+        charactersIgnoringModifiers: characters, isARepeat: false, keyCode: code))
+      browser.webView.keyDown(with: event)
+      try await Task.sleep(for: .milliseconds(100))
+    }
+    for (characters, code) in [("\u{F702}", UInt16(123)), ("\u{F703}", 124), ("z", 6), ("h", 4)] {
+      try await press(characters, code: code)
+    }
+    let keys = try await browser.webView.evaluateJavaScript("keys") as? [String]
+    XCTAssertEqual(keys, ["ArrowLeft", "ArrowRight", "z", "h"])
+    XCTAssertEqual(fallback.keys, [], "Unhandled web keys must not reach AppKit's alert-sound fallback")
+    _ = try await browser.webView.evaluateJavaScript("document.querySelector('input').focus()")
+    try await press("a", code: 0)
+    try await press("b", code: 11)
+    try await press("\u{F702}", code: 123)
+    try await press("c", code: 8)
+    let typed = try await browser.webView.evaluateJavaScript("document.querySelector('input').value") as? String
+    XCTAssertEqual(typed, "acb")
+  }
+
+  func testMuteStopsExistingAndNewWebAudioAcrossNavigation() async throws {
+    let saved = UserDefaults.standard.object(forKey: "webViewSoundsMuted")
+    defer { UserDefaults.standard.set(saved, forKey: "webViewSoundsMuted") }
+    let browser = ChessBrowser()
+    let window = NSWindow(contentRect: NSRect(x: 100, y: 100, width: 400, height: 400),
+      styleMask: [.titled], backing: .buffered, defer: false)
+    window.contentView = browser.webView
+    window.makeKeyAndOrderFront(nil)
+    defer { window.orderOut(nil) }
+    func load() async throws {
+      browser.webView.loadHTMLString("<p>Audio fixture</p>", baseURL: URL(string: "https://lichess.org"))
+      for _ in 0..<100 {
+        if !browser.webView.isLoading { break }
+        try await Task.sleep(for: .milliseconds(50))
+      }
+    }
+    func start(_ name: String) async throws {
+      _ = try await browser.webView.evaluateJavaScript("""
+        window.\(name) = new AudioContext();
+        var oscillator = \(name).createOscillator();
+        var gain = \(name).createGain(); gain.gain.value = 0;
+        oscillator.connect(gain).connect(\(name).destination); oscillator.start();
+        \(name).resume(); void 0;
+        """)
+      try await Task.sleep(for: .milliseconds(200))
+    }
+    func state(_ name: String) async throws -> String? {
+      try await browser.webView.evaluateJavaScript("\(name).state") as? String
+    }
+    try await load()
+    if browser.soundsMuted { browser.toggleSoundsMuted() }
+    try await start("existing")
+    let playing = try await state("existing")
+    XCTAssertEqual(playing, "running")
+    browser.toggleSoundsMuted()
+    try await Task.sleep(for: .milliseconds(200))
+    let muted = try await state("existing")
+    XCTAssertTrue(["suspended", "interrupted"].contains(muted ?? ""), "Existing Web Audio must stop when muted")
+    try await start("later")
+    let later = try await state("later")
+    XCTAssertEqual(later, "suspended", "New Web Audio must stay muted")
+    browser.toggleSoundsMuted()
+    try await Task.sleep(for: .milliseconds(200))
+    let existingResumed = try await state("existing")
+    let laterResumed = try await state("later")
+    XCTAssertEqual(existingResumed, "running")
+    XCTAssertEqual(laterResumed, "running")
+    browser.toggleSoundsMuted()
+    try await load()
+    try await start("navigated")
+    let navigated = try await state("navigated")
+    XCTAssertEqual(navigated, "suspended", "Mute must survive navigation")
+    browser.toggleSoundsMuted()
+    try await Task.sleep(for: .milliseconds(200))
+    let resumed = try await state("navigated")
+    XCTAssertEqual(resumed, "running", "Unmute must restore playback")
+  }
+
+  func testMuteBlocksMediaElementsCreatedWhileMuted() async throws {
+    let saved = UserDefaults.standard.object(forKey: "webViewSoundsMuted")
+    defer { UserDefaults.standard.set(saved, forKey: "webViewSoundsMuted") }
+    let configuration = WKWebViewConfiguration()
+    configuration.mediaTypesRequiringUserActionForPlayback = []
+    let browser = ChessBrowser(configuration: configuration)
+    if !browser.soundsMuted { browser.toggleSoundsMuted() }
+    let window = NSWindow(contentRect: NSRect(x: 100, y: 100, width: 400, height: 400),
+      styleMask: [.titled], backing: .buffered, defer: false)
+    window.contentView = browser.webView
+    window.makeKeyAndOrderFront(nil)
+    defer { window.orderOut(nil) }
+    browser.webView.loadHTMLString("<p>Media fixture</p>", baseURL: URL(string: "https://lichess.org"))
+    for _ in 0..<100 {
+      if !browser.webView.isLoading { break }
+      try await Task.sleep(for: .milliseconds(50))
+    }
+    // A silent PCM WAV exercises real HTML media playback without making test noise.
+    _ = try await browser.webView.evaluateJavaScript("""
+      var bytes = new Uint8Array(44 + 8000 * 10);
+      var header = new DataView(bytes.buffer);
+      function text(at, value) { for (let i = 0; i < value.length; i++) bytes[at+i] = value.charCodeAt(i); }
+      text(0, 'RIFF'); header.setUint32(4, bytes.length - 8, true); text(8, 'WAVE'); text(12, 'fmt ');
+      header.setUint32(16, 16, true); header.setUint16(20, 1, true); header.setUint16(22, 1, true);
+      header.setUint32(24, 8000, true); header.setUint32(28, 8000, true);
+      header.setUint16(32, 1, true); header.setUint16(34, 8, true);
+      text(36, 'data'); header.setUint32(40, bytes.length - 44, true); bytes.fill(128, 44);
+      window.audio = new Audio(URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' })));
+      audio.loop = true; document.body.append(audio); audio.play().catch(() => {}); void 0;
+      """)
+    try await Task.sleep(for: .milliseconds(300))
+    let mutedTime = try await browser.webView.evaluateJavaScript("audio.currentTime") as? Double
+    XCTAssertEqual(mutedTime, 0)
+    browser.toggleSoundsMuted()
+    try await Task.sleep(for: .milliseconds(200))
+    _ = try await browser.webView.evaluateJavaScript("audio.play().catch(e => window.playError = e.message); void 0")
+    try await Task.sleep(for: .milliseconds(300))
+    let currentTime = try await browser.webView.evaluateJavaScript("audio.currentTime") as? Double
+    let playingTime = try XCTUnwrap(currentTime)
+    let playback = try await browser.webView.evaluateJavaScript("JSON.stringify({ready: audio.readyState, paused: audio.paused, error: audio.error?.message, playError: window.playError})")
+    XCTAssertGreaterThan(playingTime, 0, "\(playback)")
+    browser.toggleSoundsMuted()
+    try await Task.sleep(for: .milliseconds(100))
+    let stoppedTime = try await browser.webView.evaluateJavaScript("audio.currentTime") as? Double
+    try await Task.sleep(for: .milliseconds(200))
+    let stillStoppedTime = try await browser.webView.evaluateJavaScript("audio.currentTime") as? Double
+    XCTAssertEqual(stoppedTime, stillStoppedTime)
+  }
+
   func testBundledAdapterIsIsolatedAndObservesRealWebKitDOM() async throws {
     try await verifyMove(background: nil)
   }

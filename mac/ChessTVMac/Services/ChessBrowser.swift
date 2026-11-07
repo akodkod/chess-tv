@@ -11,10 +11,11 @@ import WebKit
   var onInvalidate: (() -> Void)?
   var loadError: String?
   var loading = true
+  private(set) var soundsMuted: Bool
 
-  init(lichess: LichessConnection? = nil) {
+  init(lichess: LichessConnection? = nil, configuration: WKWebViewConfiguration = WKWebViewConfiguration()) {
     self.lichess = lichess ?? LichessConnection()
-    let configuration = WKWebViewConfiguration()
+    soundsMuted = UserDefaults.standard.object(forKey: "webViewSoundsMuted") as? Bool ?? true
     configuration.websiteDataStore = .default()
     // Keep the adapter callable when the app is hidden or its window is minimized.
     // WebKit may still throttle page animations; moves require observed DOM confirmation.
@@ -25,8 +26,9 @@ import WebKit
     webView = WKWebView(frame: .zero, configuration: configuration)
     super.init()
     configuration.userContentController.addScriptMessageHandler(LichessBridge(browser: self), contentWorld: world, name: "lichess")
-    // Keep embedded page media silent, including across navigation.
-    webView.setAllMediaPlaybackSuspended(true, completionHandler: nil)
+    installSoundScript()
+    // Native suspension covers media elements; the script also covers future Web Audio contexts.
+    if soundsMuted { webView.setAllMediaPlaybackSuspended(true, completionHandler: nil) }
     do {
       guard let url = Bundle.main.url(forResource: "adapter", withExtension: "js") else {
         throw ProtocolFailure("The bundled game adapter is missing. Rebuild the app.")
@@ -87,6 +89,76 @@ import WebKit
   var usable: Bool {
     return !loading && loadError == nil && webView.window != nil
   }
+  func toggleSoundsMuted() {
+    soundsMuted.toggle()
+    UserDefaults.standard.set(soundsMuted, forKey: "webViewSoundsMuted")
+    installSoundScript()
+    webView.evaluateJavaScript("window.__chessTVSetSoundsMuted?.(\(soundsMuted)); void 0", completionHandler: nil)
+    webView.setAllMediaPlaybackSuspended(soundsMuted, completionHandler: nil)
+  }
+  private func installSoundScript() {
+    let controller = webView.configuration.userContentController
+    let scripts = controller.userScripts.filter { !$0.source.hasPrefix("// Chess TV web audio\n") }
+    controller.removeAllUserScripts()
+    for script in scripts { controller.addUserScript(script) }
+    controller.addUserScript(WKUserScript(source: """
+      // Chess TV web audio
+      (() => {
+        let muted = \(soundsMuted);
+        const contexts = new Set();
+        const resumeAfterMute = new Set();
+        const waiters = new Map();
+        const NativeContext = window.AudioContext || window.webkitAudioContext;
+        if (!NativeContext) return;
+        const resume = NativeContext.prototype.resume;
+        const suspend = NativeContext.prototype.suspend;
+        NativeContext.prototype.resume = function(...args) {
+          if (!muted || this.state === 'closed') return resume.apply(this, args);
+          resumeAfterMute.add(this);
+          return new Promise((resolve, reject) => {
+            if (!waiters.has(this)) waiters.set(this, []);
+            waiters.get(this).push({ resolve, reject });
+          });
+        };
+        const WrappedContext = new Proxy(NativeContext, {
+          construct(target, args) {
+            const context = Reflect.construct(target, args);
+            contexts.add(context);
+            if (muted) {
+              if (context.state === 'running') resumeAfterMute.add(context);
+              suspend.call(context).catch(() => {});
+            }
+            return context;
+          }
+        });
+        window.AudioContext = WrappedContext;
+        if (window.webkitAudioContext) window.webkitAudioContext = WrappedContext;
+        window.__chessTVSetSoundsMuted = value => {
+          muted = value;
+          for (const context of contexts) {
+            if (context.state === 'closed') { contexts.delete(context); continue; }
+            if (muted) {
+              if (context.state === 'running' || context.state === 'interrupted') resumeAfterMute.add(context);
+              suspend.call(context).catch(() => {});
+            } else if (resumeAfterMute.delete(context)) {
+              const pending = waiters.get(context) || [];
+              waiters.delete(context);
+              resume.call(context).then(
+                () => pending.forEach(p => p.resolve()),
+                error => pending.forEach(p => p.reject(error)));
+            }
+          }
+          for (let i = 0; i < window.frames.length; i++)
+            window.frames[i].postMessage({ type: 'chess-tv-sounds-muted', muted }, '*');
+        };
+        window.addEventListener('message', event => {
+          if (event.source === window.parent && event.data?.type === 'chess-tv-sounds-muted'
+              && typeof event.data.muted === 'boolean')
+            window.__chessTVSetSoundsMuted(event.data.muted);
+        });
+      })();
+      """, injectionTime: .atDocumentStart, forMainFrameOnly: false, in: .page))
+  }
   func selectSite(_ site: String) {
     UserDefaults.standard.set(site, forKey: "chessSite")
     home()
@@ -134,6 +206,9 @@ import WebKit
     loading = true
     loadError = nil
     invalidate()
+  }
+  func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+    webView.evaluateJavaScript("window.__chessTVSetSoundsMuted?.(\(soundsMuted)); void 0", completionHandler: nil)
   }
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { loading = false }
   func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {

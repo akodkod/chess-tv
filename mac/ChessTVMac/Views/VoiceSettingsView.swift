@@ -42,7 +42,7 @@ struct VoiceSettingsView: View {
           Text("Includes speech detection. Audio is processed on your Mac. Select Parakeet after the download completes.")
             .font(.caption).foregroundStyle(.secondary)
         }
-        if let error = models.error { Text(error).foregroundStyle(.red) }
+        if let error = models.error { Text(error.displayText).foregroundStyle(.red) }
       }
       Section("Move interpretation") {
         Text("Say “Rook D4”, “Knight F3”, or “Pawn D4”. Always name the piece. Only add a starting square when ambiguous: “Rook from B1 to B4”.")
@@ -59,7 +59,7 @@ struct VoiceSettingsView: View {
             catch { keyStatus = error.localizedDescription }
           }
         }
-        if let keyStatus { Text(keyStatus).font(.caption).foregroundStyle(.secondary) }
+        if let keyStatus { Text(keyStatus.displayText).font(.caption).foregroundStyle(.secondary) }
       }
     }
     .formStyle(.grouped)

@@ -6,6 +6,8 @@ Play standard Chess.com or Lichess games on Apple TV, or watch Chess.com games. 
 pieces and moves while your game runs in either the native Mac app or a Chrome
 extension. The Mac app also supports spoken moves, with or without a TV.
 
+![Chess TV displaying a live chess game on a television](artwork/chess-tv-in-use.jpeg)
+
 Chess TV is a prototype built from source. It supports standard bot and online
 games, plus read-only spectating. Custom starting positions and chess variants
 are unsupported. It validates your chosen moves; it does not choose moves for you.
